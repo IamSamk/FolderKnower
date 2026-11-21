@@ -1,51 +1,89 @@
 import { FolderOpen, Sparkles } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import { DEMO_ROOT, isTauri, onFolderDrop, pickFolder } from "../lib/backend";
 import { TIER_COLOR } from "../lib/theme";
 import { useStore } from "../store";
+import { ThemeSwitch } from "./TopBar";
 
-function Logo() {
-  const tiers = [TIER_COLOR.Frontend, TIER_COLOR.Backend, TIER_COLOR.Storage];
+const LANGS: { name: string; color: string }[] = [
+  { name: "TypeScript", color: TIER_COLOR.Frontend },
+  { name: "JavaScript", color: TIER_COLOR.Gateway },
+  { name: "Python", color: TIER_COLOR.Backend },
+  { name: "Rust", color: TIER_COLOR.Workers },
+  { name: "Go", color: TIER_COLOR.Storage },
+];
+
+/** Three tiers stacking into a building: the one orchestrated moment on this screen. */
+function Stack() {
+  const reduce = useReducedMotion();
+  const slabs = [
+    { c: TIER_COLOR.Frontend, label: "Frontend" },
+    { c: TIER_COLOR.Backend, label: "Backend" },
+    { c: TIER_COLOR.Storage, label: "Data" },
+  ];
   return (
-    <svg viewBox="0 0 200 170" className="h-36 w-44" aria-hidden>
-      <title>Architekton</title>
-      {tiers.map((c, i) => (
-        <motion.polygon
-          key={c}
-          points={`100,${20 + i * 40} 180,${50 + i * 40} 100,${80 + i * 40} 20,${50 + i * 40}`}
-          fill={c}
-          fillOpacity={0.85}
-          stroke="white"
-          strokeOpacity={0.6}
-          strokeWidth={1.5}
-          initial={{ opacity: 0, y: -18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 + (2 - i) * 0.14, type: "spring", stiffness: 160, damping: 14 }}
-        />
+    <div className="relative mb-6 flex flex-col items-center gap-[10px]" aria-hidden>
+      {slabs.map((s, i) => (
+        <motion.div
+          key={s.label}
+          initial={reduce ? false : { y: -160, rotate: i % 2 ? 7 : -7, opacity: 0 }}
+          animate={{ y: 0, rotate: 0, opacity: 1 }}
+          transition={{ delay: 0.15 + (2 - i) * 0.16, type: "spring", stiffness: 220, damping: 15 }}
+          style={{
+            width: 210 - i * 0,
+            height: 44,
+            background: s.c,
+            border: "2.5px solid var(--line)",
+            borderRadius: 12,
+            boxShadow: "5px 5px 0 var(--shade)",
+            display: "grid",
+            placeItems: "center",
+            fontWeight: 750,
+            color: "#1f1d36",
+            fontSize: 15,
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          {s.label}
+        </motion.div>
       ))}
-      <motion.line
-        x1="100"
-        y1="22"
-        x2="100"
-        y2="140"
-        stroke="white"
-        strokeWidth="3"
-        strokeLinecap="round"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ delay: 0.7, duration: 0.7 }}
+      <motion.div
+        className="absolute"
+        style={{
+          left: "50%",
+          top: -14,
+          bottom: -10,
+          width: 4,
+          marginLeft: -2,
+          background: "var(--line)",
+          borderRadius: 4,
+          transformOrigin: "top",
+          zIndex: 0,
+        }}
+        initial={reduce ? false : { scaleY: 0 }}
+        animate={{ scaleY: 1 }}
+        transition={{ delay: 0.9, duration: 0.5, ease: [0.65, 0, 0.35, 1] }}
       />
-      <motion.circle
-        cx="100"
-        cy="142"
-        r="6"
-        fill="white"
-        initial={{ scale: 0 }}
+      <motion.div
+        className="absolute"
+        style={{
+          zIndex: 2,
+          bottom: -20,
+          left: "50%",
+          marginLeft: -9,
+          width: 18,
+          height: 18,
+          borderRadius: 99,
+          background: "var(--mark)",
+          border: "2.5px solid var(--line)",
+        }}
+        initial={reduce ? false : { scale: 0 }}
         animate={{ scale: 1 }}
-        transition={{ delay: 1.3 }}
+        transition={{ delay: 1.35, type: "spring", stiffness: 400, damping: 12 }}
       />
-    </svg>
+    </div>
   );
 }
 
@@ -62,19 +100,22 @@ export function Welcome() {
 
   return (
     <div className="ak-welcome">
-      <div className="ak-aurora" />
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="relative z-10 flex flex-col items-center"
-      >
-        <Logo />
-        <h1 className="ak-hero mt-2">Architekton</h1>
-        <p className="ak-muted mt-2 max-w-xl text-center text-[15px] leading-relaxed">
-          Drop a repository. Architekton reads it offline, works out what each part <em>does</em>{" "}
-          (frontend, gateway, backend, workers, data) and draws how a click travels all the way to
-          the database.
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        <button
+          type="button"
+          className="ak-btn ghost"
+          onClick={() => useStore.setState({ setupOpen: true })}
+        >
+          <Sparkles size={15} /> Local AI
+        </button>
+        <ThemeSwitch />
+      </div>
+      <div className="relative z-10 flex flex-col items-center px-6">
+        <Stack />
+        <h1 className="ak-hero">Architekton</h1>
+        <p className="ak-hero-sub mt-4">
+          Drop in a repository and see how it is really built: what is frontend, what is backend,
+          which button calls which API, and which table it ends up in.
         </p>
         <motion.button
           type="button"
@@ -83,27 +124,33 @@ export function Welcome() {
             const p = await pickFolder();
             if (p) void start(p);
           }}
-          whileHover={{ scale: 1.015 }}
-          whileTap={{ scale: 0.99 }}
+          whileTap={{ scale: 0.985 }}
         >
-          <FolderOpen size={30} strokeWidth={1.6} />
-          <div className="mt-3 text-[16px] font-semibold">
+          <FolderOpen size={32} strokeWidth={2.2} />
+          <div className="ak-drop-title">
             {hover
-              ? "Release to analyze"
+              ? "Let go to open it"
               : isTauri
-                ? "Drop a folder here, or click to choose"
+                ? "Drop a folder here, or click to choose one"
                 : "Open the demo project"}
           </div>
-          <div className="ak-muted mt-1 text-[12.5px]">
-            TypeScript · JavaScript · Python · Rust · Go — nothing leaves your machine
+          <div className="ak-muted mt-1 text-[13.5px]">
+            Read on this computer. Nothing is uploaded.
+          </div>
+          <div className="ak-stickers">
+            {LANGS.map((l) => (
+              <span key={l.name} className="ak-sticker" style={{ background: l.color }}>
+                {l.name}
+              </span>
+            ))}
           </div>
         </motion.button>
         {isTauri && (
-          <button type="button" className="ak-btn mt-4" onClick={() => void start(DEMO_ROOT)}>
-            <Sparkles size={14} /> Explore the demo full-stack app
+          <button type="button" className="ak-btn mt-6" onClick={() => void start(DEMO_ROOT)}>
+            Try the demo full-stack app
           </button>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }

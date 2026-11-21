@@ -1,11 +1,13 @@
 import type { Node } from "@xyflow/react";
 import { useMemo } from "react";
 import { buildEr, buildFocus } from "../canvas/build";
-import { Canvas } from "../canvas/Canvas";
+import { Canvas, type NavOrigin } from "../canvas/Canvas";
 import type { TierLabel } from "../gen";
+import { TIER_COLOR } from "../lib/theme";
 import { type Focus, useStore } from "../store";
+import { originOf, PortalScene } from "./Portal";
 
-function focusKey(f: Focus): string {
+export function focusKey(f: Focus): string {
   switch (f.level) {
     case "system":
       return "system";
@@ -20,48 +22,70 @@ function focusKey(f: Focus): string {
   }
 }
 
+function nodeLabel(n: Node): string {
+  const d = n.data as Record<string, unknown>;
+  if (n.type === "tier") return String(d.tier);
+  if (n.type === "cluster") return (d.cluster as { name: string }).name;
+  if (n.type === "file")
+    return ((d.file as { path: string }).path.split("/").pop() ?? "") as string;
+  if (n.type === "fn") return `${(d.fn as { name: string }).name}()`;
+  if (n.type === "model") return (d.model as { name: string }).name;
+  return "";
+}
+
 export function ArchitectureView() {
   const ix = useStore((s) => s.ix);
   const stack = useStore((s) => s.stack);
-  const drill = useStore((s) => s.drill);
-  const reveal = useStore((s) => s.reveal);
   const select = useStore((s) => s.select);
+  const go = useStore((s) => s.go);
   const focus = stack[stack.length - 1];
   const built = useMemo(() => (ix ? buildFocus(ix, focus) : null), [ix, focus]);
   if (!ix || !built) return null;
 
-  const open = (n: Node) => {
+  const push = (f: Focus) => useStore.setState((s) => ({ stack: [...s.stack, f] }));
+
+  const open = (n: Node, el: Element | null) => {
+    const tier = (n.data as { tier?: TierLabel }).tier;
+    const origin = originOf(el, nodeLabel(n), tier ? TIER_COLOR[tier] : undefined);
     switch (n.type) {
       case "tier":
-        drill({ level: "tier", tier: (n.data as { tier: TierLabel }).tier });
+        go(origin, "in", () => push({ level: "tier", tier: (n.data as { tier: TierLabel }).tier }));
         break;
       case "cluster":
-        drill({ level: "cluster", clusterId: n.id });
+        go(origin, "in", () => push({ level: "cluster", clusterId: n.id }));
         break;
       case "file":
-        if (!(n.data as { ghost?: boolean }).ghost) drill({ level: "file", fileId: n.id });
-        else reveal(n.id);
+        if (!(n.data as { ghost?: boolean }).ghost)
+          go(origin, "in", () => push({ level: "file", fileId: n.id }));
         break;
       case "fn":
         if (focus.level !== "function" || focus.fnId !== n.id)
-          drill({ level: "function", fnId: n.id });
+          go(origin, "in", () => push({ level: "function", fnId: n.id }));
         break;
       case "model":
-        reveal(n.id);
+        go(origin, "tab", () => useStore.getState().reveal(n.id));
         break;
     }
   };
 
-  const navigate = (target: string) => {
+  const navigate = (target: string, at?: NavOrigin) => {
+    const origin = {
+      x: at?.x ?? 400,
+      y: at?.y ?? 300,
+      label: ix.label(target),
+      color: TIER_COLOR[ix.tierOf(target) ?? "Shared"],
+    };
     if (target.startsWith("tier:")) {
       const tier = target.slice(5) as TierLabel;
-      useStore.setState({ stack: [{ level: "system" }, { level: "tier", tier }] });
-      select(null);
+      go({ ...origin, label: tier, color: TIER_COLOR[tier] }, "in", () => {
+        useStore.setState({ stack: [{ level: "system" }, { level: "tier", tier }] });
+        select(null);
+      });
       return;
     }
-    if (ix.files.has(target)) {
-      const fe = ix.files.get(target);
-      if (fe)
+    const fe = ix.files.get(target);
+    if (fe) {
+      go(origin, "in", () => {
         useStore.setState({
           stack: [
             { level: "system" },
@@ -69,52 +93,57 @@ export function ArchitectureView() {
             { level: "cluster", clusterId: fe.cluster.id },
           ],
         });
-      select(target);
+        select(target);
+      });
       return;
     }
-    if (ix.fns.has(target) && focus.level === "function") {
-      const fe = ix.fns.get(target);
-      if (fe)
-        useStore.setState({
-          stack: [
-            { level: "system" },
-            { level: "tier", tier: fe.tier },
-            { level: "cluster", clusterId: fe.clusterId },
-            { level: "file", fileId: fe.file.id },
-            { level: "function", fnId: target },
-          ],
-        });
-      select(target);
+    const fn = ix.fns.get(target);
+    if (fn) {
+      go(origin, "in", () => {
+        const base: Focus[] = [
+          { level: "system" },
+          { level: "tier", tier: fn.tier },
+          { level: "cluster", clusterId: fn.clusterId },
+          { level: "file", fileId: fn.file.id },
+        ];
+        if (focus.level === "function") base.push({ level: "function", fnId: target });
+        useStore.setState({ stack: base });
+        select(target);
+      });
       return;
     }
-    reveal(target);
+    go(origin, "tab", () => useStore.getState().reveal(target));
   };
 
-  return <Canvas built={built} sceneKey={focusKey(focus)} onOpen={open} onNavigate={navigate} />;
+  return (
+    <PortalScene sceneKey={focusKey(focus)}>
+      <Canvas built={built} onOpen={open} onNavigate={navigate} />
+    </PortalScene>
+  );
 }
 
 export function ErView() {
   const ix = useStore((s) => s.ix);
   const reveal = useStore((s) => s.reveal);
+  const go = useStore((s) => s.go);
   const built = useMemo(() => (ix ? buildEr(ix) : null), [ix]);
   if (!ix || !built) return null;
   if (built.nodes.length === 0)
     return (
       <div className="ak-empty">
-        <div className="text-lg font-semibold">No data models found</div>
-        <div className="ak-muted mt-1 max-w-md text-sm">
+        <h2>No data models found</h2>
+        <p>
           Architekton reads SQLAlchemy, Django, SQLModel, Pydantic, Prisma, SQL DDL, TypeORM,
-          Sequelize, zod, sqlx, Diesel and GORM models.
-        </div>
+          Sequelize, zod, sqlx, Diesel and GORM models. Open a repository that uses one of them.
+        </p>
       </div>
     );
   return (
     <Canvas
       built={built}
-      sceneKey="er"
-      onOpen={(n) => {
+      onOpen={(n, el) => {
         const m = ix.models.get(n.id);
-        if (m) reveal(m.fileId);
+        if (m) go(originOf(el, m.name, TIER_COLOR.Storage), "in", () => reveal(m.fileId));
       }}
       onNavigate={(t) => useStore.getState().select(t)}
     />

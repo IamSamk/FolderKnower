@@ -22,7 +22,11 @@ ark-core = { workspace = true }
 ark-ontology = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-ureq = { version = "3.5.1", default-features = false, features = ["json"] }
+ureq = { version = "3.5.1", default-features = false, features = ["json", "rustls"] }
+sha2 = "0.11.1"
+zip = { version = "9.8.1", default-features = false, features = ["deflate"] }
+flate2 = "1.1.11"
+tar = "0.4.46"
 
 [lints]
 workspace = true

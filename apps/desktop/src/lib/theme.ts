@@ -1,12 +1,13 @@
 import type { BigO, OntologyLayer, Protocol, TierLabel } from "../gen";
 
+// Tier colours are fills: they always carry ink-coloured text, in both themes.
 export const TIER_COLOR: Record<TierLabel, string> = {
-  Frontend: "#5B8CFF",
-  Gateway: "#F5A524",
-  Backend: "#A78BFA",
-  Storage: "#10B981",
-  Workers: "#F43F5E",
-  Shared: "#94A3B8",
+  Frontend: "#8FB0FF",
+  Gateway: "#FFD25E",
+  Backend: "#BFA6FF",
+  Storage: "#7FE0B4",
+  Workers: "#FF9C8F",
+  Shared: "#C9CDDC",
 };
 
 export const TIER_BLURB: Record<TierLabel, string> = {
@@ -28,30 +29,30 @@ export const TIER_ORDER: TierLabel[] = [
 ];
 
 export const PROTOCOL_COLOR: Record<Protocol, string> = {
-  "HTTP/REST": "#22D3EE",
-  WebSocket: "#38BDF8",
-  gRPC: "#818CF8",
-  SQL: "#34D399",
-  IPC: "#FBBF24",
-  Queue: "#FB7185",
+  "HTTP/REST": "#3D5AFE",
+  WebSocket: "#2196F3",
+  gRPC: "#7C4DFF",
+  SQL: "#0E9F6E",
+  IPC: "#E0A100",
+  Queue: "#E5484D",
 };
 
 export const LAYER_COLOR: Record<OntologyLayer, string> = {
-  os: "#F59E0B",
-  network: "#22D3EE",
-  cloud: "#A78BFA",
-  data: "#34D399",
+  os: "#FFB547",
+  network: "#7AB8FF",
+  cloud: "#C9A7FF",
+  data: "#6EDCA8",
 };
 
 export const BIGO_COLOR: Record<BigO, string> = {
-  "O(1)": "#34D399",
-  "O(log N)": "#4ADE80",
-  "O(N)": "#A3E635",
-  "O(N log N)": "#FACC15",
-  "O(N^2)": "#FB923C",
-  "O(N^k)": "#F87171",
-  "O(2^N)": "#EF4444",
-  unknown: "#64748B",
+  "O(1)": "#7FE0B4",
+  "O(log N)": "#A6EBA0",
+  "O(N)": "#D9F27A",
+  "O(N log N)": "#FFE07A",
+  "O(N^2)": "#FFB870",
+  "O(N^k)": "#FF9C8F",
+  "O(2^N)": "#FF7A7A",
+  unknown: "#C9CDDC",
 };
 
 export const BASIS_TEXT: Record<string, string> = {

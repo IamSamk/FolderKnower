@@ -20,25 +20,27 @@ Download the installer for your OS from the [latest release](https://github.com/
 2. Watch it narrate what it finds: files scanned, routes linked, and what kind of project it thinks this is.
 3. **Architecture** view, five zoom levels: *System tiers → Subsystems → Files → Functions & calls → Function detail*.
    - Click to inspect, **double-click to zoom in**, use the breadcrumb to zoom out.
-   - Click a glowing arrow or a dashed "portal" node to **travel along it** into another tier or file.
+   - Click an arrow or a dashed "portal" node and the camera **travels along it** into another tier or file. Double-clicking drops a magnifying glass on what you opened and reveals the next level through it.
 4. **UI map**: turn on the **pointer** (top right), hover any button/input like Chrome DevTools, click it, and the trace shows the path: element → handler → API client → `POST /route` → handler → table.
 5. **Data (ER)**: tables, columns, PK/FK, relations, and the Pydantic/zod/DTO schemas that mirror each table.
-6. The **Inspector** shows details, highlighted source (**Code** tab) and an optional **Explain ✦** tab.
-7. **Help me classify**: when the rules are unsure about a folder, Architekton asks. Your answer re-runs the analysis.
-8. `Ctrl/Cmd + K` jumps to any file, function, route or table. The download button exports `architecture.json`.
+6. Pick **light, dark or system** theme in the top-right corner.
+7. The **Inspector** shows details, highlighted source (**Code** tab) and an optional **Explain ✦** tab.
+8. **Help me sort these**: when the rules are unsure about a folder, Architekton asks. Your answer re-runs the analysis.
+9. `Ctrl/Cmd + K` jumps to any file, function, route or table. The download button exports `architecture.json`.
 
 Languages: TypeScript/TSX, JavaScript/JSX, Python, Rust, Go. Frameworks recognised include React/Next.js/Vue/Svelte, Express/Fastify/Hono/NestJS, FastAPI/Flask/Django, Axum/Actix, Gin/Echo/net/http, SQLAlchemy/SQLModel/Django ORM/Pydantic, Prisma/TypeORM/Sequelize/zod, sqlx/Diesel/GORM, SQL DDL, Celery/BullMQ.
 
-### Optional: local model (SLM)
+### Optional: built-in local AI
 
-The app works fully without a model. If you want plain-language explanations and a second opinion on ambiguous folders:
+Everything works without AI. On first launch Architekton shows its license and privacy terms, then offers three optional downloads (you can also open this later from the sparkle button):
 
-```sh
-# Ollama (https://ollama.com)
-ollama pull qwen2.5-coder:3b
-```
+| Component | What it does | License | Size |
+|---|---|---|---|
+| llama.cpp runtime (`llama-server`, build b12606) | Runs the models below on your CPU | MIT | 12 to 25 MB |
+| [Laya](https://huggingface.co/convaiinnovations/laya) decision model (Q8_0 GGUF) | Settles folders the rules were unsure about. It picks one of the given options with a probability and never generates text | Apache-2.0 | 449 MB |
+| [Qwen2.5 0.5B Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct) (Q4_K_M GGUF) | Explains the selection in plain language, citing graph node ids; ungrounded sentences are dropped | Apache-2.0 | 491 MB |
 
-or run llama.cpp's `llama-server` (port 8080) or LM Studio (port 1234). Architekton detects a server on `127.0.0.1`, sends it only the facts of the selected subgraph, forces JSON output whose citations must be ids from that subgraph, and drops any sentence that cites something else.
+Each file is pinned and verified against a SHA-256 checksum, stored in the app's data folder, and served on `127.0.0.1` only. If you already run Ollama, llama.cpp or LM Studio locally, Architekton can use that instead. See [PRIVACY.md](PRIVACY.md).
 
 ## Command line
 
@@ -94,3 +96,7 @@ UPDATE_GOLDEN=1 cargo test -p ark-core golden        # refresh the fixture snaps
 ```
 
 Pushing a tag `v*` runs `.github/workflows/release.yml`, which builds Windows, macOS (universal) and Linux installers plus CLI archives and publishes them as a GitHub Release.
+
+## License
+
+Architekton is dual-licensed under [MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE), at your option. The installer shows the full terms, privacy notice and third-party notices ([EULA.txt](apps/desktop/src-tauri/EULA.txt)).

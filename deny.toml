@@ -21,6 +21,8 @@ allow = [
     "CC0-1.0",
     "MPL-2.0",
     "Unlicense",
+    # webpki-roots: Mozilla CA certificate data used to verify HTTPS downloads.
+    "CDLA-Permissive-2.0",
 ]
 
 [licenses.private]

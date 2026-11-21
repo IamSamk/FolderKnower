@@ -26,10 +26,10 @@ export interface Built {
 const KIND_COLOR: Record<FlowKind, string> = {
   http: PROTOCOL_COLOR["HTTP/REST"],
   sql: PROTOCOL_COLOR.SQL,
-  call: "#A1A1AA",
-  import: "#52525B",
-  relation: "#34D399",
-  mirror: "#A78BFA",
+  call: "#7B7899",
+  import: "#A6A4BF",
+  relation: "#0E9F6E",
+  mirror: "#7C4DFF",
 };
 
 export const SIZE: Record<string, { w: number; h: number }> = {

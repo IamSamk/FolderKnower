@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import type { TierLabel } from "../gen";
-import { CONCEPT_BY_ID, type Sentence, slmExplain } from "../lib/backend";
+import { aiStartNarrator, CONCEPT_BY_ID, type Sentence, slmExplain } from "../lib/backend";
 import type { Indexed } from "../lib/graph";
 import {
   BASIS_TEXT,
@@ -600,8 +600,9 @@ function Explain({ id, ix }: { id: string; ix: Indexed }) {
     setErr(null);
     try {
       const g = grounded(ix, id);
+      const base = slm.baseUrl === "builtin" ? await aiStartNarrator() : (slm.baseUrl as string);
       const r = await slmExplain({
-        baseUrl: slm.baseUrl as string,
+        baseUrl: base,
         model,
         question: q,
         nodes: g.nodes,
