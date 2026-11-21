@@ -1,0 +1,7 @@
+{
+  "name": "@architekton/desktop",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Architekton desktop app (Tauri 2 + React). Scaffold only in Phase 1."
+}

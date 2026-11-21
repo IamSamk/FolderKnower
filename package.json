@@ -1,0 +1,12 @@
+{
+  "name": "architekton",
+  "private": true,
+  "packageManager": "pnpm@12.21.0",
+  "scripts": {
+    "lint": "biome ci .",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.8"
+  }
+}
