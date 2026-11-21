@@ -9,6 +9,23 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+ark-scan = { workspace = true }
+ark-store = { workspace = true }
+ark-parse = { workspace = true }
+ark-link = { workspace = true }
+ark-metrics = { workspace = true }
+ark-ontology = { workspace = true }
+ark-structure = { workspace = true }
+ark-schema = { workspace = true }
+rayon = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+dirs = { workspace = true }
+blake3 = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
 
 [lints]
 workspace = true

@@ -1,0 +1,135 @@
+# Tier classification rules. A file's score per tier is the sum of the weights of the
+# rules that fire. Folder names are weak hints (weight 1); what the code imports and
+# declares is strong evidence (weight 2-4). Files with weak evidence then borrow from
+# the files they import / are imported by (semantic propagation, see ark-structure).
+#
+# Matchers (one per rule):
+#   packages: external package names (exact, or prefix ending with '*')
+#   fact:     component | routes | http_client | tables | schemas | middleware | task | cli | test
+#   path:     regex over the repo-relative path
+version: "0.1.0"
+rules:
+  - id: tier.fe.framework
+    tier: Frontend
+    weight: 3
+    packages: [react, react-dom, next, vue, nuxt, svelte, "@sveltejs/*", "@angular/*", solid-js, preact, "@remix-run/*", react-native, expo, "expo-*", astro, "@tanstack/react-*", react-router, react-router-dom, "@reduxjs/*", zustand, jotai, recoil, "@mui/*", "@chakra-ui/*", "@radix-ui/*", framer-motion, motion, tailwindcss, styled-components, "@emotion/*", swr, lit, alpine, htmx.org]
+  - id: tier.fe.component
+    tier: Frontend
+    weight: 4
+    fact: component
+  - id: tier.fe.http-client
+    tier: Frontend
+    weight: 1
+    fact: http_client
+  - id: tier.fe.dir
+    tier: Frontend
+    weight: 1
+    path: '(^|/)(components?|pages|views|screens|hooks|ui|frontend|client|web|webapp|public|static|styles|app/\(.*\))/'
+  - id: tier.be.framework
+    tier: Backend
+    weight: 3
+    packages: [express, fastify, koa, hono, "@nestjs/*", "@hapi/*", "@trpc/server", "graphql-yoga", apollo-server, "@apollo/server", fastapi, flask, django, starlette, sanic, tornado, aiohttp, falcon, bottle, litestar, axum, actix-web, rocket, warp, poem, tide, "github.com/gin-gonic/gin", "github.com/labstack/echo", "github.com/gofiber/fiber", "github.com/go-chi/chi", "github.com/gorilla/mux", net/http, uvicorn, gunicorn, grpc, tonic]
+  - id: tier.be.routes
+    tier: Backend
+    weight: 4
+    fact: routes
+  - id: tier.be.dir
+    tier: Backend
+    weight: 1
+    path: '(^|/)(server|backend|api|services?|controllers?|handlers?|routes?|routers?|endpoints?|resolvers?|usecases?|domain)/'
+  - id: tier.gw.middleware
+    tier: Gateway
+    weight: 3
+    fact: middleware
+  - id: tier.gw.packages
+    tier: Gateway
+    weight: 2
+    packages: [cors, helmet, express-rate-limit, http-proxy-middleware, http-proxy, jsonwebtoken, jose, passport, "passport-*", next-auth, "@auth/*", express-session, slowapi, tower-http, "github.com/rs/cors"]
+  - id: tier.gw.dir
+    tier: Gateway
+    weight: 2
+    path: '(^|/)(middlewares?|gateway|proxy|auth|guards?|interceptors?)(/|\.)|(^|/)middleware\.(ts|js)$'
+  - id: tier.db.packages
+    tier: Storage
+    weight: 2
+    packages: [sqlalchemy, alembic, sqlmodel, psycopg, psycopg2, asyncpg, pymongo, motor, redis, peewee, tortoise, prisma, "@prisma/client", mongoose, mongodb, typeorm, sequelize, drizzle-orm, knex, kysely, pg, mysql2, sqlite3, better-sqlite3, ioredis, "@supabase/supabase-js", firebase-admin, sqlx, diesel, sea-orm, rusqlite, mongodb, "gorm.io/gorm", database/sql, "github.com/jmoiron/sqlx", "github.com/jackc/pgx", "go.mongodb.org/mongo-driver"]
+  - id: tier.db.tables
+    tier: Storage
+    weight: 4
+    fact: tables
+  - id: tier.db.dir
+    tier: Storage
+    weight: 1
+    path: '(^|/)(models?|db|database|repositor(y|ies)|migrations?|entities|schema|dao|persistence|prisma)(/|\.)'
+  - id: tier.wk.packages
+    tier: Workers
+    weight: 3
+    packages: [celery, rq, dramatiq, huey, arq, apscheduler, bullmq, bull, bee-queue, agenda, node-cron, cron, kafkajs, amqplib, pika, aiokafka, "@aws-sdk/client-sqs", temporalio, "@temporalio/*", inngest, "@trigger.dev/*", faktory, "github.com/hibiken/asynq"]
+  - id: tier.wk.task
+    tier: Workers
+    weight: 4
+    fact: task
+  - id: tier.wk.dir
+    tier: Workers
+    weight: 2
+    path: '(^|/)(workers?|jobs?|tasks?|cron|queues?|consumers?|schedulers?|background)(/|\.)'
+  - id: tier.sh.dir
+    tier: Shared
+    weight: 1
+    path: '(^|/)(utils?|lib|libs|shared|common|types?|helpers?|constants?|config|core)(/|\.)'
+  - id: tier.sh.schemas
+    tier: Shared
+    weight: 1
+    fact: schemas
+# Display names for detected frameworks, used in the project headline.
+frameworks:
+  react: React
+  next: Next.js
+  vue: Vue
+  nuxt: Nuxt
+  svelte: Svelte
+  "@angular/core": Angular
+  solid-js: Solid
+  react-native: React Native
+  astro: Astro
+  express: Express
+  fastify: Fastify
+  koa: Koa
+  hono: Hono
+  "@nestjs/core": NestJS
+  fastapi: FastAPI
+  flask: Flask
+  django: Django
+  starlette: Starlette
+  axum: Axum
+  actix-web: Actix
+  rocket: Rocket
+  "github.com/gin-gonic/gin": Gin
+  "github.com/labstack/echo": Echo
+  "github.com/gofiber/fiber": Fiber
+  sqlalchemy: SQLAlchemy
+  sqlmodel: SQLModel
+  prisma: Prisma
+  "@prisma/client": Prisma
+  mongoose: Mongoose
+  typeorm: TypeORM
+  sequelize: Sequelize
+  drizzle-orm: Drizzle
+  pg: PostgreSQL
+  psycopg2: PostgreSQL
+  psycopg: PostgreSQL
+  asyncpg: PostgreSQL
+  redis: Redis
+  ioredis: Redis
+  pymongo: MongoDB
+  mongodb: MongoDB
+  sqlx: SQLx
+  diesel: Diesel
+  "gorm.io/gorm": GORM
+  celery: Celery
+  bullmq: BullMQ
+  rq: RQ
+  pydantic: Pydantic
+  zod: Zod
+  tauri: Tauri
+  electron: Electron

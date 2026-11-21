@@ -1,0 +1,6 @@
+CREATE TABLE audit_log (
+  id SERIAL PRIMARY KEY,
+  todo_id INTEGER NOT NULL REFERENCES todos(id),
+  action TEXT NOT NULL,
+  at TIMESTAMP NOT NULL
+);

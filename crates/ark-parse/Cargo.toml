@@ -9,6 +9,17 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+tree-sitter = { workspace = true }
+tree-sitter-typescript = { workspace = true }
+tree-sitter-javascript = { workspace = true }
+tree-sitter-python = { workspace = true }
+tree-sitter-rust = { workspace = true }
+tree-sitter-go = { workspace = true }
+serde = { workspace = true }
+ark-scan = { workspace = true }
+ark-metrics = { workspace = true }
+ark-schema = { workspace = true }
+regex = { workspace = true }
 
 [lints]
 workspace = true

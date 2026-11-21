@@ -1,0 +1,1948 @@
+{
+  "schemaVersion": "2.0",
+  "repoName": "fullstack-todo",
+  "rootPath": ".",
+  "generator": {
+    "version": "golden",
+    "rulesetVersion": "ontology 0.1.0 / tiers 0.1.0",
+    "grammars": {
+      "tree-sitter-go": "0.25.0",
+      "tree-sitter-javascript": "0.25.0",
+      "tree-sitter-python": "0.25.0",
+      "tree-sitter-rust": "0.24.2",
+      "tree-sitter-typescript": "0.23.2"
+    }
+  },
+  "contentRoot": "e088a6fdc72397934d528c2671336d4bca0c81680e6dcd2879238f30b6161b99",
+  "tiers": [
+    {
+      "id": "tier:frontend",
+      "label": "Frontend",
+      "evidence": [
+        "tier.fe.component",
+        "tier.fe.dir",
+        "tier.fe.framework",
+        "tier.fe.http-client",
+        "tier.propagated",
+        "tier.sh.dir"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:frontend:todolist",
+          "name": "todolist",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:web/src/components/TodoList.tsx",
+              "path": "web/src/components/TodoList.tsx",
+              "language": "typescript",
+              "contentHash": "49fe64627692e71478688a7c21651c35517ed3b8e2e482b0660664a0d36299c5",
+              "lines": 38,
+              "tierConfidence": 0.99,
+              "role": "component",
+              "imports": [
+                {
+                  "target": "file:web/src/lib/api.ts",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:web/src/lib/types.ts",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:web/src/components/TodoList.tsx#TodoList",
+                  "name": "TodoList",
+                  "visibility": "public",
+                  "lineRange": [
+                    6,
+                    29
+                  ],
+                  "byteRange": [
+                    229,
+                    941
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Client state",
+                      "layer": "data",
+                      "ruleId": "data.state.client"
+                    },
+                    {
+                      "concept": "Server-state cache",
+                      "layer": "data",
+                      "ruleId": "data.state.server-cache"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:web/src/components/TodoList.tsx#onSuccess",
+                  "name": "onSuccess",
+                  "visibility": "internal",
+                  "lineRange": [
+                    10,
+                    10
+                  ],
+                  "byteRange": [
+                    458,
+                    486
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:web/src/components/TodoList.tsx#handleAdd",
+                  "name": "handleAdd",
+                  "visibility": "internal",
+                  "lineRange": [
+                    12,
+                    16
+                  ],
+                  "byteRange": [
+                    512,
+                    611
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:web/src/components/TodoList.tsx#TodoRow",
+                  "name": "TodoRow",
+                  "visibility": "internal",
+                  "lineRange": [
+                    31,
+                    38
+                  ],
+                  "byteRange": [
+                    943,
+                    1122
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "{ todo }",
+                        "type": "{ todo: Todo }"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "calls": [
+                    {
+                      "target": "fn:web/src/lib/api.ts#completeTodo",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                }
+              ]
+            },
+            {
+              "id": "file:web/src/lib/api.ts",
+              "path": "web/src/lib/api.ts",
+              "language": "typescript",
+              "contentHash": "b0d0521bd125a93ac1e1a0e112b047476af7731bcc7d4bd87d0d8acd5618868e",
+              "lines": 32,
+              "tierConfidence": 0.68,
+              "role": "api-client",
+              "imports": [
+                {
+                  "target": "file:web/src/lib/types.ts",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:web/src/lib/api.ts#listTodos",
+                  "name": "listTodos",
+                  "visibility": "public",
+                  "lineRange": [
+                    5,
+                    8
+                  ],
+                  "byteRange": [
+                    106,
+                    222
+                  ],
+                  "signature": {
+                    "parameters": [],
+                    "returnType": "Promise<Todo[]>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "JSON serialization",
+                      "layer": "data",
+                      "ruleId": "data.serialize.json"
+                    },
+                    {
+                      "concept": "HTTP request",
+                      "layer": "network",
+                      "ruleId": "net.http.client"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:web/src/lib/api.ts#createTodo",
+                  "name": "createTodo",
+                  "visibility": "public",
+                  "lineRange": [
+                    10,
+                    17
+                  ],
+                  "byteRange": [
+                    231,
+                    475
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "input",
+                        "type": "TodoInput"
+                      }
+                    ],
+                    "returnType": "Promise<Todo>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "JSON serialization",
+                      "layer": "data",
+                      "ruleId": "data.serialize.json"
+                    },
+                    {
+                      "concept": "HTTP request",
+                      "layer": "network",
+                      "ruleId": "net.http.client"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:web/src/lib/api.ts#completeTodo",
+                  "name": "completeTodo",
+                  "visibility": "public",
+                  "lineRange": [
+                    19,
+                    22
+                  ],
+                  "byteRange": [
+                    484,
+                    647
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "id",
+                        "type": "number"
+                      }
+                    ],
+                    "returnType": "Promise<Todo>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "JSON serialization",
+                      "layer": "data",
+                      "ruleId": "data.serialize.json"
+                    },
+                    {
+                      "concept": "HTTP request",
+                      "layer": "network",
+                      "ruleId": "net.http.client"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:web/src/components/TodoList.tsx#TodoRow"
+                  ]
+                },
+                {
+                  "id": "fn:web/src/lib/api.ts#login",
+                  "name": "login",
+                  "visibility": "public",
+                  "lineRange": [
+                    24,
+                    32
+                  ],
+                  "byteRange": [
+                    656,
+                    970
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "email",
+                        "type": "string"
+                      },
+                      {
+                        "name": "password",
+                        "type": "string"
+                      }
+                    ],
+                    "returnType": "Promise<string>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "JSON serialization",
+                      "layer": "data",
+                      "ruleId": "data.serialize.json"
+                    },
+                    {
+                      "concept": "Browser storage",
+                      "layer": "data",
+                      "ruleId": "data.storage.browser"
+                    },
+                    {
+                      "concept": "HTTP request",
+                      "layer": "network",
+                      "ruleId": "net.http.client"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:web/src/components/LoginForm.tsx#submit"
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "file:web/src/lib/types.ts",
+              "path": "web/src/lib/types.ts",
+              "language": "typescript",
+              "contentHash": "a9ee2447ed8edc1c6177725e743853c4372f5ed67b20dca044cbd81432b55167",
+              "lines": 10,
+              "tierConfidence": 0.66,
+              "role": "types",
+              "imports": [],
+              "functions": []
+            }
+          ]
+        },
+        {
+          "id": "cluster:frontend:loginform",
+          "name": "loginform",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:web/src/App.tsx",
+              "path": "web/src/App.tsx",
+              "language": "typescript",
+              "contentHash": "233ac190071f963fabba3523d0c0180a1fbf36f4fd6e54a4e25e5954cde93ff8",
+              "lines": 8,
+              "tierConfidence": 0.99,
+              "role": "component",
+              "imports": [
+                {
+                  "target": "file:web/src/components/LoginForm.tsx",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:web/src/components/TodoList.tsx",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:web/src/App.tsx#App",
+                  "name": "App",
+                  "visibility": "public",
+                  "lineRange": [
+                    5,
+                    8
+                  ],
+                  "byteRange": [
+                    152,
+                    294
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Client state",
+                      "layer": "data",
+                      "ruleId": "data.state.client"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                }
+              ]
+            },
+            {
+              "id": "file:web/src/components/LoginForm.tsx",
+              "path": "web/src/components/LoginForm.tsx",
+              "language": "typescript",
+              "contentHash": "8d6c148be9eb84d1aff93ee7f40604c9c11e59ce8a5f78f9a2da0dbead00ae26",
+              "lines": 20,
+              "tierConfidence": 0.99,
+              "role": "component",
+              "imports": [
+                {
+                  "target": "file:web/src/lib/api.ts",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:web/src/components/LoginForm.tsx#LoginForm",
+                  "name": "LoginForm",
+                  "visibility": "public",
+                  "lineRange": [
+                    4,
+                    20
+                  ],
+                  "byteRange": [
+                    78,
+                    622
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "{ onDone }",
+                        "type": "{ onDone: (token: string) => void }"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Client state",
+                      "layer": "data",
+                      "ruleId": "data.state.client"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:web/src/components/LoginForm.tsx#submit",
+                  "name": "submit",
+                  "visibility": "internal",
+                  "lineRange": [
+                    8,
+                    11
+                  ],
+                  "byteRange": [
+                    241,
+                    337
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "calls": [
+                    {
+                      "target": "fn:web/src/lib/api.ts#login",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tier:gateway",
+      "label": "Gateway",
+      "evidence": [
+        "tier.be.dir",
+        "tier.be.framework",
+        "tier.gw.middleware",
+        "tier.gw.packages",
+        "tier.sh.dir"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:gateway:security",
+          "name": "security",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:api/app/core/security.py",
+              "path": "api/app/core/security.py",
+              "language": "python",
+              "contentHash": "b5d7c3c5ed87ca906c6e76e12d8501314021818ae60965ecf2b961350766d892",
+              "lines": 28,
+              "tierConfidence": 0.64,
+              "role": "middleware",
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:api/app/core/security.py#hash_password",
+                  "name": "hash_password",
+                  "visibility": "public",
+                  "lineRange": [
+                    11,
+                    12
+                  ],
+                  "byteRange": [
+                    227,
+                    295
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "raw",
+                        "type": "str"
+                      }
+                    ],
+                    "returnType": "str"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Password hashing",
+                      "layer": "network",
+                      "ruleId": "net.auth.password"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:api/app/core/security.py#verify_password",
+                  "name": "verify_password",
+                  "visibility": "public",
+                  "lineRange": [
+                    15,
+                    16
+                  ],
+                  "byteRange": [
+                    298,
+                    392
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "raw",
+                        "type": "str"
+                      },
+                      {
+                        "name": "hashed",
+                        "type": "str"
+                      }
+                    ],
+                    "returnType": "bool"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Password hashing",
+                      "layer": "network",
+                      "ruleId": "net.auth.password"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:api/app/routers/auth.py#login"
+                  ]
+                },
+                {
+                  "id": "fn:api/app/core/security.py#create_access_token",
+                  "name": "create_access_token",
+                  "visibility": "public",
+                  "lineRange": [
+                    19,
+                    21
+                  ],
+                  "byteRange": [
+                    395,
+                    554
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "user_id",
+                        "type": "int"
+                      }
+                    ],
+                    "returnType": "str"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "JWT auth",
+                      "layer": "network",
+                      "ruleId": "net.auth.jwt"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:api/app/routers/auth.py#login"
+                  ]
+                },
+                {
+                  "id": "fn:api/app/core/security.py#auth_middleware",
+                  "name": "auth_middleware",
+                  "visibility": "public",
+                  "lineRange": [
+                    24,
+                    28
+                  ],
+                  "byteRange": [
+                    557,
+                    783
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "request",
+                        "type": "Request"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "JWT auth",
+                      "layer": "network",
+                      "ruleId": "net.auth.jwt"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tier:backend",
+      "label": "Backend",
+      "evidence": [
+        "tier.be.dir",
+        "tier.be.framework",
+        "tier.be.routes",
+        "tier.gw.dir",
+        "tier.gw.middleware",
+        "tier.propagated",
+        "tier.sh.schemas"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:backend:routers",
+          "name": "routers",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": [
+              "file:api/app/routers/auth.py",
+              "file:api/app/routers/todos.py"
+            ]
+          },
+          "files": [
+            {
+              "id": "file:api/app/main.py",
+              "path": "api/app/main.py",
+              "language": "python",
+              "contentHash": "18052eb9915d6ddb7786a2659bfc372ae17c12dcac9f0af3e60fd485b08ef874",
+              "lines": 15,
+              "tierConfidence": 0.66,
+              "role": "middleware",
+              "imports": [
+                {
+                  "target": "file:api/app/core/db.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:api/app/routers/auth.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:api/app/routers/todos.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:api/app/main.py#create_tables",
+                  "name": "create_tables",
+                  "visibility": "public",
+                  "lineRange": [
+                    13,
+                    15
+                  ],
+                  "byteRange": [
+                    358,
+                    420
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Schema migration",
+                      "layer": "data",
+                      "ruleId": "data.migration"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                }
+              ]
+            },
+            {
+              "id": "file:api/app/routers/auth.py",
+              "path": "api/app/routers/auth.py",
+              "language": "python",
+              "contentHash": "7a0a44328cacd067059687d056eb27833c7309c9857b2cc773286802b8542c3a",
+              "lines": 16,
+              "tierConfidence": 0.89,
+              "role": "route-handler",
+              "imports": [
+                {
+                  "target": "file:api/app/core/db.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:api/app/core/security.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:api/app/models.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:api/app/schemas.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:api/app/routers/auth.py#login",
+                  "name": "login",
+                  "visibility": "public",
+                  "lineRange": [
+                    11,
+                    16
+                  ],
+                  "byteRange": [
+                    292,
+                    598
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "body",
+                        "type": "LoginIn"
+                      },
+                      {
+                        "name": "db",
+                        "defaultValue": "Depends(get_db)"
+                      }
+                    ],
+                    "returnType": "TokenOut"
+                  },
+                  "complexity": {
+                    "cyclomatic": 3,
+                    "cognitive": 2,
+                    "maxNesting": 1,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "ORM read",
+                      "layer": "data",
+                      "ruleId": "data.orm.read"
+                    },
+                    {
+                      "concept": "SQL query",
+                      "layer": "data",
+                      "ruleId": "data.sql.query"
+                    },
+                    {
+                      "concept": "JWT auth",
+                      "layer": "network",
+                      "ruleId": "net.auth.jwt"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:api/app/core/security.py#create_access_token",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    },
+                    {
+                      "target": "fn:api/app/core/security.py#verify_password",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                }
+              ]
+            },
+            {
+              "id": "file:api/app/routers/todos.py",
+              "path": "api/app/routers/todos.py",
+              "language": "python",
+              "contentHash": "c7ff91ebf394e33719bea667e16983a8f1a982cb8ebd53205d97d7ac3c5aa718",
+              "lines": 42,
+              "tierConfidence": 0.99,
+              "role": "route-handler",
+              "imports": [
+                {
+                  "target": "file:api/app/core/db.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:api/app/core/security.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:api/app/models.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:api/app/schemas.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:worker/tasks.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:api/app/routers/todos.py#list_todos",
+                  "name": "list_todos",
+                  "visibility": "public",
+                  "lineRange": [
+                    12,
+                    14
+                  ],
+                  "byteRange": [
+                    348,
+                    433
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "db",
+                        "defaultValue": "Depends(get_db)"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "ORM read",
+                      "layer": "data",
+                      "ruleId": "data.orm.read"
+                    },
+                    {
+                      "concept": "SQL query",
+                      "layer": "data",
+                      "ruleId": "data.sql.query"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:api/app/routers/todos.py#create_todo",
+                  "name": "create_todo",
+                  "visibility": "public",
+                  "lineRange": [
+                    17,
+                    23
+                  ],
+                  "byteRange": [
+                    483,
+                    668
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "body",
+                        "type": "TodoCreate"
+                      },
+                      {
+                        "name": "db",
+                        "defaultValue": "Depends(get_db)"
+                      }
+                    ],
+                    "returnType": "TodoOut"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Background job",
+                      "layer": "cloud",
+                      "ruleId": "cloud.worker.task"
+                    },
+                    {
+                      "concept": "ORM write",
+                      "layer": "data",
+                      "ruleId": "data.orm.write"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:worker/tasks.py#send_digest",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:api/app/routers/todos.py#complete_todo",
+                  "name": "complete_todo",
+                  "visibility": "public",
+                  "lineRange": [
+                    26,
+                    33
+                  ],
+                  "byteRange": [
+                    738,
+                    953
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "todo_id",
+                        "type": "int"
+                      },
+                      {
+                        "name": "db",
+                        "defaultValue": "Depends(get_db)"
+                      }
+                    ],
+                    "returnType": "TodoOut"
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "ORM read",
+                      "layer": "data",
+                      "ruleId": "data.orm.read"
+                    },
+                    {
+                      "concept": "ORM write",
+                      "layer": "data",
+                      "ruleId": "data.orm.write"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:api/app/routers/todos.py#rank_todos",
+                  "name": "rank_todos",
+                  "visibility": "public",
+                  "lineRange": [
+                    36,
+                    42
+                  ],
+                  "byteRange": [
+                    956,
+                    1141
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "todos",
+                        "type": "list"
+                      }
+                    ],
+                    "returnType": "list"
+                  },
+                  "complexity": {
+                    "cyclomatic": 4,
+                    "cognitive": 6,
+                    "maxNesting": 3,
+                    "timeBigO": "O(N^2)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.loop.depth-2",
+                      "bigo.lib.sort",
+                      "space.alloc-in-loop",
+                      "space.lib.sort"
+                    ],
+                    "memoryFlags": [
+                      "alloc-in-loop"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "calls": [],
+                  "calledBy": []
+                }
+              ]
+            },
+            {
+              "id": "file:api/app/schemas.py",
+              "path": "api/app/schemas.py",
+              "language": "python",
+              "contentHash": "7acd53eea86d6c26f62179538fa77dd4e3f25badd1f4eb6f26efcbace9103369",
+              "lines": 21,
+              "tierConfidence": 0.73,
+              "role": "schemas",
+              "imports": [],
+              "functions": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tier:storage",
+      "label": "Storage",
+      "evidence": [
+        "tier.be.dir",
+        "tier.db.dir",
+        "tier.db.packages",
+        "tier.db.tables",
+        "tier.sh.dir"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:storage:db",
+          "name": "db",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:api/app/core/db.py",
+              "path": "api/app/core/db.py",
+              "language": "python",
+              "contentHash": "a0a0c3a0fcf321069251d6c84ff948a060f36758d97e0c60ff63e28e08c11999",
+              "lines": 19,
+              "tierConfidence": 0.8,
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:api/app/core/db.py#get_db",
+                  "name": "get_db",
+                  "visibility": "public",
+                  "lineRange": [
+                    14,
+                    19
+                  ],
+                  "byteRange": [
+                    260,
+                    355
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "calls": [],
+                  "calledBy": []
+                }
+              ]
+            },
+            {
+              "id": "file:api/app/models.py",
+              "path": "api/app/models.py",
+              "language": "python",
+              "contentHash": "6e93c28b5c3d69baca80cfc0e2db08c52f1612fe9d8fdbebec7b5a8102e31912",
+              "lines": 21,
+              "tierConfidence": 0.94,
+              "role": "orm-models",
+              "imports": [
+                {
+                  "target": "file:api/app/core/db.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tier:workers",
+      "label": "Workers",
+      "evidence": [
+        "tier.wk.dir",
+        "tier.wk.packages",
+        "tier.wk.task"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:workers:tasks",
+          "name": "tasks",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:worker/tasks.py",
+              "path": "worker/tasks.py",
+              "language": "python",
+              "contentHash": "0e33c2d62fa806df1394cb60aa055e6130a38f1ba6454efe154b61fe57566765",
+              "lines": 11,
+              "tierConfidence": 0.99,
+              "role": "worker",
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:worker/tasks.py#send_digest",
+                  "name": "send_digest",
+                  "visibility": "public",
+                  "lineRange": [
+                    8,
+                    11
+                  ],
+                  "byteRange": [
+                    117,
+                    282
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "user_id",
+                        "type": "int"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Email delivery",
+                      "layer": "cloud",
+                      "ruleId": "cloud.email"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:api/app/routers/todos.py#create_todo"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "crossTierEdges": [
+    {
+      "id": "xedge:fn:api/app/routers/auth.py#login->model:api/app/models.py#User",
+      "source": "fn:api/app/routers/auth.py#login",
+      "target": "model:api/app/models.py#User",
+      "protocol": "SQL",
+      "evidence": [
+        "orm.query(User)",
+        "orm.sqlalchemy"
+      ]
+    },
+    {
+      "id": "xedge:fn:api/app/routers/todos.py#complete_todo->model:api/app/models.py#Todo",
+      "source": "fn:api/app/routers/todos.py#complete_todo",
+      "target": "model:api/app/models.py#Todo",
+      "protocol": "SQL",
+      "evidence": [
+        "orm.get(Todo)",
+        "orm.sqlalchemy"
+      ]
+    },
+    {
+      "id": "xedge:fn:api/app/routers/todos.py#create_todo->model:api/app/models.py#Todo",
+      "source": "fn:api/app/routers/todos.py#create_todo",
+      "target": "model:api/app/models.py#Todo",
+      "protocol": "SQL",
+      "evidence": [
+        "orm.construct Todo",
+        "orm.sqlalchemy"
+      ]
+    },
+    {
+      "id": "xedge:fn:api/app/routers/todos.py#list_todos->model:api/app/models.py#Todo",
+      "source": "fn:api/app/routers/todos.py#list_todos",
+      "target": "model:api/app/models.py#Todo",
+      "protocol": "SQL",
+      "evidence": [
+        "orm.order_by(Todo)",
+        "orm.query(Todo)",
+        "orm.sqlalchemy"
+      ]
+    },
+    {
+      "id": "xedge:fn:web/src/lib/api.ts#completeTodo->fn:api/app/routers/todos.py#complete_todo",
+      "source": "fn:web/src/lib/api.ts#completeTodo",
+      "target": "fn:api/app/routers/todos.py#complete_todo",
+      "protocol": "HTTP/REST",
+      "evidence": [
+        "http.PATCH :param/api/todos/:param/complete",
+        "route.fastapi",
+        "match.suffix"
+      ]
+    },
+    {
+      "id": "xedge:fn:web/src/lib/api.ts#createTodo->fn:api/app/routers/todos.py#create_todo",
+      "source": "fn:web/src/lib/api.ts#createTodo",
+      "target": "fn:api/app/routers/todos.py#create_todo",
+      "protocol": "HTTP/REST",
+      "evidence": [
+        "http.POST :param/api/todos",
+        "route.fastapi",
+        "match.suffix"
+      ]
+    },
+    {
+      "id": "xedge:fn:web/src/lib/api.ts#listTodos->fn:api/app/routers/todos.py#list_todos",
+      "source": "fn:web/src/lib/api.ts#listTodos",
+      "target": "fn:api/app/routers/todos.py#list_todos",
+      "protocol": "HTTP/REST",
+      "evidence": [
+        "http.GET :param/api/todos",
+        "route.fastapi",
+        "match.suffix"
+      ]
+    },
+    {
+      "id": "xedge:fn:web/src/lib/api.ts#login->fn:api/app/routers/auth.py#login",
+      "source": "fn:web/src/lib/api.ts#login",
+      "target": "fn:api/app/routers/auth.py#login",
+      "protocol": "HTTP/REST",
+      "evidence": [
+        "http.POST :param/api/auth/login",
+        "route.fastapi",
+        "match.suffix"
+      ]
+    }
+  ],
+  "nonCodeNodes": [
+    {
+      "id": "noncode:README.md",
+      "path": "README.md",
+      "kind": "doc",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:api/pyproject.toml",
+      "path": "api/pyproject.toml",
+      "kind": "manifest",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:api/tests/test_todos.py",
+      "path": "api/tests/test_todos.py",
+      "kind": "test",
+      "relatesTo": [
+        "file:api/app/routers/todos.py"
+      ]
+    },
+    {
+      "id": "noncode:db/audit.sql",
+      "path": "db/audit.sql",
+      "kind": "schema",
+      "relatesTo": [
+        "model:db/audit.sql#audit_log"
+      ]
+    },
+    {
+      "id": "noncode:web/package.json",
+      "path": "web/package.json",
+      "kind": "manifest",
+      "relatesTo": []
+    }
+  ],
+  "summary": {
+    "kind": "full-stack",
+    "headline": "Full-stack app: frontend (React) talks to a backend (FastAPI, Pydantic) backed by 3 tables (SQLAlchemy).",
+    "findings": [
+      {
+        "text": "Sorted 13 files by what they do, not where they live: 5 frontend, 1 gateway/middleware, 4 backend, 2 data, 1 worker, 0 shared.",
+        "evidence": [
+          "tier.*"
+        ]
+      },
+      {
+        "text": "Found 4 HTTP routes (fastapi).",
+        "evidence": [
+          "route:GET /todos#api/app/routers/todos.py",
+          "route:PATCH /todos/:param/complete#api/app/routers/todos.py",
+          "route:POST /auth/login#api/app/routers/auth.py",
+          "route:POST /todos#api/app/routers/todos.py"
+        ]
+      },
+      {
+        "text": "4 client calls reach 4 backend handlers over HTTP.",
+        "evidence": [
+          "xedge:fn:web/src/lib/api.ts#completeTodo->fn:api/app/routers/todos.py#complete_todo",
+          "xedge:fn:web/src/lib/api.ts#createTodo->fn:api/app/routers/todos.py#create_todo",
+          "xedge:fn:web/src/lib/api.ts#listTodos->fn:api/app/routers/todos.py#list_todos",
+          "xedge:fn:web/src/lib/api.ts#login->fn:api/app/routers/auth.py#login"
+        ]
+      },
+      {
+        "text": "3 tables and 4 schemas/DTOs; 2 schemas mirror a table; 4 functions touch the database.",
+        "evidence": [
+          "model:api/app/models.py#Todo",
+          "model:api/app/models.py#User",
+          "model:api/app/schemas.py#LoginIn",
+          "model:api/app/schemas.py#TodoCreate",
+          "model:api/app/schemas.py#TodoOut",
+          "model:api/app/schemas.py#TokenOut",
+          "model:db/audit.sql#audit_log"
+        ]
+      },
+      {
+        "text": "3 UI elements are wired to handlers you can follow into the code.",
+        "evidence": [
+          "ui:web/src/components/LoginForm.tsx:14:4",
+          "ui:web/src/components/TodoList.tsx:21:6",
+          "ui:web/src/components/TodoList.tsx:35:6"
+        ]
+      },
+      {
+        "text": "1 file runs as background workers (Celery).",
+        "evidence": [
+          "tier.wk.*"
+        ]
+      }
+    ],
+    "stats": {
+      "files": 13,
+      "functions": 23,
+      "lines": 281,
+      "languages": {
+        "python": 8,
+        "typescript": 5
+      }
+    }
+  },
+  "dataModels": [
+    {
+      "id": "model:api/app/models.py#Todo",
+      "name": "Todo",
+      "kind": "table",
+      "framework": "sqlalchemy",
+      "fileId": "file:api/app/models.py",
+      "line": 15,
+      "table": "todos",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Integer",
+          "primaryKey": true,
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "primaryKey": false,
+          "nullable": false
+        },
+        {
+          "name": "done",
+          "type": "Boolean",
+          "primaryKey": false,
+          "nullable": false
+        },
+        {
+          "name": "owner_id",
+          "type": "Integer",
+          "primaryKey": false,
+          "nullable": false,
+          "references": "users.id"
+        }
+      ],
+      "relations": [
+        {
+          "target": "model:api/app/models.py#User",
+          "kind": "many_to_one",
+          "via": "owner"
+        },
+        {
+          "target": "model:api/app/models.py#User",
+          "kind": "many_to_one",
+          "via": "owner_id"
+        }
+      ],
+      "mirrors": [
+        "model:api/app/schemas.py#TodoCreate",
+        "model:api/app/schemas.py#TodoOut"
+      ]
+    },
+    {
+      "id": "model:api/app/models.py#User",
+      "name": "User",
+      "kind": "table",
+      "framework": "sqlalchemy",
+      "fileId": "file:api/app/models.py",
+      "line": 7,
+      "table": "users",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Integer",
+          "primaryKey": true,
+          "nullable": false
+        },
+        {
+          "name": "email",
+          "type": "String",
+          "primaryKey": false,
+          "nullable": false
+        },
+        {
+          "name": "password_hash",
+          "type": "String",
+          "primaryKey": false,
+          "nullable": false
+        }
+      ],
+      "relations": [
+        {
+          "target": "model:api/app/models.py#Todo",
+          "kind": "one_to_many",
+          "via": "todos"
+        }
+      ],
+      "mirrors": []
+    },
+    {
+      "id": "model:api/app/schemas.py#LoginIn",
+      "name": "LoginIn",
+      "kind": "schema",
+      "framework": "pydantic",
+      "fileId": "file:api/app/schemas.py",
+      "line": 15,
+      "fields": [
+        {
+          "name": "email",
+          "type": "str",
+          "primaryKey": false,
+          "nullable": false
+        },
+        {
+          "name": "password",
+          "type": "str",
+          "primaryKey": false,
+          "nullable": false
+        }
+      ],
+      "relations": [],
+      "mirrors": []
+    },
+    {
+      "id": "model:api/app/schemas.py#TodoCreate",
+      "name": "TodoCreate",
+      "kind": "schema",
+      "framework": "pydantic",
+      "fileId": "file:api/app/schemas.py",
+      "line": 4,
+      "fields": [
+        {
+          "name": "title",
+          "type": "str",
+          "primaryKey": false,
+          "nullable": false
+        }
+      ],
+      "relations": [],
+      "mirrors": [
+        "model:api/app/models.py#Todo"
+      ]
+    },
+    {
+      "id": "model:api/app/schemas.py#TodoOut",
+      "name": "TodoOut",
+      "kind": "schema",
+      "framework": "pydantic",
+      "fileId": "file:api/app/schemas.py",
+      "line": 8,
+      "fields": [
+        {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "str",
+          "primaryKey": false,
+          "nullable": false
+        },
+        {
+          "name": "done",
+          "type": "bool",
+          "primaryKey": false,
+          "nullable": false
+        },
+        {
+          "name": "owner_id",
+          "type": "int",
+          "primaryKey": false,
+          "nullable": false
+        }
+      ],
+      "relations": [],
+      "mirrors": [
+        "model:api/app/models.py#Todo"
+      ]
+    },
+    {
+      "id": "model:api/app/schemas.py#TokenOut",
+      "name": "TokenOut",
+      "kind": "schema",
+      "framework": "pydantic",
+      "fileId": "file:api/app/schemas.py",
+      "line": 20,
+      "fields": [
+        {
+          "name": "access_token",
+          "type": "str",
+          "primaryKey": false,
+          "nullable": false
+        }
+      ],
+      "relations": [],
+      "mirrors": []
+    },
+    {
+      "id": "model:db/audit.sql#audit_log",
+      "name": "audit_log",
+      "kind": "table",
+      "framework": "sql",
+      "fileId": "file:db/audit.sql",
+      "line": 1,
+      "table": "audit_log",
+      "fields": [
+        {
+          "name": "id",
+          "type": "SERIAL",
+          "primaryKey": true,
+          "nullable": false
+        },
+        {
+          "name": "todo_id",
+          "type": "INTEGER",
+          "primaryKey": false,
+          "nullable": false,
+          "references": "todos.id"
+        },
+        {
+          "name": "action",
+          "type": "TEXT",
+          "primaryKey": false,
+          "nullable": false
+        },
+        {
+          "name": "at",
+          "type": "TIMESTAMP",
+          "primaryKey": false,
+          "nullable": false
+        }
+      ],
+      "relations": [
+        {
+          "target": "model:api/app/models.py#Todo",
+          "kind": "many_to_one",
+          "via": "todo_id"
+        }
+      ],
+      "mirrors": []
+    }
+  ],
+  "routes": [
+    {
+      "id": "route:GET /todos#api/app/routers/todos.py",
+      "method": "GET",
+      "path": "/todos",
+      "framework": "fastapi",
+      "fileId": "file:api/app/routers/todos.py",
+      "line": 12,
+      "handler": "fn:api/app/routers/todos.py#list_todos"
+    },
+    {
+      "id": "route:PATCH /todos/:param/complete#api/app/routers/todos.py",
+      "method": "PATCH",
+      "path": "/todos/:param/complete",
+      "framework": "fastapi",
+      "fileId": "file:api/app/routers/todos.py",
+      "line": 26,
+      "handler": "fn:api/app/routers/todos.py#complete_todo"
+    },
+    {
+      "id": "route:POST /auth/login#api/app/routers/auth.py",
+      "method": "POST",
+      "path": "/auth/login",
+      "framework": "fastapi",
+      "fileId": "file:api/app/routers/auth.py",
+      "line": 11,
+      "handler": "fn:api/app/routers/auth.py#login"
+    },
+    {
+      "id": "route:POST /todos#api/app/routers/todos.py",
+      "method": "POST",
+      "path": "/todos",
+      "framework": "fastapi",
+      "fileId": "file:api/app/routers/todos.py",
+      "line": 17,
+      "handler": "fn:api/app/routers/todos.py#create_todo"
+    }
+  ],
+  "uiElements": [
+    {
+      "id": "ui:web/src/App.tsx:7:32",
+      "tag": "LoginForm",
+      "fileId": "file:web/src/App.tsx",
+      "line": 7,
+      "component": "fn:web/src/App.tsx#App",
+      "event": "onDone"
+    },
+    {
+      "id": "ui:web/src/components/LoginForm.tsx:14:4",
+      "tag": "form",
+      "fileId": "file:web/src/components/LoginForm.tsx",
+      "line": 14,
+      "component": "fn:web/src/components/LoginForm.tsx#LoginForm",
+      "event": "onSubmit",
+      "handler": "fn:web/src/components/LoginForm.tsx#submit"
+    },
+    {
+      "id": "ui:web/src/components/LoginForm.tsx:15:6",
+      "tag": "input",
+      "label": "Email",
+      "fileId": "file:web/src/components/LoginForm.tsx",
+      "line": 15,
+      "component": "fn:web/src/components/LoginForm.tsx#LoginForm",
+      "event": "onChange"
+    },
+    {
+      "id": "ui:web/src/components/LoginForm.tsx:16:6",
+      "tag": "input",
+      "label": "Password",
+      "fileId": "file:web/src/components/LoginForm.tsx",
+      "line": 16,
+      "component": "fn:web/src/components/LoginForm.tsx#LoginForm",
+      "event": "onChange"
+    },
+    {
+      "id": "ui:web/src/components/LoginForm.tsx:17:6",
+      "tag": "button",
+      "label": "Sign in",
+      "fileId": "file:web/src/components/LoginForm.tsx",
+      "line": 17,
+      "component": "fn:web/src/components/LoginForm.tsx#LoginForm"
+    },
+    {
+      "id": "ui:web/src/components/TodoList.tsx:20:6",
+      "tag": "input",
+      "label": "What needs doing?",
+      "fileId": "file:web/src/components/TodoList.tsx",
+      "line": 20,
+      "component": "fn:web/src/components/TodoList.tsx#TodoList",
+      "event": "onChange"
+    },
+    {
+      "id": "ui:web/src/components/TodoList.tsx:21:6",
+      "tag": "button",
+      "label": "Add todo",
+      "fileId": "file:web/src/components/TodoList.tsx",
+      "line": 21,
+      "component": "fn:web/src/components/TodoList.tsx#TodoList",
+      "event": "onClick",
+      "handler": "fn:web/src/components/TodoList.tsx#handleAdd"
+    },
+    {
+      "id": "ui:web/src/components/TodoList.tsx:35:6",
+      "tag": "button",
+      "label": "Done",
+      "fileId": "file:web/src/components/TodoList.tsx",
+      "line": 35,
+      "component": "fn:web/src/components/TodoList.tsx#TodoRow",
+      "event": "onClick",
+      "handler": "fn:web/src/lib/api.ts#completeTodo"
+    }
+  ],
+  "questions": []
+}

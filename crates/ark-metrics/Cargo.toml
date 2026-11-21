@@ -9,6 +9,10 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+tree-sitter = { workspace = true }
+ark-scan = { workspace = true }
+ark-schema = { workspace = true }
+
 
 [lints]
 workspace = true
