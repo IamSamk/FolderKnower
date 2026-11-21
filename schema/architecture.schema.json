@@ -1,0 +1,686 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SystemArchitectureGraph",
+  "description": "Root document: the whole repository as a tiered graph.",
+  "type": "object",
+  "properties": {
+    "contentRoot": {
+      "description": "Merkle root (blake3) over sorted file hashes: the determinism key.",
+      "type": "string"
+    },
+    "crossTierEdges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/CrossTierEdge"
+      }
+    },
+    "generator": {
+      "$ref": "#/$defs/GeneratorInfo"
+    },
+    "nonCodeNodes": {
+      "description": "Config, docs, tests, migrations, infra and manifests.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/NonCodeNode"
+      }
+    },
+    "repoName": {
+      "type": "string"
+    },
+    "rootPath": {
+      "description": "Stored relative-safe; never leaves the machine.",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "tiers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/TierNode"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "repoName",
+    "rootPath",
+    "generator",
+    "contentRoot",
+    "tiers",
+    "crossTierEdges",
+    "nonCodeNodes"
+  ],
+  "$defs": {
+    "BigO": {
+      "type": "string",
+      "enum": [
+        "O(1)",
+        "O(log N)",
+        "O(N)",
+        "O(N log N)",
+        "O(N^2)",
+        "O(N^k)",
+        "O(2^N)",
+        "unknown"
+      ]
+    },
+    "ClusterAlgo": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "leiden"
+          ]
+        },
+        {
+          "description": "Placeholder grouping by directory, used until Leiden lands (M1.8).",
+          "type": "string",
+          "const": "directory"
+        }
+      ]
+    },
+    "ClusterMethod": {
+      "description": "How a cluster was formed. Leiden runs with a fixed seed so it is reproducible.",
+      "type": "object",
+      "properties": {
+        "algo": {
+          "$ref": "#/$defs/ClusterAlgo"
+        },
+        "anchors": {
+          "description": "Anchor node ids (routers, data stores, tests) that guided the partition.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resolution": {
+          "type": "number",
+          "format": "double"
+        },
+        "seed": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "algo",
+        "seed",
+        "resolution",
+        "anchors"
+      ]
+    },
+    "Complexity": {
+      "type": "object",
+      "properties": {
+        "basis": {
+          "description": "Rule ids that produced the Big-O labels.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cognitive": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "cyclomatic": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "maxNesting": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "memoryFlags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "spaceBigO": {
+          "$ref": "#/$defs/BigO"
+        },
+        "timeBigO": {
+          "$ref": "#/$defs/BigO"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "cyclomatic",
+        "cognitive",
+        "maxNesting",
+        "timeBigO",
+        "spaceBigO",
+        "basis",
+        "memoryFlags"
+      ]
+    },
+    "CrossTierEdge": {
+      "description": "An edge between tiers, e.g. frontend fetch -> backend route.",
+      "type": "object",
+      "properties": {
+        "evidence": {
+          "description": "e.g. ontology rule ids at the call sites.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "id": {
+          "type": "string"
+        },
+        "protocol": {
+          "$ref": "#/$defs/Protocol"
+        },
+        "source": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "source",
+        "target",
+        "protocol",
+        "evidence"
+      ]
+    },
+    "Edge": {
+      "description": "A directed edge, shared by imports and calls. Every edge carries provenance.",
+      "type": "object",
+      "properties": {
+        "candidates": {
+          "description": "Unresolved targets ranked by a deterministic rule (never a model).",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "confidence": {
+          "description": "0..=1, derived deterministically from provenance plus resolution rule.",
+          "type": "number",
+          "format": "double",
+          "maximum": 1.0,
+          "minimum": 0.0
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "target": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "target",
+        "provenance",
+        "confidence"
+      ]
+    },
+    "FunctionNode": {
+      "description": "A function or method.",
+      "type": "object",
+      "properties": {
+        "byteRange": {
+          "description": "Byte range, for the function locator.",
+          "type": "array",
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0
+            },
+            {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0
+            }
+          ]
+        },
+        "calledBy": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "calls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Edge"
+          }
+        },
+        "complexity": {
+          "$ref": "#/$defs/Complexity"
+        },
+        "id": {
+          "description": "SCIP symbol if available, else `fn:<path>#<qualname>`.",
+          "type": "string"
+        },
+        "inferredRole": {
+          "description": "Phase 5 model output; kept apart from static facts.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/InferredRole"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lineRange": {
+          "description": "1-based inclusive line range.",
+          "type": "array",
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0
+            },
+            {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0
+            }
+          ]
+        },
+        "liveTelemetry": {
+          "description": "Phase 4 runtime sample.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LiveTelemetry"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "ontologyTags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OntologyTag"
+          }
+        },
+        "signature": {
+          "$ref": "#/$defs/Signature"
+        },
+        "visibility": {
+          "$ref": "#/$defs/Visibility"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "visibility",
+        "lineRange",
+        "byteRange",
+        "signature",
+        "complexity",
+        "ontologyTags",
+        "calls",
+        "calledBy"
+      ]
+    },
+    "GeneratorInfo": {
+      "description": "Which tool versions produced the graph.",
+      "type": "object",
+      "properties": {
+        "grammars": {
+          "description": "Grammar name to version, e.g. `\"tree-sitter-rust\" -> \"0.24.2\"`.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "rulesetVersion": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "rulesetVersion",
+        "grammars"
+      ]
+    },
+    "InferredRole": {
+      "type": "object",
+      "properties": {
+        "confidence": {
+          "type": "number",
+          "format": "double"
+        },
+        "model": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "confidence",
+        "model"
+      ]
+    },
+    "LiveTelemetry": {
+      "type": "object",
+      "properties": {
+        "activeThreads": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "cpuPercent": {
+          "type": "number",
+          "format": "double"
+        },
+        "rssBytes": {
+          "description": "f64 so TS sees `number`; exact to 2^53 bytes.",
+          "type": "number",
+          "format": "double"
+        },
+        "syscallsPerSec": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "cpuPercent",
+        "rssBytes",
+        "activeThreads"
+      ]
+    },
+    "NonCodeKind": {
+      "type": "string",
+      "enum": [
+        "config",
+        "doc",
+        "test",
+        "migration",
+        "infra",
+        "manifest"
+      ]
+    },
+    "NonCodeNode": {
+      "description": "A file that is not application code but relates to it.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/NonCodeKind"
+        },
+        "path": {
+          "type": "string"
+        },
+        "relatesTo": {
+          "description": "File/function ids this relates to (test -> source, doc -> source).",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "path",
+        "kind",
+        "relatesTo"
+      ]
+    },
+    "OntologyLayer": {
+      "type": "string",
+      "enum": [
+        "os",
+        "network",
+        "cloud",
+        "data"
+      ]
+    },
+    "OntologyTag": {
+      "description": "A systems-ontology concept matched at this function.",
+      "type": "object",
+      "properties": {
+        "concept": {
+          "type": "string"
+        },
+        "layer": {
+          "$ref": "#/$defs/OntologyLayer"
+        },
+        "ruleId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "concept",
+        "layer",
+        "ruleId"
+      ]
+    },
+    "Parameter": {
+      "description": "Types are optional: the UI never shows a type the source did not state.",
+      "type": "object",
+      "properties": {
+        "defaultValue": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ]
+    },
+    "Protocol": {
+      "type": "string",
+      "enum": [
+        "HTTP/REST",
+        "WebSocket",
+        "gRPC",
+        "SQL",
+        "IPC",
+        "Queue"
+      ]
+    },
+    "Provenance": {
+      "type": "string",
+      "enum": [
+        "scip_exact",
+        "ts_resolved",
+        "ts_name_match",
+        "runtime_observed"
+      ]
+    },
+    "SchemaVersion": {
+      "description": "Schema version tag. Only `\"2.0\"` is valid.",
+      "type": "string",
+      "enum": [
+        "2.0"
+      ]
+    },
+    "Signature": {
+      "type": "object",
+      "properties": {
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Parameter"
+          }
+        },
+        "returnType": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "parameters"
+      ]
+    },
+    "SourceFileNode": {
+      "description": "One source file, e.g. `file:src/auth/service.ts`.",
+      "type": "object",
+      "properties": {
+        "contentHash": {
+          "description": "blake3 of the file bytes.",
+          "type": "string"
+        },
+        "functions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FunctionNode"
+          }
+        },
+        "id": {
+          "type": "string"
+        },
+        "imports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Edge"
+          }
+        },
+        "language": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "path",
+        "language",
+        "contentHash",
+        "imports",
+        "functions"
+      ]
+    },
+    "SubsystemCluster": {
+      "description": "A semantic subsystem inside a tier, e.g. `cluster:auth`.",
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceFileNode"
+          }
+        },
+        "id": {
+          "type": "string"
+        },
+        "method": {
+          "$ref": "#/$defs/ClusterMethod"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "method",
+        "files"
+      ]
+    },
+    "TierLabel": {
+      "type": "string",
+      "enum": [
+        "Frontend",
+        "Gateway",
+        "Backend",
+        "Storage",
+        "Workers",
+        "Shared"
+      ]
+    },
+    "TierNode": {
+      "description": "A macro tier such as `tier:backend`.",
+      "type": "object",
+      "properties": {
+        "clusters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SubsystemCluster"
+          }
+        },
+        "evidence": {
+          "description": "Manifest/dir rule ids that fired.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "$ref": "#/$defs/TierLabel"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "evidence",
+        "clusters"
+      ]
+    },
+    "Visibility": {
+      "type": "string",
+      "enum": [
+        "public",
+        "private",
+        "protected",
+        "internal"
+      ]
+    }
+  }
+}

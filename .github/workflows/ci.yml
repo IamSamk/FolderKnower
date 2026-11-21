@@ -29,6 +29,11 @@ jobs:
       - run: cargo fmt --all --check
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
+      - name: Generated schema + TS are fresh
+        if: runner.os == 'Linux'
+        run: |
+          cargo run -q -p ark-schema --bin gen-schema
+          git diff --exit-code -- schema apps/desktop/src/gen
 
   deny:
     runs-on: ubuntu-latest

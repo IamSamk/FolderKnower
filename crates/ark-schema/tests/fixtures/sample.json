@@ -1,0 +1,210 @@
+{
+  "schemaVersion": "2.0",
+  "repoName": "todo-fullstack",
+  "rootPath": ".",
+  "generator": {
+    "version": "0.1.0",
+    "rulesetVersion": "0.0.1",
+    "grammars": {
+      "tree-sitter-python": "0.25.0",
+      "tree-sitter-typescript": "0.23.2"
+    }
+  },
+  "contentRoot": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+  "tiers": [
+    {
+      "id": "tier:frontend",
+      "label": "Frontend",
+      "evidence": [
+        "tier.fe.package-react"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:todo-ui",
+          "name": "todo-ui",
+          "method": {
+            "algo": "directory",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:web/src/api.ts",
+              "path": "web/src/api.ts",
+              "language": "typescript",
+              "contentHash": "5e8a1f0c3b2d4e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7",
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:web/src/api.ts#createTodo",
+                  "name": "createTodo",
+                  "visibility": "public",
+                  "lineRange": [
+                    3,
+                    9
+                  ],
+                  "byteRange": [
+                    41,
+                    212
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "title",
+                        "type": "string"
+                      }
+                    ],
+                    "returnType": "Promise<Todo>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "http.client.request",
+                      "layer": "network",
+                      "ruleId": "net.fetch"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "external:fetch",
+                      "provenance": "ts_name_match",
+                      "confidence": 0.5,
+                      "candidates": [
+                        "external:fetch"
+                      ]
+                    }
+                  ],
+                  "calledBy": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tier:backend",
+      "label": "Backend",
+      "evidence": [
+        "tier.be.pyproject-fastapi"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:todos",
+          "name": "todos",
+          "method": {
+            "algo": "leiden",
+            "seed": 42,
+            "resolution": 1.0,
+            "anchors": [
+              "fn:api/routes.py#create_todo"
+            ]
+          },
+          "files": [
+            {
+              "id": "file:api/routes.py",
+              "path": "api/routes.py",
+              "language": "python",
+              "contentHash": "0b1c2d3e4f5061728394a5b6c7d8e9f00112233445566778899aabbccddeeff0",
+              "imports": [
+                {
+                  "target": "file:api/models.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.9
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:api/routes.py#create_todo",
+                  "name": "create_todo",
+                  "visibility": "public",
+                  "lineRange": [
+                    12,
+                    20
+                  ],
+                  "byteRange": [
+                    300,
+                    540
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "body",
+                        "type": "TodoIn"
+                      },
+                      {
+                        "name": "db",
+                        "defaultValue": "Depends(get_db)"
+                      }
+                    ],
+                    "returnType": "TodoOut"
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "db.write",
+                      "layer": "data",
+                      "ruleId": "data.sqlalchemy.add"
+                    }
+                  ],
+                  "liveTelemetry": {
+                    "cpuPercent": 1.5,
+                    "rssBytes": 52428800.0,
+                    "activeThreads": 4
+                  },
+                  "calls": [],
+                  "calledBy": [
+                    "fn:web/src/api.ts#createTodo"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "crossTierEdges": [
+    {
+      "id": "xedge:createTodo->create_todo",
+      "source": "fn:web/src/api.ts#createTodo",
+      "target": "fn:api/routes.py#create_todo",
+      "protocol": "HTTP/REST",
+      "evidence": [
+        "net.fetch",
+        "net.fastapi.route"
+      ]
+    }
+  ],
+  "nonCodeNodes": [
+    {
+      "id": "noncode:api/tests/test_routes.py",
+      "path": "api/tests/test_routes.py",
+      "kind": "test",
+      "relatesTo": [
+        "file:api/routes.py"
+      ]
+    }
+  ]
+}
