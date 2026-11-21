@@ -1,32 +1,69 @@
 import {
   Background,
   BackgroundVariant,
-  Controls,
   type Edge,
   MiniMap,
   type Node,
+  Panel,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  useViewport,
 } from "@xyflow/react";
+import { Maximize2, Minus, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { TierLabel } from "../gen";
 import { layout } from "../lib/layout";
 import { TIER_COLOR } from "../lib/theme";
+import { useTheme } from "../lib/themeMode";
 import { useStore } from "../store";
 import { type Built, estimateHeight, estimateWidth, type FlowEdgeData } from "./build";
 import { edgeTypes } from "./FlowEdge";
 import { nodeTypes } from "./nodes";
 
-interface Props {
-  built: Built;
-  /** Stable key for the current scene; a change triggers the enter animation + fit. */
-  sceneKey: string;
-  onOpen: (node: Node) => void;
-  onNavigate: (targetId: string) => void;
+export interface NavOrigin {
+  x: number;
+  y: number;
 }
 
-function Inner({ built, sceneKey, onOpen, onNavigate }: Props) {
+interface Props {
+  built: Built;
+  /** Open (zoom into) a node. `el` is the node's DOM element, for the lens. */
+  onOpen: (node: Node, el: Element | null) => void;
+  /** Go to another id. `origin` is where on screen the journey ended. */
+  onNavigate: (targetId: string, origin?: NavOrigin) => void;
+}
+
+const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+
+function ZoomBar() {
+  const rf = useReactFlow();
+  const { zoom } = useViewport();
+  return (
+    <Panel position="bottom-right" className="ak-zoombar">
+      <button
+        type="button"
+        aria-label="Zoom out"
+        onClick={() => void rf.zoomOut({ duration: 300 })}
+      >
+        <Minus size={15} strokeWidth={2.4} />
+      </button>
+      <span className="ak-zoomval">{Math.round(zoom * 100)}%</span>
+      <button type="button" aria-label="Zoom in" onClick={() => void rf.zoomIn({ duration: 300 })}>
+        <Plus size={15} strokeWidth={2.4} />
+      </button>
+      <button
+        type="button"
+        aria-label="Fit to screen"
+        onClick={() => void rf.fitView({ duration: 600, padding: 0.18 })}
+      >
+        <Maximize2 size={14} strokeWidth={2.4} />
+      </button>
+    </Panel>
+  );
+}
+
+function Inner({ built, onOpen, onNavigate }: Props) {
   const rf = useReactFlow();
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -34,6 +71,8 @@ function Inner({ built, sceneKey, onOpen, onNavigate }: Props) {
   const select = useStore((s) => s.select);
   const travel = useStore((s) => s.travel);
   const hops = useStore((s) => s.hops);
+  const dark = useTheme((s) => s.resolved === "dark");
+  const box = useRef<HTMLDivElement>(null);
   const seq = useRef(0);
 
   useEffect(() => {
@@ -52,23 +91,20 @@ function Inner({ built, sceneKey, onOpen, onNavigate }: Props) {
         layer: (n.data as { layer?: "FIRST" | "LAST" }).layer,
       })),
       built.edges.map((e) => ({ id: e.id, source: e.source, target: e.target })),
-      { direction: built.direction, layerGap: built.direction === "DOWN" ? 90 : 120 },
+      { direction: built.direction, layerGap: built.direction === "DOWN" ? 96 : 130 },
     ).then((pos) => {
       if (my !== seq.current) return;
       setNodes(ns.map((n) => ({ ...n, position: pos.get(n.id) ?? { x: 0, y: 0 } })));
       setEdges(built.edges);
       requestAnimationFrame(() => {
-        void rf.fitView({ duration: 750, padding: 0.18, maxZoom: 1.15 });
+        void rf.fitView({ duration: 0, padding: 0.2, maxZoom: 1.1 });
       });
     });
   }, [built, rf]);
 
-  // Highlight the neighbourhood of the selection (and the active trace).
   const view = useMemo(() => {
     const hopIds = new Set(hops.map((h) => h.id));
     const focus = selected && nodes.some((n) => n.id === selected) ? selected : null;
-    // Only dim when the selection lives in this scene; a trace started elsewhere
-    // just highlights the hops that happen to be visible.
     if (!focus) {
       if (hopIds.size === 0) return { nodes, edges };
       return {
@@ -76,16 +112,12 @@ function Inner({ built, sceneKey, onOpen, onNavigate }: Props) {
         edges,
       };
     }
-    const keep = new Set<string>();
-    if (focus) {
-      keep.add(focus);
-      for (const e of edges) {
-        if (e.source === focus) keep.add(e.target);
-        if (e.target === focus) keep.add(e.source);
-      }
+    const keep = new Set<string>([focus]);
+    for (const e of edges) {
+      if (e.source === focus) keep.add(e.target);
+      if (e.target === focus) keep.add(e.source);
     }
     for (const id of hopIds) keep.add(id);
-    if (keep.size <= 1 && !focus) return { nodes, edges };
     return {
       nodes: nodes.map((n) => ({
         ...n,
@@ -98,61 +130,91 @@ function Inner({ built, sceneKey, onOpen, onNavigate }: Props) {
     };
   }, [nodes, edges, selected, hops]);
 
+  /** Fly the camera along an edge (following the travelling dot), then navigate. */
+  const journey = (edge: Edge, target: string, reverse: boolean) => {
+    const path = box.current?.querySelector<SVGPathElement>(`path[id="${CSS.escape(edge.id)}"]`);
+    const zoom = Math.max(rf.getZoom(), 0.85);
+    const end = () => {
+      const r = box.current?.getBoundingClientRect();
+      onNavigate(target, r ? { x: r.width / 2, y: r.height / 2 } : undefined);
+    };
+    if (!path) {
+      travel(edge.id, end);
+      return;
+    }
+    const len = path.getTotalLength();
+    const t0 = performance.now();
+    const dur = 720;
+    travel(edge.id, end);
+    const step = (now: number) => {
+      const t = Math.min((now - t0) / dur, 1);
+      const k = ease(t);
+      const p = path.getPointAtLength(len * (reverse ? 1 - k : k));
+      void rf.setCenter(p.x, p.y, { zoom: zoom + 0.25 * Math.sin(Math.PI * t) });
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+
   const edgeTo = (nodeId: string) =>
     edges.find((e) => e.target === nodeId) ?? edges.find((e) => e.source === nodeId);
 
   return (
-    <ReactFlow
-      key={sceneKey}
-      nodes={view.nodes}
-      edges={view.edges}
-      nodeTypes={nodeTypes}
-      edgeTypes={edgeTypes}
-      nodesConnectable={false}
-      nodesDraggable
-      minZoom={0.08}
-      maxZoom={2.5}
-      proOptions={{ hideAttribution: true }}
-      onlyRenderVisibleElements={false}
-      onNodeClick={(_, n) => {
-        if (n.type === "portal") {
-          const e = edgeTo(n.id);
-          const target = (n.data as { targetId: string }).targetId;
-          if (e) travel(e.id, () => onNavigate(target));
-          else onNavigate(target);
-          return;
-        }
-        if (n.type === "fn" && (n.data as { ghost?: boolean }).ghost) {
-          const e = edgeTo(n.id);
-          if (e) travel(e.id, () => onNavigate(n.id));
-          else onNavigate(n.id);
-          return;
-        }
-        select(n.id);
-      }}
-      onNodeDoubleClick={(_, n) => onOpen(n)}
-      onEdgeClick={(_, e) => {
-        const d = e.data as FlowEdgeData | undefined;
-        if (d?.to) travel(e.id, () => onNavigate(d.to as string));
-      }}
-      onPaneClick={() => select(null)}
-      fitView
-    >
-      <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="#2A3142" />
-      <Controls showInteractive={false} position="bottom-right" />
-      <MiniMap
-        pannable
-        zoomable
-        position="bottom-left"
-        maskColor="rgba(8,10,16,0.72)"
-        nodeColor={(n) => {
-          const t = (n.data as { tier?: TierLabel }).tier;
-          return t ? TIER_COLOR[t] : n.type === "model" ? "#10B981" : "#475569";
+    <div ref={box} className="h-full w-full">
+      <ReactFlow
+        nodes={view.nodes}
+        edges={view.edges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        nodesConnectable={false}
+        nodesDraggable
+        minZoom={0.08}
+        maxZoom={2.5}
+        zoomOnDoubleClick={false}
+        proOptions={{ hideAttribution: true }}
+        onNodeClick={(_, n) => {
+          const isPortal =
+            n.type === "portal" || (n.type === "fn" && (n.data as { ghost?: boolean }).ghost);
+          if (isPortal) {
+            const target = n.type === "portal" ? (n.data as { targetId: string }).targetId : n.id;
+            const e = edgeTo(n.id);
+            if (e) journey(e, target, e.target !== n.id);
+            else onNavigate(target);
+            return;
+          }
+          select(n.id);
         }}
-        nodeStrokeWidth={0}
-        style={{ background: "rgba(15,18,26,0.85)", width: 160, height: 104 }}
-      />
-    </ReactFlow>
+        onNodeDoubleClick={(ev, n) =>
+          onOpen(n, (ev.target as Element).closest(".react-flow__node"))
+        }
+        onEdgeClick={(_, e) => {
+          const d = e.data as FlowEdgeData | undefined;
+          if (d?.to) journey(e, d.to, d.to === e.source);
+        }}
+        onPaneClick={() => select(null)}
+      >
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={24}
+          size={1.6}
+          color={dark ? "#3a3760" : "#c3c6d9"}
+        />
+        <ZoomBar />
+        <MiniMap
+          pannable
+          zoomable
+          position="bottom-left"
+          className="ak-minimap"
+          bgColor={dark ? "#26244a" : "#ffffff"}
+          maskColor={dark ? "rgba(20,19,38,0.7)" : "rgba(238,240,247,0.7)"}
+          nodeColor={(n) => {
+            const t = (n.data as { tier?: TierLabel }).tier;
+            return t ? TIER_COLOR[t] : n.type === "model" ? TIER_COLOR.Storage : "#b9bccc";
+          }}
+          nodeStrokeWidth={0}
+        />
+      </ReactFlow>
+    </div>
   );
 }
 

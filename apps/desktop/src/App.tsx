@@ -2,6 +2,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { Analyzing } from "./components/Analyzing";
 import { Inspector } from "./components/Inspector";
 import { Palette } from "./components/Palette";
+import { Lens, PortalScene } from "./components/Portal";
+import { Setup } from "./components/Setup";
 import { Sidebar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
 import { UiMap } from "./components/UiMap";
@@ -17,20 +19,12 @@ function Workspace() {
       <div className="ak-body">
         <Sidebar />
         <main className="ak-main">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={view}
-              className="absolute inset-0"
-              initial={{ opacity: 0, scale: 0.985, filter: "blur(6px)" }}
-              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-              exit={{ opacity: 0, scale: 1.01, filter: "blur(6px)" }}
-              transition={{ duration: 0.32, ease: [0.4, 0, 0.2, 1] }}
-            >
-              {view === "architecture" && <ArchitectureView />}
-              {view === "er" && <ErView />}
-              {view === "ui" && <UiMap />}
-            </motion.div>
-          </AnimatePresence>
+          <PortalScene sceneKey={view}>
+            {view === "architecture" && <ArchitectureView />}
+            {view === "er" && <ErView />}
+            {view === "ui" && <UiMap />}
+          </PortalScene>
+          <Lens />
         </main>
         <Inspector />
       </div>
@@ -54,6 +48,7 @@ export default function App() {
         transition={{ duration: 0.35 }}
       >
         {phase === "welcome" && <Welcome />}
+        <Setup />
         {phase === "analyzing" && <Analyzing />}
         {phase === "ready" && <Workspace />}
         {phase === "error" && (

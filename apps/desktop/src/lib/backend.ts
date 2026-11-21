@@ -209,3 +209,76 @@ export async function slmClassify(req: {
 }): Promise<{ questionId: string; tier: TierLabel; reason: string; model: string }> {
   return invoke("slm_classify", { req });
 }
+
+// ---- built-in local AI (llama.cpp runtime + Laya decider + Qwen narrator)
+
+export interface AiComponent {
+  id: "runtime" | "decider" | "narrator";
+  name: string;
+  purpose: string;
+  license: string;
+  licenseUrl: string;
+  sourceUrl: string;
+  size: number;
+  installed: boolean;
+  supported: boolean;
+}
+
+export interface AiStatus {
+  components: AiComponent[];
+  deciderReady: boolean;
+  narratorReady: boolean;
+  narratorBaseUrl: string | null;
+}
+
+export interface AiProgress {
+  id: string;
+  done: number;
+  total: number;
+  phase: "download" | "verified" | "extract";
+}
+
+export async function aiStatus(): Promise<AiStatus | null> {
+  if (!isTauri) return null;
+  return invoke<AiStatus>("ai_status");
+}
+
+export async function aiInstall(
+  id: string,
+  onProgress: (p: AiProgress) => void,
+): Promise<AiStatus> {
+  const { listen } = await import("@tauri-apps/api/event");
+  const un = await listen<AiProgress>("ai-progress", (e) => onProgress(e.payload));
+  try {
+    return await invoke<AiStatus>("ai_install", { id });
+  } finally {
+    un();
+  }
+}
+
+export async function aiRemove(id: string): Promise<AiStatus> {
+  return invoke<AiStatus>("ai_remove", { id });
+}
+
+export async function aiStartNarrator(): Promise<string> {
+  return invoke<string>("ai_start_narrator");
+}
+
+export interface Decision {
+  choice: string;
+  probabilities: Record<string, number>;
+  confidence: number;
+}
+
+/** Ask the Laya decision model to pick one option. */
+export async function aiDecide(
+  state: string,
+  instructions: string,
+  criteria: Record<string, string>,
+): Promise<Decision> {
+  const r = await invoke<{ answers: { q: Decision } }>("ai_decide", {
+    stateText: state,
+    questions: { q: { type: "choice", instructions, criteria } },
+  });
+  return r.answers.q;
+}

@@ -1,6 +1,7 @@
 //! Tauri shell: exposes the offline indexer, confined source reads, the ontology
 //! catalogue and the optional local-model layer to the UI.
 
+mod ai;
 mod slm;
 
 use std::{
@@ -11,7 +12,7 @@ use std::{
 use ark_core::{Options, Progress, RunStats, analyze as run_analyze, ark_schema};
 use ark_schema::{SystemArchitectureGraph, TierLabel};
 use serde::Serialize;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -109,8 +110,9 @@ fn export_json(path: String, graph: SystemArchitectureGraph) -> Result<(), Strin
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .manage(ai::AiState::default())
         .invoke_handler(tauri::generate_handler![
             analyze,
             read_source,
@@ -119,7 +121,17 @@ pub fn run() {
             slm::slm_status,
             slm::slm_explain,
             slm::slm_classify,
+            ai::ai_status,
+            ai::ai_install,
+            ai::ai_remove,
+            ai::ai_start_narrator,
+            ai::ai_decide,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running Architekton");
+        .build(tauri::generate_context!())
+        .expect("error while building Architekton");
+    app.run(|handle, event| {
+        if let tauri::RunEvent::Exit = event {
+            handle.state::<ai::AiState>().shutdown();
+        }
+    });
 }

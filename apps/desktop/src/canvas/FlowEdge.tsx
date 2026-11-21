@@ -20,7 +20,7 @@ export function FlowEdge(props: EdgeProps) {
   const color = data?.color ?? "#71717A";
   const dim = (data as { dim?: boolean } | undefined)?.dim;
   const strong = kind === "http" || kind === "sql";
-  const width = Math.min(1.4 + Math.log2((data?.count ?? 1) + 1) * 0.9, 5) + (strong ? 0.6 : 0);
+  const width = Math.min(2 + Math.log2((data?.count ?? 1) + 1) * 0.9, 6) + (strong ? 1.2 : 0);
   return (
     <>
       <BaseEdge
@@ -30,7 +30,7 @@ export function FlowEdge(props: EdgeProps) {
         style={{
           stroke: color,
           strokeWidth: width,
-          opacity: dim ? 0.12 : kind === "import" ? 0.45 : 0.85,
+          opacity: dim ? 0.12 : kind === "import" ? 0.7 : 1,
         }}
         interactionWidth={18}
       />
@@ -38,13 +38,13 @@ export function FlowEdge(props: EdgeProps) {
         <path
           d={path}
           className="ak-edge-flow"
-          style={{ stroke: color, strokeWidth: Math.max(width - 0.6, 1.2) }}
+          style={{ strokeWidth: Math.max(width - 1, 2) }}
           fill="none"
         />
       )}
       {travelling && (
         <g>
-          <circle r={9} fill={color} opacity={0.25}>
+          <circle r={13} fill="#ffe14d" stroke="#1f1d36" strokeWidth={2.5}>
             <animateMotion
               dur="0.7s"
               repeatCount="1"
@@ -56,7 +56,7 @@ export function FlowEdge(props: EdgeProps) {
               keySplines="0.4 0 0.2 1"
             />
           </circle>
-          <circle r={4.5} fill="#fff">
+          <circle r={4} fill="#1f1d36">
             <animateMotion
               dur="0.7s"
               repeatCount="1"

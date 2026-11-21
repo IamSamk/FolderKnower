@@ -1,7 +1,10 @@
 import { create } from "zustand";
+import type { PortalOrigin } from "./components/Portal";
 import type { TierLabel } from "./gen";
 import {
+  type AiStatus,
   type AnalyzeResult,
+  aiStatus,
   analyze,
   type Progress,
   type SlmStatus,
@@ -39,8 +42,14 @@ interface State {
   hops: Hop[];
   travelling: string | null;
   slm: SlmStatus | null;
+  ai: AiStatus | null;
   model: string | null;
   paletteOpen: boolean;
+  portal: PortalOrigin | null;
+  lens: { id: number; x: number; y: number; label?: string; color?: string } | null;
+  setupOpen: boolean;
+  /** Run a scene change with a portal transition from `origin`. */
+  go: (origin: Omit<PortalOrigin, "dir">, dir: PortalOrigin["dir"], change: () => void) => void;
 
   start: (path: string) => Promise<void>;
   answer: (subject: string, tier: TierLabel) => Promise<void>;
@@ -76,8 +85,22 @@ export const useStore = create<State>((set, get) => ({
   hops: [],
   travelling: null,
   slm: null,
+  ai: null,
   model: null,
   paletteOpen: false,
+  portal: null,
+  lens: null,
+  setupOpen: false,
+  go(origin, dir, change) {
+    set({
+      portal: { ...origin, dir },
+      lens:
+        dir === "in"
+          ? { id: Date.now(), x: origin.x, y: origin.y, label: origin.label, color: origin.color }
+          : null,
+    });
+    change();
+  },
 
   async start(path) {
     set({ phase: "analyzing", root: path, log: [], error: null });
@@ -128,6 +151,8 @@ export const useStore = create<State>((set, get) => ({
   reveal(id) {
     const ix = get().ix;
     if (!ix) return;
+    const main = document.querySelector(".ak-main")?.getBoundingClientRect();
+    set({ portal: { x: (main?.width ?? 800) / 2, y: (main?.height ?? 600) / 2, dir: "tab" } });
     if (ix.models.has(id)) {
       set({ view: "er" });
       get().select(id);
@@ -160,8 +185,23 @@ export const useStore = create<State>((set, get) => ({
   },
 
   async refreshSlm() {
+    const ai = await aiStatus().catch(() => null);
+    if (ai?.narratorReady) {
+      set({
+        ai,
+        slm: {
+          available: true,
+          server: "built-in",
+          baseUrl: "builtin",
+          models: ["qwen2.5-0.5b-instruct"],
+          hint: "Built-in narrator (Qwen2.5 0.5B) running on this computer.",
+        },
+        model: "qwen2.5-0.5b-instruct",
+      });
+      return;
+    }
     const s = await slmStatus();
-    set({ slm: s, model: get().model ?? s.models[0] ?? null });
+    set({ ai, slm: s, model: get().model ?? s.models[0] ?? null });
   },
   setModel: (model) => set({ model }),
   setPalette: (paletteOpen) => set({ paletteOpen }),
