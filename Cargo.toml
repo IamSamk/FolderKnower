@@ -1,0 +1,35 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+# ark-probe is the Phase 4 privileged helper; build it explicitly with `-p ark-probe`.
+default-members = [
+    "crates/ark-schema",
+    "crates/ark-scan",
+    "crates/ark-store",
+    "crates/ark-parse",
+    "crates/ark-chunk",
+    "crates/ark-link",
+    "crates/ark-metrics",
+    "crates/ark-ontology",
+    "crates/ark-structure",
+    "crates/ark-core",
+    "crates/ark-cli",
+    "crates/ark-telemetry",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/IamSamk/Architekton"
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

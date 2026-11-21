@@ -1,0 +1,19 @@
+[package]
+name = "ark-cli"
+description = "Architekton command-line indexer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[[bin]]
+name = "architekton"
+path = "src/main.rs"
+
+[dependencies]
+ark-core = { path = "../ark-core" }
+
+[lints]
+workspace = true
