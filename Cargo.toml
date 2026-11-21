@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/*"]
+members = ["crates/*", "apps/desktop/src-tauri"]
 # ark-probe is the Phase 4 privileged helper; build it explicitly with `-p ark-probe`.
 default-members = [
     "crates/ark-schema",
@@ -24,11 +24,48 @@ rust-version = "1.95"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/IamSamk/Architekton"
 
+[workspace.dependencies]
+ark-schema = { path = "crates/ark-schema" }
+ark-scan = { path = "crates/ark-scan" }
+ark-store = { path = "crates/ark-store" }
+ark-parse = { path = "crates/ark-parse" }
+ark-chunk = { path = "crates/ark-chunk" }
+ark-link = { path = "crates/ark-link" }
+ark-metrics = { path = "crates/ark-metrics" }
+ark-ontology = { path = "crates/ark-ontology" }
+ark-structure = { path = "crates/ark-structure" }
+ark-core = { path = "crates/ark-core" }
+tree-sitter = "0.27.2"
+tree-sitter-typescript = "0.23.2"
+tree-sitter-javascript = "0.25.0"
+tree-sitter-python = "0.25.0"
+tree-sitter-rust = "0.24.2"
+tree-sitter-go = "0.25.0"
+ignore = "0.4.34"
+blake3 = "1.8.7"
+rusqlite = { version = "0.43.0", features = ["bundled"] }
+rayon = "1.12.0"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1"
+serde_yaml_ng = "0.10.0"
+regex = "1"
+dirs = "7.0.0"
+clap = { version = "4", features = ["derive"] }
+thiserror = "2"
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+proptest = "1.12.0"
+tempfile = "3"
+
 [workspace.lints.rust]
 unsafe_code = "deny"
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
+type_complexity = "allow"
+needless_range_loop = "allow"
+too_many_arguments = "allow"
 
 [profile.release]
 lto = "thin"

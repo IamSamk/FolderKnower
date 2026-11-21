@@ -34,6 +34,9 @@
               "path": "web/src/api.ts",
               "language": "typescript",
               "contentHash": "5e8a1f0c3b2d4e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7",
+              "lines": 42,
+              "tierConfidence": 0.9,
+              "role": "api-client",
               "imports": [],
               "functions": [
                 {
@@ -117,6 +120,9 @@
               "path": "api/routes.py",
               "language": "python",
               "contentHash": "0b1c2d3e4f5061728394a5b6c7d8e9f00112233445566778899aabbccddeeff0",
+              "lines": 42,
+              "tierConfidence": 0.9,
+              "role": "route-handler",
               "imports": [
                 {
                   "target": "file:api/models.py",
@@ -205,6 +211,99 @@
       "relatesTo": [
         "file:api/routes.py"
       ]
+    }
+  ],
+  "summary": {
+    "kind": "full-stack",
+    "headline": "Full-stack app: React frontend talking to a FastAPI backend.",
+    "findings": [
+      {
+        "text": "web/ imports react",
+        "evidence": [
+          "tier.fe.react"
+        ]
+      }
+    ],
+    "stats": {
+      "files": 2,
+      "functions": 2,
+      "lines": 84,
+      "languages": {
+        "python": 1,
+        "typescript": 1
+      }
+    }
+  },
+  "dataModels": [
+    {
+      "id": "model:api/models.py#Todo",
+      "name": "Todo",
+      "kind": "table",
+      "framework": "sqlalchemy",
+      "fileId": "file:api/models.py",
+      "line": 5,
+      "table": "todos",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Integer",
+          "primaryKey": true,
+          "nullable": false
+        },
+        {
+          "name": "owner_id",
+          "type": "Integer",
+          "primaryKey": false,
+          "nullable": true,
+          "references": "users.id"
+        }
+      ],
+      "relations": [
+        {
+          "target": "model:api/models.py#User",
+          "kind": "many_to_one",
+          "via": "owner_id"
+        }
+      ],
+      "mirrors": [
+        "model:api/schemas.py#TodoOut"
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "id": "route:POST /todos",
+      "method": "POST",
+      "path": "/todos",
+      "framework": "fastapi",
+      "fileId": "file:api/routes.py",
+      "line": 11,
+      "handler": "fn:api/routes.py#create_todo"
+    }
+  ],
+  "uiElements": [
+    {
+      "id": "ui:web/src/App.tsx:14",
+      "tag": "button",
+      "label": "Add",
+      "fileId": "file:web/src/App.tsx",
+      "line": 14,
+      "component": "fn:web/src/App.tsx#App",
+      "event": "onClick",
+      "handler": "fn:web/src/api.ts#createTodo"
+    }
+  ],
+  "questions": [
+    {
+      "id": "q:scripts",
+      "text": "Is scripts/ a background worker or dev tooling?",
+      "subject": "scripts/",
+      "options": [
+        "Workers",
+        "Shared"
+      ],
+      "suggested": "Shared",
+      "confidence": 0.4
     }
   ]
 }

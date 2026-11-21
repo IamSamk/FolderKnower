@@ -9,6 +9,13 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+ark-parse = { workspace = true }
+ark-scan = { workspace = true }
+ark-schema = { workspace = true }
+ark-link = { workspace = true }
+serde = { workspace = true }
+serde_yaml_ng = { workspace = true }
+regex = { workspace = true }
 
 [lints]
 workspace = true

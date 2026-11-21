@@ -18,4 +18,4 @@ ts-rs = "12.0.1"
 workspace = true
 
 [dev-dependencies]
-jsonschema = "0.62.0"
+jsonschema = { version = "0.62.0", default-features = false }

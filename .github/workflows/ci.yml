@@ -33,7 +33,8 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           cargo run -q -p ark-schema --bin gen-schema
-          git diff --exit-code -- schema apps/desktop/src/gen
+          cargo run -q -p ark-cli -- ontology > apps/desktop/src/lib/ontology.json
+          git diff --exit-code -- schema apps/desktop/src/gen apps/desktop/src/lib/ontology.json
 
   deny:
     runs-on: ubuntu-latest
@@ -59,3 +60,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm biome ci .
+      - name: Typecheck + build the desktop UI
+        working-directory: apps/desktop
+        run: |
+          pnpm exec tsc --noEmit
+          pnpm exec vite build

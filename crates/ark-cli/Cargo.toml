@@ -13,7 +13,10 @@ name = "architekton"
 path = "src/main.rs"
 
 [dependencies]
-ark-core = { path = "../ark-core" }
+ark-core = { workspace = true }
+ark-ontology = { workspace = true }
+clap = { workspace = true }
+serde_json = { workspace = true }
 
 [lints]
 workspace = true

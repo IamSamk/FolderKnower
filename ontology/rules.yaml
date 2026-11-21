@@ -1,0 +1,309 @@
+# Systems Ontology v0. Each rule tags a function when one of its calls matches.
+# `calls` are regexes over "<receiver>.<callee>" (or just "<callee>" when there is no receiver).
+# `explain` is the teaching text shown in the app.
+version: "0.1.0"
+rules:
+  # ---------------- OS ----------------
+  - id: os.fs.read
+    layer: os
+    concept: File read
+    explain: Reads bytes from disk through the kernel's VFS layer (open/read syscalls). The page cache usually serves repeated reads from RAM.
+    calls: ['(^|\.)(readFile|readFileSync|read_to_string|read_text|ReadFile|readlines)$', '^(fs|fsp|os|io|ioutil)\.(read|open)', '^open$', 'File::open$']
+  - id: os.fs.write
+    layer: os
+    concept: File write
+    explain: Writes go to the page cache first; data reaches the device later unless fsync is called.
+    calls: ['(^|\.)(writeFile|writeFileSync|appendFile|write_all|write_text|WriteFile)$', 'File::create$', '^(fs|os)\.(write|create)']
+  - id: os.fs.watch
+    layer: os
+    concept: File watching
+    explain: Subscribes to kernel file-change notifications (inotify on Linux, FSEvents on macOS, ReadDirectoryChangesW on Windows).
+    calls: ['(^|\.)(watch|watchFile)$', 'chokidar', 'notify::', 'watchdog']
+  - id: os.process.spawn
+    layer: os
+    concept: Child process
+    explain: Starts another program. The OS forks/execs (CreateProcess on Windows) a new process with its own address space.
+    calls: ['(^|\.)(spawn|exec|execFile|execSync|spawnSync|fork)$', '^subprocess\.', 'Command::new$', '^exec\.Command$', '^os\.system$', 'Popen$']
+  - id: os.thread.spawn
+    layer: os
+    concept: Thread
+    explain: Creates an OS thread that shares memory with its parent. The scheduler time-slices threads across CPU cores.
+    calls: ['^threading\.Thread$', '^Thread$', 'thread::spawn$', '^Worker$', 'ThreadPoolExecutor$', 'spawn_blocking$']
+  - id: os.async.task
+    layer: os
+    concept: Async task
+    explain: Schedules a cooperative task on an event loop or async runtime. It yields at await points instead of blocking a thread.
+    calls: ['(^|\.)(create_task|gather|run_until_complete)$', '^asyncio\.', 'tokio::spawn$', '^Promise\.(all|race|allSettled)$', '^setImmediate$', '^queueMicrotask$']
+  - id: os.timer
+    layer: os
+    concept: Timer
+    explain: Asks the runtime to wake code after a delay. Timers are backed by the event loop or a kernel timer facility.
+    calls: ['^(setTimeout|setInterval)$', '^time\.sleep$', '(^|\.)sleep$', '^time\.(After|NewTicker|Tick)$']
+  - id: os.env.read
+    layer: os
+    concept: Environment variable
+    explain: Reads configuration from the process environment block, inherited from the parent process at start.
+    calls: ['^process\.env', '^os\.(getenv|environ)', 'env::var$', '^os\.Getenv$', 'dotenv']
+  - id: os.signal
+    layer: os
+    concept: Signal handling
+    explain: Reacts to asynchronous OS notifications such as SIGINT/SIGTERM (Ctrl+C, shutdown).
+    calls: ['^signal\.', 'ctrl_c$', '^signal\.Notify$']
+  - id: os.memory.buffer
+    layer: os
+    concept: Raw buffer
+    explain: Allocates a contiguous block of memory. Large buffers may be backed by mmap'd pages.
+    calls: ['^Buffer\.(alloc|from)$', '^bytearray$', '^ArrayBuffer$', '(^|\.)with_capacity$', 'mmap']
+  - id: os.lock
+    layer: os
+    concept: Lock / mutex
+    explain: Serialises access to shared memory so only one thread enters a critical section. Contention parks threads in the kernel (futex).
+    calls: ['(Mutex|RwLock|RLock|Semaphore)(::new)?$', '(^|\.)(lock|Lock)$', '^sync\.(Mutex|RWMutex)$']
+  - id: os.channel
+    layer: os
+    concept: Channel
+    explain: Passes messages between threads or tasks instead of sharing memory.
+    calls: ['(^|\.)(channel|unbounded_channel)$', 'mpsc::', '^queue\.Queue$', '^asyncio\.Queue$']
+  - id: os.crypto.random
+    layer: os
+    concept: Secure randomness
+    explain: Pulls entropy from the OS CSPRNG (getrandom, /dev/urandom, BCryptGenRandom).
+    calls: ['(^|\.)(randomUUID|randomBytes|getRandomValues|token_hex|token_urlsafe|urandom)$', 'uuid', 'OsRng', 'rand::']
+  - id: os.crypto.hash
+    layer: os
+    concept: Hashing
+    explain: Computes a fixed-size digest (SHA-256, blake3), used for integrity checks, cache keys and signatures.
+    calls: ['(^|\.)(createHash|sha256|md5|digest|hexdigest)$', 'hashlib', 'blake3', 'sha2']
+  - id: os.compress
+    layer: os
+    concept: Compression
+    explain: Trades CPU for fewer bytes (gzip/deflate, brotli, zstd). Decompression is usually much faster than compression.
+    calls: ['gzip', 'zlib', 'brotli', 'zstd', 'deflate', 'flate2']
+  - id: os.log
+    layer: os
+    concept: Logging
+    explain: Writes diagnostic lines to stdout/stderr or a file. Synchronous logging on hot paths can become a bottleneck.
+    calls: ['^console\.(log|error|warn|info|debug)$', '^(logger|log|logging)\.(info|debug|warn|warning|error|exception)$', '^log\.(Print|Printf|Println|Fatal)']
+  - id: os.stdio
+    layer: os
+    concept: Standard I/O
+    explain: Reads the terminal/pipe input or writes to stdout; the OS buffers file descriptors 0/1/2.
+    calls: ['^(print|input)$', '^fmt\.(Print|Println|Printf|Scan)', '(^|\.)(stdin|stdout|read_line)$']
+  - id: os.gpu
+    layer: os
+    concept: GPU compute
+    explain: Offloads parallel math to the GPU via a driver API (CUDA, Metal, WebGPU).
+    calls: ['cuda', '^torch\.', 'wgpu', 'navigator\.gpu']
+  # ---------------- Network ----------------
+  - id: net.http.client
+    layer: network
+    concept: HTTP request
+    explain: Opens (or reuses) a TCP connection, optionally wraps it in TLS, sends an HTTP request and waits for the response.
+    calls: ['^(fetch|\$fetch|ofetch)$', '^axios(\.(get|post|put|patch|delete|request))?$', '^(requests|httpx|session|client|http|aiohttp)\.(get|post|put|patch|delete|request)$', '^reqwest::', '^http\.(Get|Post)$', '^ky\.']
+  - id: net.http.server
+    layer: network
+    concept: HTTP server
+    explain: Binds a listening TCP socket, accepts connections and parses incoming HTTP requests into handler calls.
+    calls: ['(^|\.)(listen|serve)$', '^uvicorn\.run$', '^http\.ListenAndServe$', '^axum::serve$', '^HttpServer::new$', 'createServer$', 'TcpListener::bind$']
+  - id: net.http.route
+    layer: network
+    concept: Route registration
+    explain: Maps an HTTP method + path pattern to a handler function in the server's router table.
+    calls: ['^(app|router|server|api|r|e)\.(get|post|put|patch|delete|all|GET|POST|PUT|PATCH|DELETE)$', '(^|\.)HandleFunc$', '(^|\.)route$']
+  - id: net.middleware
+    layer: network
+    concept: Middleware
+    explain: Code that runs before/after every request (auth, CORS, logging). Requests pass through the chain before reaching a route.
+    calls: ['^(app|router|server)\.use$', '(^|\.)add_middleware$', '(^|\.)layer$', '(^|\.)Use$', '^helmet$']
+  - id: net.websocket
+    layer: network
+    concept: WebSocket
+    explain: Upgrades an HTTP connection into a long-lived, full-duplex message channel.
+    calls: ['WebSocket', '(^|\.)(websocket|ws)$', '^io\.(on|emit)$', '^socket\.(on|emit)$', 'Upgrader']
+  - id: net.socket.tcp
+    layer: network
+    concept: TCP socket
+    explain: A byte stream between two endpoints with ordered, reliable delivery (handshake, acks, retransmits).
+    calls: ['^socket\.socket$', 'TcpStream::connect$', '^net\.(createConnection|connect|Dial)$']
+  - id: net.dns
+    layer: network
+    concept: DNS lookup
+    explain: Resolves a hostname to IP addresses via the system resolver (stub resolver, then a recursive DNS server).
+    calls: ['^dns\.', '^socket\.gethostbyname', 'lookup_host$', '^net\.LookupHost$']
+  - id: net.grpc
+    layer: network
+    concept: gRPC call
+    explain: A typed RPC over HTTP/2 using Protocol Buffers for the payload.
+    calls: ['grpc', 'tonic::']
+  - id: net.auth.jwt
+    layer: network
+    concept: JWT auth
+    explain: Signs or verifies a JSON Web Token (base64 header.payload plus a signature), checked on every request.
+    calls: ['^jwt\.(sign|verify|decode|encode)$', 'jsonwebtoken', '(^|\.)(create_access_token|decode_token)$', 'jwt::']
+  - id: net.auth.password
+    layer: network
+    concept: Password hashing
+    explain: Derives a slow, salted hash (bcrypt/argon2/scrypt) so stolen hashes are expensive to crack.
+    calls: ['bcrypt', 'argon2', 'scrypt', 'pwd_context\.(hash|verify)', 'hashpw$', 'checkpw$']
+  - id: net.cors
+    layer: network
+    concept: CORS
+    explain: The browser blocks cross-origin requests unless the server returns Access-Control-Allow-* headers.
+    calls: ['^cors$', 'CORSMiddleware', 'CorsLayer', 'flask_cors']
+  - id: net.rate-limit
+    layer: network
+    concept: Rate limiting
+    explain: Caps requests per client per time window, usually with a token bucket held in memory or Redis.
+    calls: ['rateLimit', 'RateLimit', 'Limiter', 'throttle']
+  - id: net.sse
+    layer: network
+    concept: Server-sent events
+    explain: A one-way stream of text events over a single long-lived HTTP response.
+    calls: ['EventSource', 'StreamingResponse', 'Sse']
+  - id: net.http.proxy
+    layer: network
+    concept: Reverse proxy
+    explain: Forwards incoming requests to another server (API gateway, dev proxy), often rewriting paths or adding auth headers.
+    calls: ['createProxyMiddleware', 'http-proxy', 'httputil\.NewSingleHostReverseProxy', '(^|\.)(proxy|rewrites)$']
+  - id: net.url.parse
+    layer: network
+    concept: URL handling
+    explain: Splits a URL into scheme, host, path and query so routing and requests use the right parts.
+    calls: ['^URL$', 'urlparse', 'url::Url', 'URLSearchParams', 'quote_plus']
+  # ---------------- Data ----------------
+  - id: data.sql.query
+    layer: data
+    concept: SQL query
+    explain: Sends SQL text to the database, which parses it, plans it (index or scan) and returns rows.
+    calls: ['(^|\.)(execute|executemany|fetchall|fetchone|raw|QueryRow|Exec)$', 'sqlx::query', '(^|\.)query_as$', '^(db|conn|cursor|pool|client)\.query$']
+  - id: data.orm.read
+    layer: data
+    concept: ORM read
+    explain: An ORM turns a method call into a SELECT. Watch for N+1 queries when loading relations in a loop.
+    calls: ['(^|\.)(findMany|findUnique|findFirst|findOne|findAll|find_by|filter_by|get_or_404|scalars|Find|First)$', '\.objects\.(all|get|filter)', '^(db|session|db\.session)\.(query|get|scalars|execute)$']
+  - id: data.orm.write
+    layer: data
+    concept: ORM write
+    explain: An ORM turns object changes into INSERT/UPDATE/DELETE, usually inside a transaction flushed on commit.
+    calls: ['(^|\.)(createMany|upsert|bulk_create|insert_one)$', '^(db|session|db\.session)\.(add|delete|commit|flush|refresh)$', '\.(create|update|delete)$:prisma', '(^|\.)(Save|Create)$']
+  - id: data.transaction
+    layer: data
+    concept: Transaction
+    explain: Groups statements so they commit or roll back together (ACID). The isolation level decides what concurrent transactions see.
+    calls: ['(^|\.)(transaction|rollback|\$transaction|atomic|Begin|BeginTx)$']
+  - id: data.migration
+    layer: data
+    concept: Schema migration
+    explain: Versioned DDL changes (CREATE/ALTER TABLE) applied in order so every environment has the same schema.
+    calls: ['^op\.(create_table|add_column|drop_table)', 'AutoMigrate$', 'create_all$']
+  - id: data.cache.redis
+    layer: data
+    concept: Redis cache
+    explain: An in-memory key-value store reached over TCP. Reads take well under a millisecond; keys can expire with TTLs.
+    calls: ['^(redis|cache|r|rdb)\.(get|set|setex|hget|hset|expire|incr|del)$', 'Redis', 'ioredis']
+  - id: data.cache.memo
+    layer: data
+    concept: Memoization
+    explain: Stores results of pure calls in process memory so repeated inputs skip recomputation.
+    calls: ['lru_cache', '^(useMemo|useCallback|memo)$', 'functools\.cache']
+  - id: data.document
+    layer: data
+    concept: Document store
+    explain: Stores JSON-like documents (MongoDB, Firestore). Queries match fields; joins happen in the application.
+    calls: ['mongoose', '(^|\.)(insertOne|insertMany|find_one|aggregate)$', 'firestore', 'MongoClient']
+  - id: data.search
+    layer: data
+    concept: Full-text search
+    explain: An inverted index maps words to documents so text queries avoid scanning every row.
+    calls: ['elasticsearch', 'meilisearch', 'typesense', 'tantivy', 'to_tsvector']
+  - id: data.serialize.json
+    layer: data
+    concept: JSON serialization
+    explain: Converts objects to JSON text and back. Cost grows with payload size; huge payloads block the event loop.
+    calls: ['^JSON\.(parse|stringify)$', '^json\.(dumps|loads|dump|load)$', 'serde_json::', '^json\.(Marshal|Unmarshal)$', '(^|\.)(model_dump|jsonify)$', '^res\.json$']
+  - id: data.validation
+    layer: data
+    concept: Input validation
+    explain: Checks untrusted input against a schema before it reaches business logic or the database.
+    calls: ['(^|\.)(safeParse|model_validate|parse_obj)$', '^z\.', 'Joi\.', 'validator']
+  - id: data.state.client
+    layer: data
+    concept: Client state
+    explain: UI state held in the browser. Changing it re-renders the components that read it.
+    calls: ['^(useState|useReducer|useContext|createContext|useStore|atom|signal)$']
+  - id: data.state.server-cache
+    layer: data
+    concept: Server-state cache
+    explain: Client-side cache of server data (React Query, SWR) with background refetch and request de-duplication.
+    calls: ['^(useQuery|useMutation|useSWR|useInfiniteQuery)$', 'queryClient']
+  - id: data.storage.browser
+    layer: data
+    concept: Browser storage
+    explain: Data persisted in the browser (localStorage, IndexedDB, cookies). It survives reloads and is scoped per origin.
+    calls: ['^(localStorage|sessionStorage)\.', 'indexedDB', 'document\.cookie']
+  - id: data.file.upload
+    layer: data
+    concept: File upload
+    explain: Receives a multipart/form-data body and streams the file to disk or object storage.
+    calls: ['UploadFile', 'multer', 'FormData', 'multipart']
+  - id: data.pagination
+    layer: data
+    concept: Pagination
+    explain: Returns large result sets in pages (LIMIT/OFFSET or cursors) to bound memory and latency.
+    calls: ['(^|\.)(offset|skip|take|paginate|Limit|Offset)$']
+  # ---------------- Cloud ----------------
+  - id: cloud.aws.s3
+    layer: cloud
+    concept: Object storage
+    explain: Stores blobs by key in a bucket over HTTPS. Cheap and durable, but every call is a network round trip.
+    calls: ['S3', '^s3\.', 'PutObject', 'GetObject', 'upload_file', 'boto3\.client']
+  - id: cloud.queue
+    layer: cloud
+    concept: Message queue
+    explain: Decouples producers and consumers. Messages wait durably until a worker acknowledges them (at-least-once delivery).
+    calls: ['(^|\.)(send_message|sendMessage|enqueue|apply_async|send_task)$', 'SQS', 'kafka', 'amqp', 'pika', '(^|\.)(queue|Queue)\.add$']
+  - id: cloud.worker.task
+    layer: cloud
+    concept: Background job
+    explain: Work moved off the request path into a separate worker process that pulls jobs from a queue.
+    calls: ['(^|\.)(shared_task|delay)$', 'cron', 'BackgroundTasks', 'add_task$']
+  - id: cloud.pubsub
+    layer: cloud
+    concept: Pub/Sub
+    explain: Publishes events to a topic and every subscriber gets a copy; used for fan-out between services.
+    calls: ['pubsub', '(^|\.)(subscribe|publish)$', 'SNS', 'EventBridge']
+  - id: cloud.secrets
+    layer: cloud
+    concept: Secrets
+    explain: Credentials loaded from a secret manager or the environment at runtime instead of being committed to source.
+    calls: ['SecretsManager', 'secretmanager', 'vault', 'KeyVault', 'get_secret']
+  - id: cloud.email
+    layer: cloud
+    concept: Email delivery
+    explain: Hands a message to an SMTP server or provider API that queues and delivers it.
+    calls: ['smtplib', 'sendmail', 'send_mail', 'nodemailer', 'sendgrid', 'resend']
+  - id: cloud.payments
+    layer: cloud
+    concept: Payments API
+    explain: Calls a payment provider over HTTPS; money movement is confirmed asynchronously via webhooks.
+    calls: ['stripe', 'paypal', 'razorpay', 'checkout\.sessions']
+  - id: cloud.llm
+    layer: cloud
+    concept: LLM API
+    explain: Sends a prompt to a hosted language model over HTTPS and streams back generated tokens.
+    calls: ['openai', 'anthropic', 'messages\.create', 'completions\.create', 'generateText', 'streamText', 'ollama']
+  - id: cloud.observability
+    layer: cloud
+    concept: Telemetry export
+    explain: Ships logs, metrics or traces to a collector (OpenTelemetry, Sentry) for dashboards and alerts.
+    calls: ['sentry', 'opentelemetry', 'tracer', 'captureException', 'prometheus', 'statsd']
+  - id: cloud.container
+    layer: cloud
+    concept: Container runtime
+    explain: Talks to Docker/Kubernetes APIs to start isolated processes with their own filesystem and network namespace.
+    calls: ['docker', 'kubernetes', 'k8s', 'containers\.run']
+  - id: cloud.serverless
+    layer: cloud
+    concept: Serverless function
+    explain: Code that runs per event on managed infrastructure; instances start on demand (cold starts) and scale automatically.
+    calls: ['lambda_handler', 'Lambda', 'serverless']

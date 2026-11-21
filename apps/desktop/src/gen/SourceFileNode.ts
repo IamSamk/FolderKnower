@@ -9,4 +9,12 @@ export type SourceFileNode = { id: string, path: string, language: string,
 /**
  * blake3 of the file bytes.
  */
-contentHash: string, imports: Array<Edge>, functions: Array<FunctionNode>, };
+contentHash: string, lines: number, 
+/**
+ * 0..=1: how sure the tier assignment is.
+ */
+tierConfidence: number, 
+/**
+ * Short role guess, e.g. `component`, `route-handler`, `orm-models`.
+ */
+role?: string, imports: Array<Edge>, functions: Array<FunctionNode>, };

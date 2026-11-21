@@ -1,0 +1,9 @@
+{
+  "name": "todo-web",
+  "private": true,
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@tanstack/react-query": "^5.0.0"
+  }
+}

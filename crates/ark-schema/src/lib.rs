@@ -38,6 +38,188 @@ pub struct SystemArchitectureGraph {
     pub cross_tier_edges: Vec<CrossTierEdge>,
     /// Config, docs, tests, migrations, infra and manifests.
     pub non_code_nodes: Vec<NonCodeNode>,
+    /// What kind of project this looks like, and why.
+    pub summary: ProjectSummary,
+    /// ORM tables, DTO/schema classes and SQL/Prisma tables (the ER view).
+    pub data_models: Vec<DataModel>,
+    /// HTTP routes declared by backend code.
+    pub routes: Vec<RouteNode>,
+    /// Interactive UI elements (buttons, forms, inputs) found in components.
+    pub ui_elements: Vec<UiElement>,
+    /// Ambiguities the classifier wants a human (or the local model) to settle.
+    pub questions: Vec<Question>,
+}
+
+/// Project-level classification with its evidence.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct ProjectSummary {
+    pub kind: ProjectKind,
+    pub headline: String,
+    pub findings: Vec<Finding>,
+    pub stats: Stats,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(rename_all = "kebab-case")]
+pub enum ProjectKind {
+    FullStack,
+    Frontend,
+    Backend,
+    Library,
+    Cli,
+    Worker,
+    #[default]
+    Unknown,
+}
+
+/// One sentence the app can say about the repo, with the node/rule ids behind it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct Finding {
+    pub text: String,
+    pub evidence: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct Stats {
+    pub files: u32,
+    pub functions: u32,
+    pub lines: u32,
+    /// Language to file count.
+    pub languages: BTreeMap<String, u32>,
+}
+
+/// An entity in the ER view.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct DataModel {
+    /// `model:<path>#<Name>`.
+    pub id: String,
+    pub name: String,
+    pub kind: DataModelKind,
+    /// Framework that declared it, e.g. `sqlalchemy`, `pydantic`, `prisma`.
+    pub framework: String,
+    pub file_id: String,
+    pub line: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub table: Option<String>,
+    pub fields: Vec<DataField>,
+    pub relations: Vec<Relation>,
+    /// Other models with the same shape: a DTO mirroring a table, or vice versa.
+    pub mirrors: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(rename_all = "snake_case")]
+pub enum DataModelKind {
+    /// Persisted table (ORM class, Prisma model, SQL DDL).
+    Table,
+    /// Validation/transfer shape (Pydantic, zod, DTO).
+    Schema,
+    /// Document store collection (Mongoose).
+    Document,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct DataField {
+    pub name: String,
+    #[serde(default, rename = "type", skip_serializing_if = "Option::is_none")]
+    #[ts(optional, rename = "type")]
+    pub ty: Option<String>,
+    pub primary_key: bool,
+    pub nullable: bool,
+    /// `table.column` or model name this field points at.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub references: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct Relation {
+    pub target: String,
+    pub kind: RelationKind,
+    pub via: String,
+}
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema, TS,
+)]
+#[serde(rename_all = "snake_case")]
+#[ts(rename_all = "snake_case")]
+pub enum RelationKind {
+    ManyToOne,
+    OneToMany,
+    OneToOne,
+    ManyToMany,
+}
+
+/// An HTTP route.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct RouteNode {
+    pub id: String,
+    pub method: String,
+    pub path: String,
+    pub framework: String,
+    pub file_id: String,
+    pub line: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub handler: Option<String>,
+}
+
+/// A clickable/typeable element in a UI component: the "inspect element" entry point.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct UiElement {
+    pub id: String,
+    pub tag: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub label: Option<String>,
+    pub file_id: String,
+    pub line: u32,
+    /// Enclosing component function id.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub component: Option<String>,
+    /// e.g. `onClick`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub event: Option<String>,
+    /// Function id the event handler resolves to.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub handler: Option<String>,
+}
+
+/// A classification the engine is unsure about.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct Question {
+    pub id: String,
+    pub text: String,
+    /// File id or directory prefix the answer applies to.
+    pub subject: String,
+    pub options: Vec<TierLabel>,
+    pub suggested: TierLabel,
+    pub confidence: f64,
 }
 
 /// Which tool versions produced the graph.
@@ -64,7 +246,7 @@ pub struct TierNode {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema, TS,
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema, TS,
 )]
 pub enum TierLabel {
     Frontend,
@@ -103,6 +285,8 @@ pub struct ClusterMethod {
 #[ts(rename_all = "lowercase")]
 pub enum ClusterAlgo {
     Leiden,
+    /// Deterministic Louvain modularity optimisation over the import/call graph.
+    Louvain,
     /// Placeholder grouping by directory, used until Leiden lands (M1.8).
     Directory,
 }
@@ -117,6 +301,13 @@ pub struct SourceFileNode {
     pub language: String,
     /// blake3 of the file bytes.
     pub content_hash: String,
+    pub lines: u32,
+    /// 0..=1: how sure the tier assignment is.
+    pub tier_confidence: f64,
+    /// Short role guess, e.g. `component`, `route-handler`, `orm-models`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub role: Option<String>,
     pub imports: Vec<Edge>,
     pub functions: Vec<FunctionNode>,
 }
@@ -138,6 +329,8 @@ pub struct NonCodeNode {
 #[ts(rename_all = "lowercase")]
 pub enum NonCodeKind {
     Config,
+    /// Prisma/SQL/GraphQL schema files.
+    Schema,
     Doc,
     Test,
     Migration,
@@ -162,7 +355,7 @@ pub struct Edge {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema, TS,
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema, TS,
 )]
 #[serde(rename_all = "snake_case")]
 #[ts(rename_all = "snake_case")]
@@ -306,7 +499,7 @@ pub struct OntologyTag {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema, TS,
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema, TS,
 )]
 #[serde(rename_all = "lowercase")]
 #[ts(rename_all = "lowercase")]
@@ -353,7 +546,7 @@ pub struct CrossTierEdge {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema, TS,
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema, TS,
 )]
 pub enum Protocol {
     #[serde(rename = "HTTP/REST")]

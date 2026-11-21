@@ -1,0 +1,362 @@
+[
+  {
+    "concept": "File read",
+    "explain": "Reads bytes from disk through the kernel's VFS layer (open/read syscalls). The page cache usually serves repeated reads from RAM.",
+    "id": "os.fs.read",
+    "layer": "os"
+  },
+  {
+    "concept": "File write",
+    "explain": "Writes go to the page cache first; data reaches the device later unless fsync is called.",
+    "id": "os.fs.write",
+    "layer": "os"
+  },
+  {
+    "concept": "File watching",
+    "explain": "Subscribes to kernel file-change notifications (inotify on Linux, FSEvents on macOS, ReadDirectoryChangesW on Windows).",
+    "id": "os.fs.watch",
+    "layer": "os"
+  },
+  {
+    "concept": "Child process",
+    "explain": "Starts another program. The OS forks/execs (CreateProcess on Windows) a new process with its own address space.",
+    "id": "os.process.spawn",
+    "layer": "os"
+  },
+  {
+    "concept": "Thread",
+    "explain": "Creates an OS thread that shares memory with its parent. The scheduler time-slices threads across CPU cores.",
+    "id": "os.thread.spawn",
+    "layer": "os"
+  },
+  {
+    "concept": "Async task",
+    "explain": "Schedules a cooperative task on an event loop or async runtime. It yields at await points instead of blocking a thread.",
+    "id": "os.async.task",
+    "layer": "os"
+  },
+  {
+    "concept": "Timer",
+    "explain": "Asks the runtime to wake code after a delay. Timers are backed by the event loop or a kernel timer facility.",
+    "id": "os.timer",
+    "layer": "os"
+  },
+  {
+    "concept": "Environment variable",
+    "explain": "Reads configuration from the process environment block, inherited from the parent process at start.",
+    "id": "os.env.read",
+    "layer": "os"
+  },
+  {
+    "concept": "Signal handling",
+    "explain": "Reacts to asynchronous OS notifications such as SIGINT/SIGTERM (Ctrl+C, shutdown).",
+    "id": "os.signal",
+    "layer": "os"
+  },
+  {
+    "concept": "Raw buffer",
+    "explain": "Allocates a contiguous block of memory. Large buffers may be backed by mmap'd pages.",
+    "id": "os.memory.buffer",
+    "layer": "os"
+  },
+  {
+    "concept": "Lock / mutex",
+    "explain": "Serialises access to shared memory so only one thread enters a critical section. Contention parks threads in the kernel (futex).",
+    "id": "os.lock",
+    "layer": "os"
+  },
+  {
+    "concept": "Channel",
+    "explain": "Passes messages between threads or tasks instead of sharing memory.",
+    "id": "os.channel",
+    "layer": "os"
+  },
+  {
+    "concept": "Secure randomness",
+    "explain": "Pulls entropy from the OS CSPRNG (getrandom, /dev/urandom, BCryptGenRandom).",
+    "id": "os.crypto.random",
+    "layer": "os"
+  },
+  {
+    "concept": "Hashing",
+    "explain": "Computes a fixed-size digest (SHA-256, blake3), used for integrity checks, cache keys and signatures.",
+    "id": "os.crypto.hash",
+    "layer": "os"
+  },
+  {
+    "concept": "Compression",
+    "explain": "Trades CPU for fewer bytes (gzip/deflate, brotli, zstd). Decompression is usually much faster than compression.",
+    "id": "os.compress",
+    "layer": "os"
+  },
+  {
+    "concept": "Logging",
+    "explain": "Writes diagnostic lines to stdout/stderr or a file. Synchronous logging on hot paths can become a bottleneck.",
+    "id": "os.log",
+    "layer": "os"
+  },
+  {
+    "concept": "Standard I/O",
+    "explain": "Reads the terminal/pipe input or writes to stdout; the OS buffers file descriptors 0/1/2.",
+    "id": "os.stdio",
+    "layer": "os"
+  },
+  {
+    "concept": "GPU compute",
+    "explain": "Offloads parallel math to the GPU via a driver API (CUDA, Metal, WebGPU).",
+    "id": "os.gpu",
+    "layer": "os"
+  },
+  {
+    "concept": "HTTP request",
+    "explain": "Opens (or reuses) a TCP connection, optionally wraps it in TLS, sends an HTTP request and waits for the response.",
+    "id": "net.http.client",
+    "layer": "network"
+  },
+  {
+    "concept": "HTTP server",
+    "explain": "Binds a listening TCP socket, accepts connections and parses incoming HTTP requests into handler calls.",
+    "id": "net.http.server",
+    "layer": "network"
+  },
+  {
+    "concept": "Route registration",
+    "explain": "Maps an HTTP method + path pattern to a handler function in the server's router table.",
+    "id": "net.http.route",
+    "layer": "network"
+  },
+  {
+    "concept": "Middleware",
+    "explain": "Code that runs before/after every request (auth, CORS, logging). Requests pass through the chain before reaching a route.",
+    "id": "net.middleware",
+    "layer": "network"
+  },
+  {
+    "concept": "WebSocket",
+    "explain": "Upgrades an HTTP connection into a long-lived, full-duplex message channel.",
+    "id": "net.websocket",
+    "layer": "network"
+  },
+  {
+    "concept": "TCP socket",
+    "explain": "A byte stream between two endpoints with ordered, reliable delivery (handshake, acks, retransmits).",
+    "id": "net.socket.tcp",
+    "layer": "network"
+  },
+  {
+    "concept": "DNS lookup",
+    "explain": "Resolves a hostname to IP addresses via the system resolver (stub resolver, then a recursive DNS server).",
+    "id": "net.dns",
+    "layer": "network"
+  },
+  {
+    "concept": "gRPC call",
+    "explain": "A typed RPC over HTTP/2 using Protocol Buffers for the payload.",
+    "id": "net.grpc",
+    "layer": "network"
+  },
+  {
+    "concept": "JWT auth",
+    "explain": "Signs or verifies a JSON Web Token (base64 header.payload plus a signature), checked on every request.",
+    "id": "net.auth.jwt",
+    "layer": "network"
+  },
+  {
+    "concept": "Password hashing",
+    "explain": "Derives a slow, salted hash (bcrypt/argon2/scrypt) so stolen hashes are expensive to crack.",
+    "id": "net.auth.password",
+    "layer": "network"
+  },
+  {
+    "concept": "CORS",
+    "explain": "The browser blocks cross-origin requests unless the server returns Access-Control-Allow-* headers.",
+    "id": "net.cors",
+    "layer": "network"
+  },
+  {
+    "concept": "Rate limiting",
+    "explain": "Caps requests per client per time window, usually with a token bucket held in memory or Redis.",
+    "id": "net.rate-limit",
+    "layer": "network"
+  },
+  {
+    "concept": "Server-sent events",
+    "explain": "A one-way stream of text events over a single long-lived HTTP response.",
+    "id": "net.sse",
+    "layer": "network"
+  },
+  {
+    "concept": "Reverse proxy",
+    "explain": "Forwards incoming requests to another server (API gateway, dev proxy), often rewriting paths or adding auth headers.",
+    "id": "net.http.proxy",
+    "layer": "network"
+  },
+  {
+    "concept": "URL handling",
+    "explain": "Splits a URL into scheme, host, path and query so routing and requests use the right parts.",
+    "id": "net.url.parse",
+    "layer": "network"
+  },
+  {
+    "concept": "SQL query",
+    "explain": "Sends SQL text to the database, which parses it, plans it (index or scan) and returns rows.",
+    "id": "data.sql.query",
+    "layer": "data"
+  },
+  {
+    "concept": "ORM read",
+    "explain": "An ORM turns a method call into a SELECT. Watch for N+1 queries when loading relations in a loop.",
+    "id": "data.orm.read",
+    "layer": "data"
+  },
+  {
+    "concept": "ORM write",
+    "explain": "An ORM turns object changes into INSERT/UPDATE/DELETE, usually inside a transaction flushed on commit.",
+    "id": "data.orm.write",
+    "layer": "data"
+  },
+  {
+    "concept": "Transaction",
+    "explain": "Groups statements so they commit or roll back together (ACID). The isolation level decides what concurrent transactions see.",
+    "id": "data.transaction",
+    "layer": "data"
+  },
+  {
+    "concept": "Schema migration",
+    "explain": "Versioned DDL changes (CREATE/ALTER TABLE) applied in order so every environment has the same schema.",
+    "id": "data.migration",
+    "layer": "data"
+  },
+  {
+    "concept": "Redis cache",
+    "explain": "An in-memory key-value store reached over TCP. Reads take well under a millisecond; keys can expire with TTLs.",
+    "id": "data.cache.redis",
+    "layer": "data"
+  },
+  {
+    "concept": "Memoization",
+    "explain": "Stores results of pure calls in process memory so repeated inputs skip recomputation.",
+    "id": "data.cache.memo",
+    "layer": "data"
+  },
+  {
+    "concept": "Document store",
+    "explain": "Stores JSON-like documents (MongoDB, Firestore). Queries match fields; joins happen in the application.",
+    "id": "data.document",
+    "layer": "data"
+  },
+  {
+    "concept": "Full-text search",
+    "explain": "An inverted index maps words to documents so text queries avoid scanning every row.",
+    "id": "data.search",
+    "layer": "data"
+  },
+  {
+    "concept": "JSON serialization",
+    "explain": "Converts objects to JSON text and back. Cost grows with payload size; huge payloads block the event loop.",
+    "id": "data.serialize.json",
+    "layer": "data"
+  },
+  {
+    "concept": "Input validation",
+    "explain": "Checks untrusted input against a schema before it reaches business logic or the database.",
+    "id": "data.validation",
+    "layer": "data"
+  },
+  {
+    "concept": "Client state",
+    "explain": "UI state held in the browser. Changing it re-renders the components that read it.",
+    "id": "data.state.client",
+    "layer": "data"
+  },
+  {
+    "concept": "Server-state cache",
+    "explain": "Client-side cache of server data (React Query, SWR) with background refetch and request de-duplication.",
+    "id": "data.state.server-cache",
+    "layer": "data"
+  },
+  {
+    "concept": "Browser storage",
+    "explain": "Data persisted in the browser (localStorage, IndexedDB, cookies). It survives reloads and is scoped per origin.",
+    "id": "data.storage.browser",
+    "layer": "data"
+  },
+  {
+    "concept": "File upload",
+    "explain": "Receives a multipart/form-data body and streams the file to disk or object storage.",
+    "id": "data.file.upload",
+    "layer": "data"
+  },
+  {
+    "concept": "Pagination",
+    "explain": "Returns large result sets in pages (LIMIT/OFFSET or cursors) to bound memory and latency.",
+    "id": "data.pagination",
+    "layer": "data"
+  },
+  {
+    "concept": "Object storage",
+    "explain": "Stores blobs by key in a bucket over HTTPS. Cheap and durable, but every call is a network round trip.",
+    "id": "cloud.aws.s3",
+    "layer": "cloud"
+  },
+  {
+    "concept": "Message queue",
+    "explain": "Decouples producers and consumers. Messages wait durably until a worker acknowledges them (at-least-once delivery).",
+    "id": "cloud.queue",
+    "layer": "cloud"
+  },
+  {
+    "concept": "Background job",
+    "explain": "Work moved off the request path into a separate worker process that pulls jobs from a queue.",
+    "id": "cloud.worker.task",
+    "layer": "cloud"
+  },
+  {
+    "concept": "Pub/Sub",
+    "explain": "Publishes events to a topic and every subscriber gets a copy; used for fan-out between services.",
+    "id": "cloud.pubsub",
+    "layer": "cloud"
+  },
+  {
+    "concept": "Secrets",
+    "explain": "Credentials loaded from a secret manager or the environment at runtime instead of being committed to source.",
+    "id": "cloud.secrets",
+    "layer": "cloud"
+  },
+  {
+    "concept": "Email delivery",
+    "explain": "Hands a message to an SMTP server or provider API that queues and delivers it.",
+    "id": "cloud.email",
+    "layer": "cloud"
+  },
+  {
+    "concept": "Payments API",
+    "explain": "Calls a payment provider over HTTPS; money movement is confirmed asynchronously via webhooks.",
+    "id": "cloud.payments",
+    "layer": "cloud"
+  },
+  {
+    "concept": "LLM API",
+    "explain": "Sends a prompt to a hosted language model over HTTPS and streams back generated tokens.",
+    "id": "cloud.llm",
+    "layer": "cloud"
+  },
+  {
+    "concept": "Telemetry export",
+    "explain": "Ships logs, metrics or traces to a collector (OpenTelemetry, Sentry) for dashboards and alerts.",
+    "id": "cloud.observability",
+    "layer": "cloud"
+  },
+  {
+    "concept": "Container runtime",
+    "explain": "Talks to Docker/Kubernetes APIs to start isolated processes with their own filesystem and network namespace.",
+    "id": "cloud.container",
+    "layer": "cloud"
+  },
+  {
+    "concept": "Serverless function",
+    "explain": "Code that runs per event on managed infrastructure; instances start on demand (cold starts) and scale automatically.",
+    "id": "cloud.serverless",
+    "layer": "cloud"
+  }
+]

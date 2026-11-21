@@ -14,6 +14,13 @@
         "$ref": "#/$defs/CrossTierEdge"
       }
     },
+    "dataModels": {
+      "description": "ORM tables, DTO/schema classes and SQL/Prisma tables (the ER view).",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/DataModel"
+      }
+    },
     "generator": {
       "$ref": "#/$defs/GeneratorInfo"
     },
@@ -24,6 +31,13 @@
         "$ref": "#/$defs/NonCodeNode"
       }
     },
+    "questions": {
+      "description": "Ambiguities the classifier wants a human (or the local model) to settle.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Question"
+      }
+    },
     "repoName": {
       "type": "string"
     },
@@ -31,13 +45,31 @@
       "description": "Stored relative-safe; never leaves the machine.",
       "type": "string"
     },
+    "routes": {
+      "description": "HTTP routes declared by backend code.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RouteNode"
+      }
+    },
     "schemaVersion": {
       "$ref": "#/$defs/SchemaVersion"
+    },
+    "summary": {
+      "description": "What kind of project this looks like, and why.",
+      "$ref": "#/$defs/ProjectSummary"
     },
     "tiers": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/TierNode"
+      }
+    },
+    "uiElements": {
+      "description": "Interactive UI elements (buttons, forms, inputs) found in components.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/UiElement"
       }
     }
   },
@@ -50,7 +82,12 @@
     "contentRoot",
     "tiers",
     "crossTierEdges",
-    "nonCodeNodes"
+    "nonCodeNodes",
+    "summary",
+    "dataModels",
+    "routes",
+    "uiElements",
+    "questions"
   ],
   "$defs": {
     "BigO": {
@@ -73,6 +110,11 @@
           "enum": [
             "leiden"
           ]
+        },
+        {
+          "description": "Deterministic Louvain modularity optimisation over the import/call graph.",
+          "type": "string",
+          "const": "louvain"
         },
         {
           "description": "Placeholder grouping by directory, used until Leiden lands (M1.8).",
@@ -195,6 +237,123 @@
         "evidence"
       ]
     },
+    "DataField": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "primaryKey": {
+          "type": "boolean"
+        },
+        "references": {
+          "description": "`table.column` or model name this field points at.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "primaryKey",
+        "nullable"
+      ]
+    },
+    "DataModel": {
+      "description": "An entity in the ER view.",
+      "type": "object",
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DataField"
+          }
+        },
+        "fileId": {
+          "type": "string"
+        },
+        "framework": {
+          "description": "Framework that declared it, e.g. `sqlalchemy`, `pydantic`, `prisma`.",
+          "type": "string"
+        },
+        "id": {
+          "description": "`model:<path>#<Name>`.",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/DataModelKind"
+        },
+        "line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "mirrors": {
+          "description": "Other models with the same shape: a DTO mirroring a table, or vice versa.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "relations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Relation"
+          }
+        },
+        "table": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "framework",
+        "fileId",
+        "line",
+        "fields",
+        "relations",
+        "mirrors"
+      ]
+    },
+    "DataModelKind": {
+      "oneOf": [
+        {
+          "description": "Persisted table (ORM class, Prisma model, SQL DDL).",
+          "type": "string",
+          "const": "table"
+        },
+        {
+          "description": "Validation/transfer shape (Pydantic, zod, DTO).",
+          "type": "string",
+          "const": "schema"
+        },
+        {
+          "description": "Document store collection (Mongoose).",
+          "type": "string",
+          "const": "document"
+        }
+      ]
+    },
     "Edge": {
       "description": "A directed edge, shared by imports and calls. Every edge carries provenance.",
       "type": "object",
@@ -228,6 +387,26 @@
         "target",
         "provenance",
         "confidence"
+      ]
+    },
+    "Finding": {
+      "description": "One sentence the app can say about the repo, with the node/rule ids behind it.",
+      "type": "object",
+      "properties": {
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "text",
+        "evidence"
       ]
     },
     "FunctionNode": {
@@ -420,14 +599,23 @@
       ]
     },
     "NonCodeKind": {
-      "type": "string",
-      "enum": [
-        "config",
-        "doc",
-        "test",
-        "migration",
-        "infra",
-        "manifest"
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "config",
+            "doc",
+            "test",
+            "migration",
+            "infra",
+            "manifest"
+          ]
+        },
+        {
+          "description": "Prisma/SQL/GraphQL schema files.",
+          "type": "string",
+          "const": "schema"
+        }
       ]
     },
     "NonCodeNode": {
@@ -514,6 +702,46 @@
         "name"
       ]
     },
+    "ProjectKind": {
+      "type": "string",
+      "enum": [
+        "full-stack",
+        "frontend",
+        "backend",
+        "library",
+        "cli",
+        "worker",
+        "unknown"
+      ]
+    },
+    "ProjectSummary": {
+      "description": "Project-level classification with its evidence.",
+      "type": "object",
+      "properties": {
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Finding"
+          }
+        },
+        "headline": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/ProjectKind"
+        },
+        "stats": {
+          "$ref": "#/$defs/Stats"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "headline",
+        "findings",
+        "stats"
+      ]
+    },
     "Protocol": {
       "type": "string",
       "enum": [
@@ -532,6 +760,114 @@
         "ts_resolved",
         "ts_name_match",
         "runtime_observed"
+      ]
+    },
+    "Question": {
+      "description": "A classification the engine is unsure about.",
+      "type": "object",
+      "properties": {
+        "confidence": {
+          "type": "number",
+          "format": "double"
+        },
+        "id": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TierLabel"
+          }
+        },
+        "subject": {
+          "description": "File id or directory prefix the answer applies to.",
+          "type": "string"
+        },
+        "suggested": {
+          "$ref": "#/$defs/TierLabel"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "text",
+        "subject",
+        "options",
+        "suggested",
+        "confidence"
+      ]
+    },
+    "Relation": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/RelationKind"
+        },
+        "target": {
+          "type": "string"
+        },
+        "via": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "target",
+        "kind",
+        "via"
+      ]
+    },
+    "RelationKind": {
+      "type": "string",
+      "enum": [
+        "many_to_one",
+        "one_to_many",
+        "one_to_one",
+        "many_to_many"
+      ]
+    },
+    "RouteNode": {
+      "description": "An HTTP route.",
+      "type": "object",
+      "properties": {
+        "fileId": {
+          "type": "string"
+        },
+        "framework": {
+          "type": "string"
+        },
+        "handler": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "method": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "path",
+        "framework",
+        "fileId",
+        "line"
       ]
     },
     "SchemaVersion": {
@@ -588,8 +924,25 @@
         "language": {
           "type": "string"
         },
+        "lines": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
         "path": {
           "type": "string"
+        },
+        "role": {
+          "description": "Short role guess, e.g. `component`, `route-handler`, `orm-models`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tierConfidence": {
+          "description": "0..=1: how sure the tier assignment is.",
+          "type": "number",
+          "format": "double"
         }
       },
       "additionalProperties": false,
@@ -598,8 +951,46 @@
         "path",
         "language",
         "contentHash",
+        "lines",
+        "tierConfidence",
         "imports",
         "functions"
+      ]
+    },
+    "Stats": {
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "functions": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "languages": {
+          "description": "Language to file count.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          }
+        },
+        "lines": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "files",
+        "functions",
+        "lines",
+        "languages"
       ]
     },
     "SubsystemCluster": {
@@ -671,6 +1062,60 @@
         "label",
         "evidence",
         "clusters"
+      ]
+    },
+    "UiElement": {
+      "description": "A clickable/typeable element in a UI component: the \"inspect element\" entry point.",
+      "type": "object",
+      "properties": {
+        "component": {
+          "description": "Enclosing component function id.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "event": {
+          "description": "e.g. `onClick`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fileId": {
+          "type": "string"
+        },
+        "handler": {
+          "description": "Function id the event handler resolves to.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "tag": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tag",
+        "fileId",
+        "line"
       ]
     },
     "Visibility": {

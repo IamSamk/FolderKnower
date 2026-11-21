@@ -9,6 +9,11 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+tree-sitter = { workspace = true }
+serde = { workspace = true }
+
+[dev-dependencies]
+tree-sitter-rust = { workspace = true }
 
 [lints]
 workspace = true
