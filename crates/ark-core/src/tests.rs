@@ -160,10 +160,14 @@ fn golden_fullstack_todo() {
     g.repo_name = "fullstack-todo".to_owned();
     g.generator.version = "golden".to_owned();
     let json = ark_schema::to_canonical_json(&g).unwrap();
-    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/expected/fullstack-todo.json");
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../fixtures/expected/fullstack-todo.json");
     if std::env::var_os("UPDATE_GOLDEN").is_some() {
         fs::write(&path, &json).unwrap();
     }
     let expected = fs::read_to_string(&path).unwrap().replace("\r\n", "\n");
-    assert!(expected == json, "golden mismatch; run with UPDATE_GOLDEN=1 and review the diff");
+    assert!(
+        expected == json,
+        "golden mismatch; run with UPDATE_GOLDEN=1 and review the diff"
+    );
 }

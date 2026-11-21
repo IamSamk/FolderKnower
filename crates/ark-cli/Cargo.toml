@@ -14,6 +14,7 @@ path = "src/main.rs"
 
 [dependencies]
 ark-core = { workspace = true }
+ark-ontology = { workspace = true }
 clap = { workspace = true }
 serde_json = { workspace = true }
 

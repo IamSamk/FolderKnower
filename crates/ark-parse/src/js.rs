@@ -456,11 +456,32 @@ impl X<'_, '_> {
             .then(|| func.child_by_field_name("object"))
             .flatten()
             .map(|o| clip(self.t(o), 48));
-        let ident_args: Vec<String> = arg_nodes
+        let mut ident_args: Vec<String> = arg_nodes
             .iter()
             .filter(|a| matches!(a.kind(), "identifier" | "member_expression"))
             .map(|a| clip(self.t(*a), 48))
             .collect();
+        // Callbacks passed in option objects: useMutation({ mutationFn: createTodo }).
+        for a in &arg_nodes {
+            if a.kind() != "object" {
+                continue;
+            }
+            for p in named_children(*a) {
+                let v = match p.kind() {
+                    "pair" => p.child_by_field_name("value"),
+                    "shorthand_property_identifier" => Some(p),
+                    _ => None,
+                };
+                if let Some(v) = v
+                    && matches!(
+                        v.kind(),
+                        "identifier" | "member_expression" | "shorthand_property_identifier"
+                    )
+                {
+                    ident_args.push(clip(self.t(v), 48));
+                }
+            }
+        }
         let fact = CallFact {
             callee: callee.clone(),
             receiver: receiver.clone(),
@@ -584,6 +605,22 @@ impl X<'_, '_> {
             return;
         };
         let tag = self.t(tag_node).to_owned();
+        // Rendering a component is a dependency on it: <TodoList /> -> TodoList.
+        if tag.starts_with(|c: char| c.is_ascii_uppercase())
+            && let Some(&i) = self.fn_stack.last()
+        {
+            let (receiver, callee) = match tag.rsplit_once('.') {
+                Some((r, c)) => (Some(r.to_owned()), c.to_owned()),
+                None => (None, tag.clone()),
+            };
+            self.facts.functions[i].calls.push(CallFact {
+                callee,
+                receiver,
+                line: line(node),
+                first_string: None,
+                ident_args: Vec::new(),
+            });
+        }
         let mut event = None;
         let mut handler = None;
         let mut label_attr = None;

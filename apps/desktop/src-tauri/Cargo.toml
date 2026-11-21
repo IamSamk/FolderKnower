@@ -1,0 +1,28 @@
+[package]
+name = "architekton-desktop"
+description = "Architekton desktop app"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+name = "architekton_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7.6", features = [] }
+
+[dependencies]
+tauri = { version = "2.12.7", features = [] }
+tauri-plugin-dialog = "2.8.4"
+ark-core = { workspace = true }
+ark-ontology = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+ureq = { version = "3.5.1", default-features = false, features = ["json"] }
+
+[lints]
+workspace = true

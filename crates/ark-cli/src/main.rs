@@ -40,11 +40,22 @@ enum Cmd {
     },
     /// Print the JSON Schema of architecture.json.
     Schema,
+    /// Print the Systems Ontology catalogue (concepts + teaching text) as JSON.
+    Ontology,
 }
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
     match cli.cmd {
+        Cmd::Ontology => {
+            let rules: Vec<serde_json::Value> = ark_ontology::Ontology::load()
+                .rules
+                .into_iter()
+                .map(|r| serde_json::json!({"id": r.id, "layer": r.layer, "concept": r.concept, "explain": r.explain}))
+                .collect();
+            println!("{}", serde_json::to_string_pretty(&rules).expect("json"));
+            ExitCode::SUCCESS
+        }
         Cmd::Schema => {
             print!("{}", ark_schema::json_schema_string());
             ExitCode::SUCCESS

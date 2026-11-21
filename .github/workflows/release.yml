@@ -1,0 +1,119 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  desktop:
+    name: desktop (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows
+            os: windows-latest
+            args: ""
+          - name: macos-universal
+            os: macos-latest
+            args: "--target universal-apple-darwin"
+          - name: linux
+            os: ubuntu-22.04
+            args: ""
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Linux system libraries for WebKitGTK
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev
+
+      - name: Rust toolchain (from rust-toolchain.toml)
+        run: rustup show active-toolchain || rustup toolchain install
+
+      - name: macOS targets
+        if: runner.os == 'macOS'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.name }}
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - uses: tauri-apps/tauri-action@v0
+        with:
+          projectPath: apps/desktop
+          tauriScript: pnpm tauri
+          tagName: ${{ github.event.inputs.tag || github.ref_name }}
+          releaseName: Architekton ${{ github.event.inputs.tag || github.ref_name }}
+          releaseBody: |
+            Offline codebase architecture explorer. Drop a repository folder and explore it from system tiers down to functions, API flows and the database.
+
+            **Install**
+            - Windows: `Architekton_*_x64-setup.exe` (or the `.msi`).
+            - macOS (Apple Silicon + Intel): `Architekton_*_universal.dmg`. The app is not notarized yet: right-click it and choose Open the first time, or run `xattr -cr /Applications/Architekton.app`.
+            - Linux: `.AppImage` (chmod +x and run), `.deb` or `.rpm`.
+
+            The `architekton-cli-*` archives contain the command-line indexer (`architekton index <repo> --out architecture.json`).
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
+
+  cli:
+    name: cli (${{ matrix.target }})
+    needs: desktop
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            exe: architekton.exe
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            exe: architekton
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            exe: architekton
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup show active-toolchain || rustup toolchain install
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release -p ark-cli
+      - name: Package and upload
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          name="architekton-cli-${TAG}-${{ matrix.target }}"
+          mkdir "$name"
+          cp "target/release/${{ matrix.exe }}" README.md "$name/"
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            7z a "$name.zip" "$name" > /dev/null
+            asset="$name.zip"
+          else
+            tar czf "$name.tar.gz" "$name"
+            asset="$name.tar.gz"
+          fi
+          gh release upload "$TAG" "$asset" --clobber

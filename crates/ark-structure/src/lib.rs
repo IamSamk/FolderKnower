@@ -242,8 +242,14 @@ fn role_for(f: &ParsedFile, facts: &BTreeSet<&'static str>, tier: TierLabel) -> 
     let p = f.scan.path.to_ascii_lowercase();
     let name = p.rsplit('/').next().unwrap_or(&p);
     let stem = name.split('.').next().unwrap_or(name);
+    let entry = matches!(
+        stem,
+        "main" | "index" | "app" | "server" | "__main__" | "manage" | "wsgi" | "asgi" | "lib"
+    );
     let r = if facts.contains("routes") {
         "route-handler"
+    } else if entry && !facts.contains("component") && !facts.contains("tables") {
+        "entrypoint"
     } else if facts.contains("middleware") {
         "middleware"
     } else if facts.contains("task") {

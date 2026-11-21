@@ -613,6 +613,17 @@ pub fn finalize(mut raw: Vec<(DataModel, Vec<(String, RelationKind, String)>)>) 
             }
             m.relations
                 .sort_by(|a, b| (&a.target, &a.via).cmp(&(&b.target, &b.via)));
+            // `owner = relationship("User")` next to `owner_id = ForeignKey(...)` is one
+            // relation; keep the side backed by a real column.
+            let cols: BTreeSet<String> = m.fields.iter().map(|f| f.name.clone()).collect();
+            let backed: BTreeSet<(String, RelationKind)> = m
+                .relations
+                .iter()
+                .filter(|r| cols.contains(&r.via))
+                .map(|r| (r.target.clone(), r.kind))
+                .collect();
+            m.relations
+                .retain(|r| cols.contains(&r.via) || !backed.contains(&(r.target.clone(), r.kind)));
             m
         })
         .collect();

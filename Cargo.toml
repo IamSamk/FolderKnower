@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/*"]
+members = ["crates/*", "apps/desktop/src-tauri"]
 # ark-probe is the Phase 4 privileged helper; build it explicitly with `-p ark-probe`.
 default-members = [
     "crates/ark-schema",

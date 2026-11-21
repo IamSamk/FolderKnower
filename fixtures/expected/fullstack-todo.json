@@ -96,8 +96,26 @@
                       "ruleId": "data.state.server-cache"
                     }
                   ],
-                  "calls": [],
-                  "calledBy": []
+                  "calls": [
+                    {
+                      "target": "fn:web/src/components/TodoList.tsx#TodoRow",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.9
+                    },
+                    {
+                      "target": "fn:web/src/lib/api.ts#createTodo",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.7
+                    },
+                    {
+                      "target": "fn:web/src/lib/api.ts#listTodos",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.7
+                    }
+                  ],
+                  "calledBy": [
+                    "fn:web/src/App.tsx#App"
+                  ]
                 },
                 {
                   "id": "fn:web/src/components/TodoList.tsx#onSuccess",
@@ -198,7 +216,9 @@
                       "confidence": 0.85
                     }
                   ],
-                  "calledBy": []
+                  "calledBy": [
+                    "fn:web/src/components/TodoList.tsx#TodoList"
+                  ]
                 }
               ]
             },
@@ -258,7 +278,9 @@
                     }
                   ],
                   "calls": [],
-                  "calledBy": []
+                  "calledBy": [
+                    "fn:web/src/components/TodoList.tsx#TodoList"
+                  ]
                 },
                 {
                   "id": "fn:web/src/lib/api.ts#createTodo",
@@ -305,7 +327,9 @@
                     }
                   ],
                   "calls": [],
-                  "calledBy": []
+                  "calledBy": [
+                    "fn:web/src/components/TodoList.tsx#TodoList"
+                  ]
                 },
                 {
                   "id": "fn:web/src/lib/api.ts#completeTodo",
@@ -493,7 +517,18 @@
                       "ruleId": "data.state.client"
                     }
                   ],
-                  "calls": [],
+                  "calls": [
+                    {
+                      "target": "fn:web/src/components/LoginForm.tsx#LoginForm",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    },
+                    {
+                      "target": "fn:web/src/components/TodoList.tsx#TodoList",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
                   "calledBy": []
                 }
               ]
@@ -553,7 +588,9 @@
                     }
                   ],
                   "calls": [],
-                  "calledBy": []
+                  "calledBy": [
+                    "fn:web/src/App.tsx#App"
+                  ]
                 },
                 {
                   "id": "fn:web/src/components/LoginForm.tsx#submit",
@@ -842,7 +879,7 @@
               "contentHash": "18052eb9915d6ddb7786a2659bfc372ae17c12dcac9f0af3e60fd485b08ef874",
               "lines": 15,
               "tierConfidence": 0.66,
-              "role": "middleware",
+              "role": "entrypoint",
               "imports": [
                 {
                   "target": "file:api/app/core/db.py",
@@ -1634,11 +1671,6 @@
         }
       ],
       "relations": [
-        {
-          "target": "model:api/app/models.py#User",
-          "kind": "many_to_one",
-          "via": "owner"
-        },
         {
           "target": "model:api/app/models.py#User",
           "kind": "many_to_one",

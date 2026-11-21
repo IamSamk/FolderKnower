@@ -154,7 +154,9 @@ pub struct Relation {
     pub via: String,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema, TS,
+)]
 #[serde(rename_all = "snake_case")]
 #[ts(rename_all = "snake_case")]
 pub enum RelationKind {

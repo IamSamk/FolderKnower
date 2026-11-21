@@ -388,6 +388,29 @@ pub fn link(files: &[ParsedFile], inputs: &LinkInputs) -> Linked {
             let src_id = fn_id(&f.scan.path, &func.qualname);
             let cls = enclosing_class(&func.qualname);
             let mut edges: BTreeMap<String, Edge> = BTreeMap::new();
+            // Functions passed as values (callbacks, handlers, DI providers) are edges too,
+            // but only when the reference resolves through scope or imports.
+            let mut refs = Vec::new();
+            for c in &func.calls {
+                for a in &c.ident_args {
+                    let (recv, name) = match a.rsplit_once('.') {
+                        Some((r, n)) => (Some(r), n),
+                        None => (None, a.as_str()),
+                    };
+                    if let Some(mut e) = idx.resolve_call(i, recv, name, cls)
+                        && e.provenance == Provenance::TsResolved
+                        && e.target.starts_with("fn:")
+                    {
+                        e.confidence = conf(e.confidence.min(0.7));
+                        refs.push(e);
+                    }
+                }
+            }
+            for e in refs {
+                if e.target != src_id {
+                    edges.entry(e.target.clone()).or_insert(e);
+                }
+            }
             for c in &func.calls {
                 if let Some(e) = idx.resolve_call(i, c.receiver.as_deref(), &c.callee, cls) {
                     if e.target == src_id {
