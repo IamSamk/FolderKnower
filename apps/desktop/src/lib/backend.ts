@@ -4,7 +4,16 @@
 import demoGraph from "../../../../fixtures/expected/fullstack-todo.json";
 import type { SystemArchitectureGraph, TierLabel } from "../gen";
 
-export const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+export function checkIsTauri(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    (Boolean((window as unknown as { isTauri?: boolean }).isTauri) ||
+      "__TAURI_INTERNALS__" in window ||
+      "__TAURI__" in window)
+  );
+}
+
+export const isTauri = checkIsTauri();
 
 export interface Progress {
   stage: "scan" | "parse" | "link" | "classify" | "assemble" | "done";
@@ -54,7 +63,7 @@ export async function analyze(
   overrides: Record<string, TierLabel>,
   onProgress: (p: Progress) => void,
 ): Promise<AnalyzeResult> {
-  if (path === DEMO_ROOT || !isTauri) {
+  if (path === DEMO_ROOT || !checkIsTauri()) {
     const g = structuredClone(demoGraph) as unknown as SystemArchitectureGraph;
     const steps: Progress[] = [
       { stage: "scan", message: "Walking the repository", done: 0, total: 0 },
@@ -104,7 +113,7 @@ export async function analyze(
 }
 
 export async function readSource(root: string, path: string): Promise<string> {
-  if (root === DEMO_ROOT || !isTauri) {
+  if (root === DEMO_ROOT || !checkIsTauri()) {
     const key = Object.keys(demoSources).find((k) => k.endsWith(`/fullstack-todo/${path}`));
     return key ? demoSources[key] : `// source not bundled in demo: ${path}`;
   }
@@ -118,7 +127,7 @@ export const CONCEPTS: Concept[] = ontology as Concept[];
 export const CONCEPT_BY_ID: Map<string, Concept> = new Map(CONCEPTS.map((c) => [c.id, c]));
 
 export async function pickFolder(): Promise<string | null> {
-  if (!isTauri) return DEMO_ROOT;
+  if (!checkIsTauri()) return DEMO_ROOT;
   const { open } = await import("@tauri-apps/plugin-dialog");
   const res = await open({ directory: true, multiple: false, title: "Choose a repository" });
   return typeof res === "string" ? res : null;
@@ -128,7 +137,7 @@ export async function onFolderDrop(
   cb: (path: string) => void,
   onHover: (h: boolean) => void,
 ): Promise<() => void> {
-  if (!isTauri) return () => {};
+  if (!checkIsTauri()) return () => {};
   const { getCurrentWebview } = await import("@tauri-apps/api/webview");
   return getCurrentWebview().onDragDropEvent((e) => {
     const p = e.payload;
@@ -143,7 +152,7 @@ export async function onFolderDrop(
 
 export async function exportJson(graph: SystemArchitectureGraph): Promise<string | null> {
   const json = `${JSON.stringify(graph, null, 2)}\n`;
-  if (!isTauri) {
+  if (!checkIsTauri()) {
     const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
     const a = document.createElement("a");
     a.href = url;
@@ -173,7 +182,7 @@ export interface SlmStatus {
 }
 
 export async function slmStatus(baseUrl?: string): Promise<SlmStatus> {
-  if (!isTauri)
+  if (!checkIsTauri())
     return {
       available: false,
       server: null,
@@ -239,7 +248,7 @@ export interface AiProgress {
 }
 
 export async function aiStatus(): Promise<AiStatus | null> {
-  if (!isTauri) return null;
+  if (!checkIsTauri()) return null;
   return invoke<AiStatus>("ai_status");
 }
 

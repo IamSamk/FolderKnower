@@ -7,6 +7,7 @@ import {
   aiInstall,
   aiRemove,
   aiStatus,
+  checkIsTauri,
   isTauri,
 } from "../lib/backend";
 import { useStore } from "../store";
@@ -75,7 +76,7 @@ function LocalAi() {
   useEffect(() => {
     void aiStatus().then(setSt);
   }, []);
-  if (!isTauri)
+  if (!isTauri && !checkIsTauri())
     return (
       <div className="ak-legal">
         <p>

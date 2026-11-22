@@ -1,7 +1,7 @@
 import { FolderOpen, Sparkles } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
-import { DEMO_ROOT, isTauri, onFolderDrop, pickFolder } from "../lib/backend";
+import { checkIsTauri, DEMO_ROOT, isTauri, onFolderDrop, pickFolder } from "../lib/backend";
 import { TIER_COLOR } from "../lib/theme";
 import { useStore } from "../store";
 import { ThemeSwitch } from "./TopBar";
@@ -90,6 +90,7 @@ function Stack() {
 export function Welcome() {
   const start = useStore((s) => s.start);
   const [hover, setHover] = useState(false);
+  const inTauri = isTauri || checkIsTauri();
   useEffect(() => {
     let un: (() => void) | undefined;
     void onFolderDrop((p) => void start(p), setHover).then((u) => {
@@ -130,7 +131,7 @@ export function Welcome() {
           <div className="ak-drop-title">
             {hover
               ? "Let go to open it"
-              : isTauri
+              : inTauri
                 ? "Drop a folder here, or click to choose one"
                 : "Open the demo project"}
           </div>
@@ -145,7 +146,7 @@ export function Welcome() {
             ))}
           </div>
         </motion.button>
-        {isTauri && (
+        {inTauri && (
           <button type="button" className="ak-btn mt-6" onClick={() => void start(DEMO_ROOT)}>
             Try the demo full-stack app
           </button>
