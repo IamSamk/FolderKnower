@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+:root[data-theme="light"] {
+  --paper: #eceef6;
+  --paper-dot: #c3c6d9;
+  --surface: #ffffff;
+  --surface-2: #f6f7fb;
+  --ink: #1f1d36;
+  --ink-2: #57546f;
+  --ink-3: #8f8ca6;
+  --line: #1f1d36;
+  --shade: #1f1d36;
+  --accent: #5b4bff;
+  --on-accent: #ffffff;
+  --mark: #ffe14d;
+  --danger: #e5484d;
+  --code-bg: #f7f6fb;
+
+  --r-sm: 8px;
+  --r: 14px;
+  --r-lg: 20px;
+  --b: 2.5px;
+  --sh-sm: 2.5px 2.5px 0 var(--shade);
+  --sh: 4.5px 4.5px 0 var(--shade);
+  --sh-lg: 7px 7px 0 var(--shade);
+
+  /* Tier colors */
+  --tier-ui: #ffdd55;
+  --tier-gateway: #ff8b53;
+  --tier-backend: #8b7dff;
+  --tier-workers: #5eead4;
+  --tier-storage: #5fe38a;
+}
+
+:root[data-theme="dark"] {
+  --paper: #131224;
+  --paper-dot: #2a2848;
+  --surface: #1e1c38;
+  --surface-2: #18172e;
+  --ink: #f2f0ff;
+  --ink-2: #b4b0d8;
+  --ink-3: #7e7a9e;
+  --line: #060514;
+  --shade: #060514;
+  --accent: #9285ff;
+  --on-accent: #0f0d26;
+  --mark: #ffe14d;
+  --danger: #ff6b6b;
+  --code-bg: #16152b;
+
+  --tier-ui: #ffd233;
+  --tier-gateway: #ff7633;
+  --tier-backend: #7966ff;
+  --tier-workers: #2dd4bf;
+  --tier-storage: #3dd66e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  background-color: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Neo-brutalist buttons */
+.ak-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 10px 20px;
+  background: var(--surface);
+  color: var(--ink);
+  border: var(--b) solid var(--line);
+  border-radius: var(--r-sm);
+  box-shadow: var(--sh);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  user-select: none;
+  text-decoration: none;
+}
+
+.ak-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--sh-lg);
+}
+
+.ak-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--shade);
+}
+
+.ak-btn-accent {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.ak-btn-mark {
+  background: var(--mark);
+  color: #1f1d36;
+}
+
+/* Neo-brutalist cards */
+.ak-card {
+  background: var(--surface);
+  border: var(--b) solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--sh);
+  padding: 24px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ak-card-interactive:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: var(--sh-lg);
+}
+
+/* Neo-brutalist badges */
+.ak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border: var(--b) solid var(--line);
+  border-radius: 9999px;
+  box-shadow: var(--sh-sm);
+}
+
+/* Dot grid background */
+.bg-dot-pattern {
+  background-image: radial-gradient(var(--paper-dot) 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+}

@@ -1,6 +1,7 @@
 /target
 node_modules/
 dist/
+.next/
 *.log
 .DS_Store
 .claude/settings.local.json
