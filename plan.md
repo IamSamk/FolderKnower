@@ -433,3 +433,30 @@ Before each phase, re-run the literature check, update `docs/research/synthesis.
 | 10 | Separate signed `ark-probe` helper; per-OS IPC authentication | Security research (capabilities(7), ETW docs, Apple DTS, Project Zero) |
 | 11 | Model shortlist with license gate; constrained decoding with node-id enum citations | HF Hub verification; JSONSchemaBench (2501.10868); ETF (2410.14748) |
 | 12 | Stack bump: pnpm 12, TS 7 (tsgo) + Biome, Vite 8, React 19.3, React Flow 13, Tauri 2.12 | Registry checks, 2026-11-21 |
+
+---
+
+## Distribution, CLI & Web Platform Roadmap (v0.3.0+)
+
+### 1. Zero-Install CLI: `npx architekton` / `pnpm dlx architekton`
+To allow any developer or CI environment to run Architekton without installing Rust, Cargo, or system libraries:
+- **npm package wrapper (`architekton`)**:
+  - Bin script `bin/architekton.js` in a lightweight npm package.
+  - When executed (`npx architekton index .` or `pnpm dlx architekton index .`), detects `process.platform` (`win32`, `darwin`, `linux`) and `process.arch` (`x64`, `arm64`).
+  - Fetches the exact pre-compiled release binary (`architekton-cli-*`) from GitHub Releases (`https://github.com/IamSamk/Architekton/releases/latest/download/...`).
+  - Caches binary locally in `~/.architekton/bin/` and executes it directly with full arguments.
+
+### 2. One-Line Shell Installers
+- **macOS / Linux**: `curl -fsSL https://<domain>/install.sh | bash`
+- **Windows (PowerShell)**: `irm https://<domain>/install.ps1 | iex`
+- Hosted in `apps/web/public/` so they are immediately available on the hosted platform.
+
+### 3. Vercel Monorepo Deployment
+- **Architecture**: Next.js 15 (App Router) in `apps/web/`.
+- **Root Directory setting**: In Vercel Project Settings > General, set **Root Directory** to `apps/web`.
+- Vercel automatically detects Next.js, installs workspace dependencies via pnpm from the repo root, and outputs the live platform without configuration conflicts.
+
+### 4. Free OS Safety & Gatekeeper Verification
+- **Windows SmartScreen**: Integrate **SignPath.io** (free Authenticode code signing for open-source GitHub repositories) into `.github/workflows/release.yml`.
+- **macOS Gatekeeper**: Requires Apple Developer ID certificate in GitHub secrets (`APPLE_CERTIFICATE`, `APPLE_SIGNING_IDENTITY`) to automate Apple Notarization.
+- **Linux Distribution**: Package for Flathub (Flatpak) and maintain native `.deb` / `.rpm` repositories.

@@ -6,3 +6,5 @@ dist/
 .DS_Store
 .claude/settings.local.json
 apps/desktop/src-tauri/gen/
+plan.md
+plan.d/

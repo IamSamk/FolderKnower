@@ -1,288 +1,248 @@
 "use client";
 
-import { CheckCircle2, Database, FileCode, Route, Upload } from "lucide-react";
+import { ArrowRight, CheckCircle2, FileCode, Route } from "lucide-react";
 import { useState } from "react";
-import demoData from "@/data/demo-architecture.json";
 
-interface FileNode {
-  path: string;
-  role?: string;
-  tierConfidence?: number;
-}
-
-interface Cluster {
-  id: string;
-  name?: string;
-  label?: string;
-  files: FileNode[];
-}
-
-interface Tier {
-  id: string;
+interface FlowStep {
+  tier: "frontend" | "api" | "backend" | "database";
   label: string;
-  clusters: Cluster[];
+  detail: string;
+  file: string;
+  codeSnippet: string;
 }
 
-interface RouteItem {
-  id?: string;
-  method?: string;
-  path: string;
-  handlerFile?: string;
-  handler?: string;
-}
-
-interface DataModelItem {
-  id?: string;
-  name: string;
-}
-
-interface ArchitectureData {
-  summary?: { headline?: string };
-  repoName?: string;
-  tiers?: Tier[];
-  routes?: RouteItem[];
-  crossTierEdges?: unknown[];
-  dataModels?: DataModelItem[];
-  database?: { models?: DataModelItem[] };
-}
+const DEMO_FLOWS: { id: string; name: string; description: string; steps: FlowStep[] }[] = [
+  {
+    id: "create-todo",
+    name: "User Creates a Todo",
+    description: "Traces from the React button click down to SQL INSERT",
+    steps: [
+      {
+        tier: "frontend",
+        label: "Add Todo Button",
+        detail: "User submits form in UI",
+        file: "web/src/components/TodoList.tsx",
+        codeSnippet: "api.createTodo({ title, completed: false })",
+      },
+      {
+        tier: "api",
+        label: "POST /api/todos",
+        detail: "REST route parsed by router",
+        file: "api/app/routes.py",
+        codeSnippet: "@router.post('/todos', response_model=TodoOut)",
+      },
+      {
+        tier: "backend",
+        label: "Todo Service Handler",
+        detail: "Validates payload with Pydantic",
+        file: "api/app/services.py",
+        codeSnippet: "db_todo = models.Todo(**todo.dict())",
+      },
+      {
+        tier: "database",
+        label: "todos Table",
+        detail: "SQLAlchemy commits record to disk",
+        file: "db/schema.sql",
+        codeSnippet: "INSERT INTO todos (title, done) VALUES ($1, $2)",
+      },
+    ],
+  },
+  {
+    id: "user-login",
+    name: "User Authentication",
+    description: "Traces JWT issue flow through password hashing to users table",
+    steps: [
+      {
+        tier: "frontend",
+        label: "Login Form",
+        detail: "Submits credentials",
+        file: "web/src/components/LoginForm.tsx",
+        codeSnippet: "auth.login(username, password)",
+      },
+      {
+        tier: "api",
+        label: "POST /api/auth/token",
+        detail: "OAuth2 password flow route",
+        file: "api/app/auth.py",
+        codeSnippet: "@router.post('/auth/token', response_model=TokenOut)",
+      },
+      {
+        tier: "backend",
+        label: "Verify Password Hash",
+        detail: "Bcrypt verification & JWT sign",
+        file: "api/app/security.py",
+        codeSnippet: "verify_password(plain, hashed_pw)",
+      },
+      {
+        tier: "database",
+        label: "users Table",
+        detail: "Selects user by email index",
+        file: "api/app/models.py",
+        codeSnippet: "SELECT * FROM users WHERE email = $1 LIMIT 1",
+      },
+    ],
+  },
+];
 
 export function ArchitectureExplorer() {
-  const [data, setData] = useState<ArchitectureData>(demoData as unknown as ArchitectureData);
-  const [selectedTier, setSelectedTier] = useState<string>("all");
-  const [selectedFile, setSelectedFile] = useState<FileNode | null>(null);
+  const [activeFlowIndex, setActiveFlowIndex] = useState<number>(0);
+  const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
 
-  const tiers: Tier[] = data.tiers || [];
-  const routes: RouteItem[] = data.routes || [];
-  const crossEdges: unknown[] = data.crossTierEdges || [];
-  const dbModels: DataModelItem[] = data.dataModels || data.database?.models || [];
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const json = JSON.parse(event.target?.result as string);
-        if (json.tiers) {
-          setData(json);
-          setSelectedTier("all");
-          setSelectedFile(null);
-        }
-      } catch {
-        alert("Invalid architecture.json file format");
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const filteredTiers =
-    selectedTier === "all"
-      ? tiers
-      : tiers.filter(
-          (t) => t.id === selectedTier || t.label.toLowerCase() === selectedTier.toLowerCase(),
-        );
+  const activeFlow = DEMO_FLOWS[activeFlowIndex];
+  const activeStep = activeFlow.steps[activeStepIndex];
 
   return (
     <section
       id="explorer"
-      className="py-20 border-t-[2.5px] border-[var(--line)] bg-[var(--surface-2)]"
+      className="py-24 border-t-[2.5px] border-[var(--line)] bg-[var(--surface-2)]"
     >
       <div className="max-w-6xl mx-auto px-6">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
             <div className="ak-badge bg-[var(--tier-ui)] text-[#1f1d36] mb-3 font-bold">
-              Live Interactive Architecture Viewer
+              Live Architecture Inspection
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[var(--ink)]">
-              Interactive Codebase Explorer
+              How Architekton Connects Your Code
             </h2>
-            <p className="text-[var(--ink-2)] text-base font-medium mt-2 max-w-xl">
-              Exploring:{" "}
-              <code className="bg-[var(--surface)] px-2 py-0.5 border border-[var(--line)] rounded font-bold text-xs">
-                {data.summary?.headline || data.repoName || "fullstack-todo"}
-              </code>
-              . Load your own <code>architecture.json</code> from <code>architekton index</code> to
-              inspect any repo.
+            <p className="text-[var(--ink-2)] text-base font-medium mt-2 max-w-2xl">
+              Traditional diagrams are hand-drawn guesses. Architekton traverses the real Abstract
+              Syntax Tree (AST) to prove exactly which button calls which route and writes to which
+              table.
             </p>
           </div>
 
-          {/* Upload Button */}
-          <label className="ak-btn ak-btn-mark cursor-pointer flex items-center gap-2">
-            <Upload size={16} />
-            <span>Upload architecture.json</span>
-            <input type="file" accept=".json" className="hidden" onChange={handleFileUpload} />
-          </label>
+          <div className="flex items-center gap-3">
+            <span className="ak-badge bg-[var(--surface)] text-[var(--ink)] text-xs font-mono">
+              Static Proof Engine
+            </span>
+          </div>
         </div>
 
-        {/* Tier filter pills */}
-        <div className="flex flex-wrap items-center gap-2.5 mb-8">
-          <button
-            type="button"
-            onClick={() => setSelectedTier("all")}
-            className={`ak-btn text-xs px-3.5 py-1.5 ${selectedTier === "all" ? "ak-btn-accent" : "bg-[var(--surface)]"}`}
-          >
-            All Tiers ({tiers.length})
-          </button>
-          {tiers.map((t) => (
+        {/* Flow Selector Tabs */}
+        <div className="flex flex-wrap items-center gap-3 mb-8">
+          {DEMO_FLOWS.map((flow, idx) => (
             <button
-              key={t.id || t.label}
+              key={flow.id}
               type="button"
-              onClick={() => setSelectedTier(t.id)}
-              className={`ak-btn text-xs px-3.5 py-1.5 ${
-                selectedTier === t.id ? "ak-btn-accent" : "bg-[var(--surface)]"
+              onClick={() => {
+                setActiveFlowIndex(idx);
+                setActiveStepIndex(0);
+              }}
+              className={`ak-btn text-sm px-4 py-2 ${
+                activeFlowIndex === idx ? "ak-btn-accent" : "bg-[var(--surface)]"
               }`}
             >
-              {t.label || t.id}
+              <Route size={15} />
+              <span>{flow.name}</span>
             </button>
           ))}
         </div>
 
-        {/* Explorer Workspace */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left: Tiers & Clusters */}
-          <div className="lg:col-span-8 flex flex-col gap-6">
-            {filteredTiers.map((tier) => (
-              <div key={tier.id || tier.label} className="ak-card p-5">
-                <div className="flex items-center justify-between pb-3 mb-4 border-b-2 border-[var(--line)]">
-                  <span className="font-extrabold text-sm uppercase tracking-wider text-[var(--ink)]">
-                    {tier.label || tier.id} Tier
-                  </span>
-                  <span className="ak-badge bg-[var(--surface-2)] text-xs">
-                    {tier.clusters?.reduce((acc, c) => acc + (c.files?.length || 0), 0) || 0} files
-                  </span>
-                </div>
+        {/* Visual Request Flow Canvas */}
+        <div className="ak-card p-6 sm:p-8 bg-[var(--surface)] mb-8">
+          <div className="text-xs font-bold uppercase tracking-wider text-[var(--ink-3)] mb-6 flex items-center justify-between">
+            <span>{activeFlow.description}</span>
+            <span>Click any node to inspect evidence</span>
+          </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {tier.clusters?.map((cluster) => (
-                    <div
-                      key={cluster.id || cluster.name}
-                      className="p-3.5 rounded-lg border-2 border-[var(--line)] bg-[var(--surface-2)] flex flex-col gap-2"
+          {/* Sequential 4-Tier Node Pipeline */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative">
+            {activeFlow.steps.map((step, idx) => {
+              const isSelected = activeStepIndex === idx;
+              const tierColor =
+                step.tier === "frontend"
+                  ? "var(--tier-ui)"
+                  : step.tier === "api"
+                    ? "var(--tier-gateway)"
+                    : step.tier === "backend"
+                      ? "var(--tier-backend)"
+                      : "var(--tier-storage)";
+
+              const tierText =
+                step.tier === "frontend"
+                  ? "Frontend UI"
+                  : step.tier === "api"
+                    ? "API Gateway"
+                    : step.tier === "backend"
+                      ? "Service Logic"
+                      : "Database Layer";
+
+              return (
+                <button
+                  key={step.label}
+                  type="button"
+                  onClick={() => setActiveStepIndex(idx)}
+                  className={`ak-card text-left p-4 cursor-pointer transition-all border-2 relative ${
+                    isSelected
+                      ? "border-[var(--line)] shadow-[5px_5px_0_var(--shade)] -translate-y-1"
+                      : "border-[var(--line)]/40 hover:border-[var(--line)] shadow-[2px_2px_0_var(--shade)] bg-[var(--surface-2)]"
+                  }`}
+                  style={{
+                    backgroundColor: isSelected ? "var(--surface)" : undefined,
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span
+                      className="ak-badge text-[10px] uppercase font-black px-2 py-0.5"
+                      style={{
+                        backgroundColor: tierColor,
+                        color: step.tier === "backend" ? "#ffffff" : "#1f1d36",
+                      }}
                     >
-                      <div className="font-bold text-xs text-[var(--ink-2)] uppercase tracking-wide">
-                        {cluster.label || cluster.name || cluster.id}
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {cluster.files?.map((file) => (
-                          <button
-                            key={file.path}
-                            type="button"
-                            onClick={() => setSelectedFile(file)}
-                            className={`px-2 py-1 rounded text-xs font-mono font-medium border border-[var(--line)] transition-all ${
-                              selectedFile?.path === file.path
-                                ? "bg-[var(--mark)] text-[#1f1d36] font-bold shadow-[2px_2px_0_var(--shade)]"
-                                : "bg-[var(--surface)] hover:bg-[var(--mark)] text-[var(--ink)]"
-                            }`}
-                          >
-                            {file.path.split("/").pop()}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-
-            {/* Cross-Tier Connections */}
-            <div className="ak-card p-5">
-              <div className="font-extrabold text-sm uppercase tracking-wider text-[var(--ink)] mb-4 pb-2 border-b-2 border-[var(--line)] flex items-center gap-2">
-                <Route size={16} />
-                <span>
-                  Static Call Flows & API Routes ({routes.length} routes, {crossEdges.length}{" "}
-                  cross-tier edges)
-                </span>
-              </div>
-              <div className="flex flex-col gap-2.5 max-h-56 overflow-y-auto pr-2">
-                {routes.slice(0, 5).map((r, idx: number) => (
-                  <div
-                    key={r.id || `${r.method || "ROUTE"}-${r.path || ""}-${idx}`}
-                    className="p-2.5 rounded border-2 border-[var(--line)] bg-[var(--surface)] text-xs flex items-center justify-between font-mono"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="ak-badge bg-[var(--tier-gateway)] text-[#1f1d36] px-1.5 py-0.5 text-[10px]">
-                        {r.method || "GET"}
-                      </span>
-                      <span className="font-bold text-[var(--ink)]">{r.path}</span>
-                    </div>
-                    <span className="text-[var(--ink-3)] text-[11px] truncate max-w-[200px]">
-                      {r.handlerFile || r.handler || "handler"}
+                      {tierText}
+                    </span>
+                    <span className="font-mono text-xs font-bold text-[var(--ink-3)]">
+                      0{idx + 1}
                     </span>
                   </div>
-                ))}
+
+                  <h3 className="font-extrabold text-sm text-[var(--ink)] mb-1">{step.label}</h3>
+
+                  <p className="text-xs text-[var(--ink-2)] font-medium leading-relaxed">
+                    {step.detail}
+                  </p>
+
+                  {idx < activeFlow.steps.length - 1 && (
+                    <div className="hidden lg:block absolute -right-3.5 top-1/2 -translate-y-1/2 z-20">
+                      <div className="w-6 h-6 rounded-full bg-[var(--line)] text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                        <ArrowRight size={12} strokeWidth={3} />
+                      </div>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Step Inspector & Static Code Evidence */}
+        <div className="ak-card p-6 sm:p-8 bg-[var(--code-bg)] border-2 border-[var(--line)]">
+          <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 mb-4 border-b-2 border-[var(--line)]/20 gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-md bg-[var(--surface)] border border-[var(--line)] flex items-center justify-center font-black text-sm shadow-[2px_2px_0_var(--shade)]">
+                <FileCode size={18} />
               </div>
+              <div>
+                <span className="text-[11px] font-bold text-[var(--ink-3)] uppercase tracking-wider block">
+                  Static AST Evidence
+                </span>
+                <span className="font-mono font-bold text-sm text-[var(--ink)]">
+                  {activeStep.file}
+                </span>
+              </div>
+            </div>
+
+            <div className="ak-badge bg-[#5fe38a] text-[#004d1a] py-1.5 px-3 font-bold text-xs">
+              <CheckCircle2 size={14} />
+              <span>Verified Cross-Tier AST Link</span>
             </div>
           </div>
 
-          {/* Right: Inspector & Details */}
-          <div className="lg:col-span-4 flex flex-col gap-6">
-            <div className="ak-card p-5 sticky top-24">
-              <div className="font-extrabold text-sm uppercase tracking-wider text-[var(--ink)] pb-3 mb-4 border-b-2 border-[var(--line)] flex items-center gap-2">
-                <FileCode size={16} />
-                <span>Inspector</span>
-              </div>
-
-              {selectedFile ? (
-                <div className="flex flex-col gap-4">
-                  <div>
-                    <span className="text-xs font-bold text-[var(--ink-3)] uppercase tracking-wider">
-                      File Path
-                    </span>
-                    <div className="font-mono font-bold text-sm text-[var(--ink)] break-all mt-1 bg-[var(--surface-2)] p-2 rounded border border-[var(--line)]">
-                      {selectedFile.path}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-2.5 rounded border border-[var(--line)] bg-[var(--surface-2)]">
-                      <span className="text-[11px] font-bold text-[var(--ink-3)] uppercase">
-                        Confidence
-                      </span>
-                      <div className="text-base font-extrabold text-[var(--accent)] mt-0.5">
-                        {Math.round((selectedFile.tierConfidence ?? 1) * 100)}%
-                      </div>
-                    </div>
-                    <div className="p-2.5 rounded border border-[var(--line)] bg-[var(--surface-2)]">
-                      <span className="text-[11px] font-bold text-[var(--ink-3)] uppercase">
-                        Role
-                      </span>
-                      <div className="text-xs font-bold text-[var(--ink)] mt-0.5 truncate">
-                        {selectedFile.role || "Component"}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="ak-badge bg-[#5fe38a] text-[#004d1a] justify-center py-2 font-bold">
-                    <CheckCircle2 size={15} />
-                    <span>Evidence-backed AST link</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-10 text-[var(--ink-3)] text-sm font-medium">
-                  Click any file node on the left to inspect its extracted architecture metadata.
-                </div>
-              )}
-
-              {/* Database Entities Preview */}
-              {dbModels.length > 0 && (
-                <div className="mt-6 pt-4 border-t-2 border-[var(--line)]">
-                  <div className="flex items-center gap-1.5 font-bold text-xs uppercase text-[var(--ink-2)] mb-3">
-                    <Database size={14} />
-                    <span>Database Entities ({dbModels.length})</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {dbModels.map((m) => (
-                      <span
-                        key={m.id || m.name}
-                        className="ak-badge bg-[var(--tier-storage)] text-[#1f1d36] text-[11px]"
-                      >
-                        {m.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+          <div className="bg-[var(--surface)] p-4 rounded-lg border border-[var(--line)] font-mono text-xs text-[var(--ink)] overflow-x-auto shadow-inner">
+            <span className="text-[var(--ink-3)] select-none mr-3">1</span>
+            <span className="font-bold">{activeStep.codeSnippet}</span>
           </div>
         </div>
       </div>
