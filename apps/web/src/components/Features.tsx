@@ -1,4 +1,4 @@
-import { Shield, Cpu, Binary, Search, Sparkles, Terminal } from "lucide-react";
+import { Shield, Cpu, Binary, Search, Brain, Terminal } from "lucide-react";
 
 export function Features() {
   const features = [
@@ -23,7 +23,7 @@ export function Features() {
       desc: "Categorizes systems into OS, Network, Cloud, and Data layers using a codified taxonomy of architectural patterns.",
     },
     {
-      icon: <Sparkles size={24} className="text-[var(--tier-ui)]" />,
+      icon: <Brain size={24} className="text-[var(--tier-ui)]" />,
       title: "Local AI Explanations",
       desc: "Optional llama.cpp & Ollama integration to explain architectural choices in plain English without sending data out.",
     },
@@ -38,8 +38,8 @@ export function Features() {
     <section id="features" className="py-24 border-t-[2.5px] border-[var(--line)] bg-[var(--paper)]">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <div className="ak-badge bg-[var(--mark)] text-[#1f1d36] mb-3">
-            ✦ Core Engineering Principles
+          <div className="ak-badge bg-[var(--mark)] text-[#1f1d36] mb-3 font-bold">
+            Core Engineering Principles
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[var(--ink)]">
             Built for Architects & Engineers

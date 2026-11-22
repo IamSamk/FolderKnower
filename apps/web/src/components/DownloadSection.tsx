@@ -25,7 +25,7 @@ export function DownloadSection() {
       os: "Linux",
       icon: <Laptop size={28} />,
       desc: "x86-64 AppImage, deb, rpm",
-      primaryBtn: "View Linux Packages ↗",
+      primaryBtn: "View Linux Packages",
       primaryUrl: "https://github.com/IamSamk/Architekton/releases/latest",
       secondaryText: "Available in .AppImage, .deb, .rpm",
       badge: "Desktop Standard",
@@ -36,8 +36,8 @@ export function DownloadSection() {
     <section id="download" className="py-24 border-t-[2.5px] border-[var(--line)] bg-[var(--surface-2)]">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <div className="ak-badge bg-[var(--tier-ui)] text-[#1f1d36] mb-3">
-            ✦ Releases & Installers
+          <div className="ak-badge bg-[var(--tier-ui)] text-[#1f1d36] mb-3 font-bold">
+            Releases & Installers
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[var(--ink)]">
             Get Architekton Desktop

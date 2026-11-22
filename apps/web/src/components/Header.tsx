@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Layers } from "lucide-react";
 import { GithubIcon } from "./Icons";
 
 export function Header() {
@@ -27,7 +27,7 @@ export function Header() {
       <div className="max-w-6xl mx-auto px-6 h-18 flex items-center justify-between">
         <a href="#" className="flex items-center gap-2.5 font-black text-xl tracking-tight text-[var(--ink)] no-underline">
           <span className="w-8 h-8 rounded-lg bg-[var(--mark)] border-2 border-[var(--line)] flex items-center justify-center font-black text-sm shadow-[2px_2px_0_var(--shade)]">
-            ⬡
+            <Layers size={18} strokeWidth={2.5} className="text-[#1f1d36]" />
           </span>
           <span>Architekton</span>
         </a>
@@ -60,7 +60,7 @@ export function Header() {
             href="#download"
             className="ak-btn ak-btn-mark hidden sm:inline-flex"
           >
-            Get App ↓
+            Get App
           </a>
         </div>
       </div>

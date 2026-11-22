@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import demoData from "@/data/demo-architecture.json";
-import { FolderGit2, Upload, FileCode, Route, Database, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Upload, FileCode, Route, Database, CheckCircle2 } from "lucide-react";
 
 interface FileNode {
   path: string;
@@ -10,13 +10,17 @@ interface FileNode {
   tierConfidence?: number;
 }
 
+interface Cluster {
+  id: string;
+  name?: string;
+  label?: string;
+  files: FileNode[];
+}
+
 interface Tier {
-  tier: string;
-  clusters: {
-    id: string;
-    label: string;
-    files: FileNode[];
-  }[];
+  id: string;
+  label: string;
+  clusters: Cluster[];
 }
 
 export function ArchitectureExplorer() {
@@ -27,7 +31,7 @@ export function ArchitectureExplorer() {
   const tiers: Tier[] = data.tiers || [];
   const routes = data.routes || [];
   const crossEdges = data.crossTierEdges || [];
-  const dbModels = data.database?.models || [];
+  const dbModels = data.dataModels || data.database?.models || [];
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -50,7 +54,7 @@ export function ArchitectureExplorer() {
 
   const filteredTiers = selectedTier === "all"
     ? tiers
-    : tiers.filter((t) => t.tier.toLowerCase() === selectedTier.toLowerCase());
+    : tiers.filter((t) => t.id === selectedTier || t.label.toLowerCase() === selectedTier.toLowerCase());
 
   return (
     <section id="explorer" className="py-20 border-t-[2.5px] border-[var(--line)] bg-[var(--surface-2)]">
@@ -58,15 +62,15 @@ export function ArchitectureExplorer() {
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <div className="ak-badge bg-[var(--tier-ui)] text-[#1f1d36] mb-3">
-              ✦ Live Interactive Architecture Viewer
+            <div className="ak-badge bg-[var(--tier-ui)] text-[#1f1d36] mb-3 font-bold">
+              Live Interactive Architecture Viewer
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[var(--ink)]">
               Interactive Codebase Explorer
             </h2>
             <p className="text-[var(--ink-2)] text-base font-medium mt-2 max-w-xl">
-              Exploring: <code className="bg-[var(--surface)] px-2 py-0.5 border border-[var(--line)] rounded font-bold text-xs">{data.summary?.headline || "fullstack-todo"}</code>.
-              Load your own <code>architecture.json</code> from <code>architekton index</code> to inspect any repo!
+              Exploring: <code className="bg-[var(--surface)] px-2 py-0.5 border border-[var(--line)] rounded font-bold text-xs">{data.summary?.headline || data.repoName || "fullstack-todo"}</code>.
+              Load your own <code>architecture.json</code> from <code>architekton index</code> to inspect any repo.
             </p>
           </div>
 
@@ -94,14 +98,14 @@ export function ArchitectureExplorer() {
           </button>
           {tiers.map((t) => (
             <button
-              key={t.tier}
+              key={t.id || t.label}
               type="button"
-              onClick={() => setSelectedTier(t.tier)}
+              onClick={() => setSelectedTier(t.id)}
               className={`ak-btn text-xs px-3.5 py-1.5 ${
-                selectedTier === t.tier ? "ak-btn-accent" : "bg-[var(--surface)]"
+                selectedTier === t.id ? "ak-btn-accent" : "bg-[var(--surface)]"
               }`}
             >
-              {t.tier}
+              {t.label || t.id}
             </button>
           ))}
         </div>
@@ -111,27 +115,27 @@ export function ArchitectureExplorer() {
           {/* Left: Tiers & Clusters */}
           <div className="lg:col-span-8 flex flex-col gap-6">
             {filteredTiers.map((tier) => (
-              <div key={tier.tier} className="ak-card p-5">
+              <div key={tier.id || tier.label} className="ak-card p-5">
                 <div className="flex items-center justify-between pb-3 mb-4 border-b-2 border-[var(--line)]">
                   <span className="font-extrabold text-sm uppercase tracking-wider text-[var(--ink)]">
-                    {tier.tier} Tier
+                    {tier.label || tier.id} Tier
                   </span>
                   <span className="ak-badge bg-[var(--surface-2)] text-xs">
-                    {tier.clusters.reduce((acc, c) => acc + c.files.length, 0)} files
+                    {tier.clusters?.reduce((acc, c) => acc + (c.files?.length || 0), 0) || 0} files
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {tier.clusters.map((cluster) => (
+                  {tier.clusters?.map((cluster) => (
                     <div
-                      key={cluster.id}
+                      key={cluster.id || cluster.name}
                       className="p-3.5 rounded-lg border-2 border-[var(--line)] bg-[var(--surface-2)] flex flex-col gap-2"
                     >
                       <div className="font-bold text-xs text-[var(--ink-2)] uppercase tracking-wide">
-                        {cluster.label || cluster.id}
+                        {cluster.label || cluster.name || cluster.id}
                       </div>
                       <div className="flex flex-wrap gap-1.5">
-                        {cluster.files.map((file) => (
+                        {cluster.files?.map((file) => (
                           <button
                             key={file.path}
                             type="button"
@@ -161,7 +165,7 @@ export function ArchitectureExplorer() {
               <div className="flex flex-col gap-2.5 max-h-56 overflow-y-auto pr-2">
                 {routes.slice(0, 5).map((r: any, idx: number) => (
                   <div
-                    key={idx}
+                    key={r.id || `${r.method || 'ROUTE'}-${r.path || ''}-${idx}`}
                     className="p-2.5 rounded border-2 border-[var(--line)] bg-[var(--surface)] text-xs flex items-center justify-between font-mono"
                   >
                     <div className="flex items-center gap-2">
@@ -171,7 +175,7 @@ export function ArchitectureExplorer() {
                       <span className="font-bold text-[var(--ink)]">{r.path}</span>
                     </div>
                     <span className="text-[var(--ink-3)] text-[11px] truncate max-w-[200px]">
-                      {r.handlerFile || "handler"}
+                      {r.handlerFile || r.handler || "handler"}
                     </span>
                   </div>
                 ))}
@@ -232,7 +236,7 @@ export function ArchitectureExplorer() {
                   <div className="flex flex-wrap gap-1.5">
                     {dbModels.map((m: any) => (
                       <span
-                        key={m.name}
+                        key={m.id || m.name}
                         className="ak-badge bg-[var(--tier-storage)] text-[#1f1d36] text-[11px]"
                       >
                         {m.name}

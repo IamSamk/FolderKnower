@@ -38,7 +38,7 @@ export function UpdateBanner() {
           transition={{ type: "spring", stiffness: 340, damping: 30 }}
         >
           <span className="update-banner__label">
-            ✦ Architekton {update!.version} is out
+            Architekton {update!.version} is out
           </span>
 
           {update!.body && (

@@ -1,4 +1,4 @@
-import { Sparkles, ArrowDown, ShieldCheck, Zap } from "lucide-react";
+import { ArrowDown, ShieldCheck, Zap, CheckCircle2 } from "lucide-react";
 
 export function Hero() {
   return (
@@ -6,9 +6,8 @@ export function Hero() {
       <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         {/* Left Column */}
         <div className="lg:col-span-7 flex flex-col items-start">
-          <div className="ak-badge bg-[var(--mark)] text-[#1f1d36] mb-6">
-            <Sparkles size={14} />
-            <span>v0.3.0 · Soft Neo-Brutalism · 100% Offline Core</span>
+          <div className="ak-badge bg-[var(--mark)] text-[#1f1d36] mb-6 font-bold">
+            v0.3.0 · Soft Neo-Brutalism · 100% Offline Core
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.08] text-[var(--ink)] mb-6">
@@ -84,8 +83,9 @@ export function Hero() {
             </div>
 
             {/* Neo-brutalist stamp */}
-            <div className="mt-6 ak-badge bg-[var(--surface)] text-[var(--ink)] text-xs">
-              ✦ Exact static linkage • No LLM hallucinations
+            <div className="mt-6 ak-badge bg-[var(--surface)] text-[var(--ink)] text-xs flex items-center gap-1.5 font-bold">
+              <CheckCircle2 size={14} className="text-[#3dd66e]" />
+              <span>Exact static linkage • Zero hallucinated edges</span>
             </div>
           </div>
         </div>
