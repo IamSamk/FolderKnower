@@ -1,4 +1,4 @@
-import { ArrowDown, ShieldCheck, Zap, CheckCircle2 } from "lucide-react";
+import { ArrowDown, CheckCircle2, ShieldCheck, Zap } from "lucide-react";
 
 export function Hero() {
   return (
@@ -11,14 +11,19 @@ export function Hero() {
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.08] text-[var(--ink)] mb-6">
-            See how any<br />
-            codebase is <span className="underline decoration-[var(--mark)] decoration-wavy decoration-3">really built</span>.
+            See how any
+            <br />
+            codebase is{" "}
+            <span className="underline decoration-[var(--mark)] decoration-wavy decoration-3">
+              really built
+            </span>
+            .
           </h1>
 
           <p className="text-lg sm:text-xl text-[var(--ink-2)] font-medium leading-relaxed mb-8 max-w-xl">
-            Drop in a local repository. Architekton walks it in seconds — completely offline —
-            and draws the full architecture: system tiers, subsystems, API routes, call flows,
-            and database schemas. Every edge backed by static evidence.
+            Drop in a local repository. Architekton walks it in seconds — completely offline — and
+            draws the full architecture: system tiers, subsystems, API routes, call flows, and
+            database schemas. Every edge backed by static evidence.
           </p>
 
           <div className="flex flex-wrap items-center gap-4 mb-10">

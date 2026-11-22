@@ -26,52 +26,50 @@ export function UpdateBanner() {
 
   const visible = !!update && !dismissed;
 
+  if (!visible || !update) return null;
+
   return (
     <AnimatePresence>
-      {visible && (
-        <motion.div
-          key="update-banner"
-          className="update-banner"
-          initial={{ y: -72, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -72, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 340, damping: 30 }}
-        >
-          <span className="update-banner__label">
-            Architekton {update!.version} is out
-          </span>
+      <motion.div
+        key="update-banner"
+        className="update-banner"
+        initial={{ y: -72, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: -72, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 340, damping: 30 }}
+      >
+        <span className="update-banner__label">Architekton {update.version} is out</span>
 
-          {update!.body && (
-            <span className="update-banner__note ak-mono">{update!.body.split("\n")[0]}</span>
-          )}
+        {update.body && (
+          <span className="update-banner__note ak-mono">{update.body.split("\n")[0]}</span>
+        )}
 
-          <div className="update-banner__actions">
-            <button
-              type="button"
-              className="ak-btn ak-btn--accent update-banner__btn-install"
-              disabled={installing}
-              onClick={async () => {
-                setInstalling(true);
-                try {
-                  await installUpdate();
-                } catch {
-                  setInstalling(false);
-                }
-              }}
-            >
-              {installing ? "Downloading…" : "Update now"}
-            </button>
+        <div className="update-banner__actions">
+          <button
+            type="button"
+            className="ak-btn ak-btn--accent update-banner__btn-install"
+            disabled={installing}
+            onClick={async () => {
+              setInstalling(true);
+              try {
+                await installUpdate();
+              } catch {
+                setInstalling(false);
+              }
+            }}
+          >
+            {installing ? "Downloading…" : "Update now"}
+          </button>
 
-            <button
-              type="button"
-              className="ak-btn update-banner__btn-later"
-              onClick={() => setDismissed(true)}
-            >
-              Later
-            </button>
-          </div>
-        </motion.div>
-      )}
+          <button
+            type="button"
+            className="ak-btn update-banner__btn-later"
+            onClick={() => setDismissed(true)}
+          >
+            Later
+          </button>
+        </div>
+      </motion.div>
     </AnimatePresence>
   );
 }

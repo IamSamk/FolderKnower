@@ -1,4 +1,4 @@
-import { Shield, Cpu, Binary, Search, Brain, Terminal } from "lucide-react";
+import { Binary, Brain, Cpu, Search, Shield, Terminal } from "lucide-react";
 
 export function Features() {
   const features = [
@@ -35,7 +35,10 @@ export function Features() {
   ];
 
   return (
-    <section id="features" className="py-24 border-t-[2.5px] border-[var(--line)] bg-[var(--paper)]">
+    <section
+      id="features"
+      className="py-24 border-t-[2.5px] border-[var(--line)] bg-[var(--paper)]"
+    >
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <div className="ak-badge bg-[var(--mark)] text-[#1f1d36] mb-3 font-bold">
@@ -45,7 +48,8 @@ export function Features() {
             Built for Architects & Engineers
           </h2>
           <p className="text-[var(--ink-2)] text-base font-medium mt-3">
-            Traditional tools guess architectures with flaky AI prompts. Architekton analyzes real AST code links.
+            Traditional tools guess architectures with flaky AI prompts. Architekton analyzes real
+            AST code links.
           </p>
         </div>
 
@@ -59,9 +63,7 @@ export function Features() {
                 <div className="w-12 h-12 rounded-lg bg-[var(--surface-2)] border-2 border-[var(--line)] flex items-center justify-center mb-5 shadow-[2px_2px_0_var(--shade)]">
                   {feat.icon}
                 </div>
-                <h3 className="text-lg font-extrabold text-[var(--ink)] mb-2.5">
-                  {feat.title}
-                </h3>
+                <h3 className="text-lg font-extrabold text-[var(--ink)] mb-2.5">{feat.title}</h3>
                 <p className="text-sm text-[var(--ink-2)] leading-relaxed font-medium">
                   {feat.desc}
                 </p>

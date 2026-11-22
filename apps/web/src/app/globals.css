@@ -62,13 +62,16 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   background-color: var(--paper);
   color: var(--ink);
   min-height: 100vh;
   margin: 0;
   padding: 0;
-  transition: background-color 0.25s ease, color 0.25s ease;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
 }
 
 /* Neo-brutalist buttons */
@@ -86,7 +89,9 @@ html, body {
   border-radius: var(--r-sm);
   box-shadow: var(--sh);
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
   user-select: none;
   text-decoration: none;
 }
@@ -118,7 +123,9 @@ html, body {
   border-radius: var(--r);
   box-shadow: var(--sh);
   padding: 24px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .ak-card-interactive:hover {

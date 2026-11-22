@@ -28,11 +28,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" data-theme="dark" className={`${bricolage.variable} ${jetbrains.variable}`}>
       <body className="font-sans antialiased selection:bg-[#ffe14d] selection:text-[#1f1d36]">

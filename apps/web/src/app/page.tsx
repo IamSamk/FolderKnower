@@ -1,9 +1,9 @@
+import { ArchitectureExplorer } from "@/components/ArchitectureExplorer";
+import { DownloadSection } from "@/components/DownloadSection";
+import { Features } from "@/components/Features";
+import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
-import { ArchitectureExplorer } from "@/components/ArchitectureExplorer";
-import { Features } from "@/components/Features";
-import { DownloadSection } from "@/components/DownloadSection";
-import { Footer } from "@/components/Footer";
 
 export default function Home() {
   return (

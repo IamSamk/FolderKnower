@@ -11,10 +11,12 @@
       "*.json",
       "!**/node_modules",
       "!**/dist",
+      "!**/.next",
       "!**/src/gen",
       "!**/src-tauri/gen",
       "!**/src-tauri/target",
-      "!**/src/lib/ontology.json"
+      "!**/src/lib/ontology.json",
+      "!**/demo-architecture.json"
     ]
   },
   "formatter": {
@@ -31,7 +33,8 @@
         "noImportantStyles": "off"
       },
       "suspicious": {
-        "noArrayIndexKey": "off"
+        "noArrayIndexKey": "off",
+        "noUnknownAtRules": "off"
       },
       "correctness": {
         "useExhaustiveDependencies": "off"

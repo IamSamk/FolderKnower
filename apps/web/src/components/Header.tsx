@@ -1,7 +1,7 @@
 "use client";
 
+import { Layers, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Sun, Moon, Layers } from "lucide-react";
 import { GithubIcon } from "./Icons";
 
 export function Header() {
@@ -25,7 +25,10 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b-[2.5px] border-[var(--line)] bg-[var(--paper)]/90 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-6 h-18 flex items-center justify-between">
-        <a href="#" className="flex items-center gap-2.5 font-black text-xl tracking-tight text-[var(--ink)] no-underline">
+        <a
+          href="/"
+          className="flex items-center gap-2.5 font-black text-xl tracking-tight text-[var(--ink)] no-underline"
+        >
           <span className="w-8 h-8 rounded-lg bg-[var(--mark)] border-2 border-[var(--line)] flex items-center justify-center font-black text-sm shadow-[2px_2px_0_var(--shade)]">
             <Layers size={18} strokeWidth={2.5} className="text-[#1f1d36]" />
           </span>
@@ -33,9 +36,15 @@ export function Header() {
         </a>
 
         <nav className="hidden md:flex items-center gap-7 font-bold text-sm text-[var(--ink-2)]">
-          <a href="#explorer" className="hover:text-[var(--ink)] transition-colors">Explorer</a>
-          <a href="#features" className="hover:text-[var(--ink)] transition-colors">Features</a>
-          <a href="#download" className="hover:text-[var(--ink)] transition-colors">Downloads</a>
+          <a href="#explorer" className="hover:text-[var(--ink)] transition-colors">
+            Explorer
+          </a>
+          <a href="#features" className="hover:text-[var(--ink)] transition-colors">
+            Features
+          </a>
+          <a href="#download" className="hover:text-[var(--ink)] transition-colors">
+            Downloads
+          </a>
           <a
             href="https://github.com/IamSamk/Architekton"
             target="_blank"
@@ -56,10 +65,7 @@ export function Header() {
           >
             {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
           </button>
-          <a
-            href="#download"
-            className="ak-btn ak-btn-mark hidden sm:inline-flex"
-          >
+          <a href="#download" className="ak-btn ak-btn-mark hidden sm:inline-flex">
             Get App
           </a>
         </div>

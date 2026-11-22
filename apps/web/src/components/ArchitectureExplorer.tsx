@@ -1,8 +1,8 @@
 "use client";
 
+import { CheckCircle2, Database, FileCode, Route, Upload } from "lucide-react";
 import { useState } from "react";
 import demoData from "@/data/demo-architecture.json";
-import { Upload, FileCode, Route, Database, CheckCircle2 } from "lucide-react";
 
 interface FileNode {
   path: string;
@@ -23,15 +23,38 @@ interface Tier {
   clusters: Cluster[];
 }
 
+interface RouteItem {
+  id?: string;
+  method?: string;
+  path: string;
+  handlerFile?: string;
+  handler?: string;
+}
+
+interface DataModelItem {
+  id?: string;
+  name: string;
+}
+
+interface ArchitectureData {
+  summary?: { headline?: string };
+  repoName?: string;
+  tiers?: Tier[];
+  routes?: RouteItem[];
+  crossTierEdges?: unknown[];
+  dataModels?: DataModelItem[];
+  database?: { models?: DataModelItem[] };
+}
+
 export function ArchitectureExplorer() {
-  const [data, setData] = useState<any>(demoData);
+  const [data, setData] = useState<ArchitectureData>(demoData as unknown as ArchitectureData);
   const [selectedTier, setSelectedTier] = useState<string>("all");
   const [selectedFile, setSelectedFile] = useState<FileNode | null>(null);
 
   const tiers: Tier[] = data.tiers || [];
-  const routes = data.routes || [];
-  const crossEdges = data.crossTierEdges || [];
-  const dbModels = data.dataModels || data.database?.models || [];
+  const routes: RouteItem[] = data.routes || [];
+  const crossEdges: unknown[] = data.crossTierEdges || [];
+  const dbModels: DataModelItem[] = data.dataModels || data.database?.models || [];
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -45,19 +68,25 @@ export function ArchitectureExplorer() {
           setSelectedTier("all");
           setSelectedFile(null);
         }
-      } catch (err) {
+      } catch {
         alert("Invalid architecture.json file format");
       }
     };
     reader.readAsText(file);
   };
 
-  const filteredTiers = selectedTier === "all"
-    ? tiers
-    : tiers.filter((t) => t.id === selectedTier || t.label.toLowerCase() === selectedTier.toLowerCase());
+  const filteredTiers =
+    selectedTier === "all"
+      ? tiers
+      : tiers.filter(
+          (t) => t.id === selectedTier || t.label.toLowerCase() === selectedTier.toLowerCase(),
+        );
 
   return (
-    <section id="explorer" className="py-20 border-t-[2.5px] border-[var(--line)] bg-[var(--surface-2)]">
+    <section
+      id="explorer"
+      className="py-20 border-t-[2.5px] border-[var(--line)] bg-[var(--surface-2)]"
+    >
       <div className="max-w-6xl mx-auto px-6">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
@@ -69,8 +98,12 @@ export function ArchitectureExplorer() {
               Interactive Codebase Explorer
             </h2>
             <p className="text-[var(--ink-2)] text-base font-medium mt-2 max-w-xl">
-              Exploring: <code className="bg-[var(--surface)] px-2 py-0.5 border border-[var(--line)] rounded font-bold text-xs">{data.summary?.headline || data.repoName || "fullstack-todo"}</code>.
-              Load your own <code>architecture.json</code> from <code>architekton index</code> to inspect any repo.
+              Exploring:{" "}
+              <code className="bg-[var(--surface)] px-2 py-0.5 border border-[var(--line)] rounded font-bold text-xs">
+                {data.summary?.headline || data.repoName || "fullstack-todo"}
+              </code>
+              . Load your own <code>architecture.json</code> from <code>architekton index</code> to
+              inspect any repo.
             </p>
           </div>
 
@@ -78,12 +111,7 @@ export function ArchitectureExplorer() {
           <label className="ak-btn ak-btn-mark cursor-pointer flex items-center gap-2">
             <Upload size={16} />
             <span>Upload architecture.json</span>
-            <input
-              type="file"
-              accept=".json"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
+            <input type="file" accept=".json" className="hidden" onChange={handleFileUpload} />
           </label>
         </div>
 
@@ -160,12 +188,15 @@ export function ArchitectureExplorer() {
             <div className="ak-card p-5">
               <div className="font-extrabold text-sm uppercase tracking-wider text-[var(--ink)] mb-4 pb-2 border-b-2 border-[var(--line)] flex items-center gap-2">
                 <Route size={16} />
-                <span>Static Call Flows & API Routes ({routes.length} routes, {crossEdges.length} cross-tier edges)</span>
+                <span>
+                  Static Call Flows & API Routes ({routes.length} routes, {crossEdges.length}{" "}
+                  cross-tier edges)
+                </span>
               </div>
               <div className="flex flex-col gap-2.5 max-h-56 overflow-y-auto pr-2">
-                {routes.slice(0, 5).map((r: any, idx: number) => (
+                {routes.slice(0, 5).map((r, idx: number) => (
                   <div
-                    key={r.id || `${r.method || 'ROUTE'}-${r.path || ''}-${idx}`}
+                    key={r.id || `${r.method || "ROUTE"}-${r.path || ""}-${idx}`}
                     className="p-2.5 rounded border-2 border-[var(--line)] bg-[var(--surface)] text-xs flex items-center justify-between font-mono"
                   >
                     <div className="flex items-center gap-2">
@@ -194,7 +225,9 @@ export function ArchitectureExplorer() {
               {selectedFile ? (
                 <div className="flex flex-col gap-4">
                   <div>
-                    <span className="text-xs font-bold text-[var(--ink-3)] uppercase tracking-wider">File Path</span>
+                    <span className="text-xs font-bold text-[var(--ink-3)] uppercase tracking-wider">
+                      File Path
+                    </span>
                     <div className="font-mono font-bold text-sm text-[var(--ink)] break-all mt-1 bg-[var(--surface-2)] p-2 rounded border border-[var(--line)]">
                       {selectedFile.path}
                     </div>
@@ -202,13 +235,17 @@ export function ArchitectureExplorer() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-2.5 rounded border border-[var(--line)] bg-[var(--surface-2)]">
-                      <span className="text-[11px] font-bold text-[var(--ink-3)] uppercase">Confidence</span>
+                      <span className="text-[11px] font-bold text-[var(--ink-3)] uppercase">
+                        Confidence
+                      </span>
                       <div className="text-base font-extrabold text-[var(--accent)] mt-0.5">
                         {Math.round((selectedFile.tierConfidence ?? 1) * 100)}%
                       </div>
                     </div>
                     <div className="p-2.5 rounded border border-[var(--line)] bg-[var(--surface-2)]">
-                      <span className="text-[11px] font-bold text-[var(--ink-3)] uppercase">Role</span>
+                      <span className="text-[11px] font-bold text-[var(--ink-3)] uppercase">
+                        Role
+                      </span>
                       <div className="text-xs font-bold text-[var(--ink)] mt-0.5 truncate">
                         {selectedFile.role || "Component"}
                       </div>
@@ -234,7 +271,7 @@ export function ArchitectureExplorer() {
                     <span>Database Entities ({dbModels.length})</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {dbModels.map((m: any) => (
+                    {dbModels.map((m) => (
                       <span
                         key={m.id || m.name}
                         className="ak-badge bg-[var(--tier-storage)] text-[#1f1d36] text-[11px]"

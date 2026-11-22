@@ -1747,7 +1747,9 @@ a {
   padding: 4px 14px;
   border-radius: var(--r-sm);
   font-weight: 700;
-  transition: transform 0.1s var(--ease), box-shadow 0.1s var(--ease);
+  transition:
+    transform 0.1s var(--ease),
+    box-shadow 0.1s var(--ease);
 }
 .update-banner__btn-install:not(:disabled):hover {
   transform: translate(-1px, -1px);
@@ -1760,7 +1762,9 @@ a {
   border-radius: var(--r-sm);
   background: var(--surface);
   font-weight: 600;
-  transition: transform 0.1s var(--ease), box-shadow 0.1s var(--ease);
+  transition:
+    transform 0.1s var(--ease),
+    box-shadow 0.1s var(--ease);
 }
 .update-banner__btn-later:hover {
   transform: translate(-1px, -1px);
