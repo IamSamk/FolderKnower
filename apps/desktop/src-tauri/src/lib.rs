@@ -13,6 +13,7 @@ use ark_core::{Options, Progress, RunStats, analyze as run_analyze, ark_schema};
 use ark_schema::{SystemArchitectureGraph, TierLabel};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_updater::UpdaterExt;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -108,9 +109,47 @@ fn export_json(path: String, graph: SystemArchitectureGraph) -> Result<(), Strin
     std::fs::write(path, json).map_err(|e| e.to_string())
 }
 
+/// Update info returned to the frontend.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateInfo {
+    version: String,
+    body: Option<String>,
+    date: Option<String>,
+}
+
+/// Check GitHub Releases for a newer version. Returns `null` when already up to date.
+#[tauri::command]
+async fn check_update(app: AppHandle) -> Result<Option<UpdateInfo>, String> {
+    let updater = app.updater_builder().build().map_err(|e| e.to_string())?;
+    match updater.check().await.map_err(|e| e.to_string())? {
+        Some(update) => Ok(Some(UpdateInfo {
+            version: update.version.clone(),
+            body: update.body.clone(),
+            date: update.date.map(|d| d.to_string()),
+        })),
+        None => Ok(None),
+    }
+}
+
+/// Download and silently install the pending update (restarts the app).
+#[tauri::command]
+async fn install_update(app: AppHandle) -> Result<(), String> {
+    let updater = app.updater_builder().build().map_err(|e| e.to_string())?;
+    if let Some(update) = updater.check().await.map_err(|e| e.to_string())? {
+        update
+            .download_and_install(|_chunk, _total| {}, || {})
+            .await
+            .map_err(|e| e.to_string())?;
+        app.restart();
+    }
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app = tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .manage(ai::AiState::default())
         .invoke_handler(tauri::generate_handler![
@@ -118,6 +157,8 @@ pub fn run() {
             read_source,
             ontology_catalog,
             export_json,
+            check_update,
+            install_update,
             slm::slm_status,
             slm::slm_explain,
             slm::slm_classify,

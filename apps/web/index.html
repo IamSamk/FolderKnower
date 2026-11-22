@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Architekton — See how any codebase is built</title>
+  <meta name="description" content="Architekton reads a local repository offline and draws its architecture: tiers, subsystems, files, call graphs, API flows and the database." />
+  <meta property="og:title" content="Architekton" />
+  <meta property="og:description" content="Offline codebase architecture explorer. Drop a folder, see the graph." />
+  <meta property="og:image" content="https://iamsamk.github.io/Architekton/og.png" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="stylesheet" href="/Architekton/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <span class="logo">⬡ Architekton</span>
+      <nav class="site-nav">
+        <a href="#features">Features</a>
+        <a href="#download">Download</a>
+        <a href="https://github.com/IamSamk/Architekton" target="_blank" rel="noopener">GitHub ↗</a>
+      </nav>
+      <button type="button" class="ak-btn" id="theme-toggle" aria-label="Toggle theme">◑</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero__bg-dots" aria-hidden="true"></div>
+      <div class="hero__content">
+        <div class="hero__badge">v0.2.0 · Offline · MIT / Apache-2.0</div>
+        <h1 class="hero__title">
+          See how any<br/>codebase is built.
+        </h1>
+        <p class="hero__sub">
+          Drop a local repository. Architekton walks it in seconds — entirely offline —
+          and draws the architecture: system tiers, subsystems, files, call graphs, API
+          routes and the database schema. Every edge is backed by static evidence.
+        </p>
+        <div class="hero__cta">
+          <a href="#download" class="ak-btn ak-btn--accent hero__btn-primary">Download free ↓</a>
+          <a href="https://github.com/IamSamk/Architekton" class="ak-btn hero__btn-secondary" target="_blank" rel="noopener">View on GitHub</a>
+        </div>
+      </div>
+
+      <!-- fake graph teaser -->
+      <div class="hero__preview" aria-hidden="true">
+        <div class="graph-preview">
+          <div class="gp-tier gp-tier--ui">
+            <span>UI / Frontend</span>
+            <div class="gp-nodes">
+              <div class="gp-node">App.tsx</div>
+              <div class="gp-node">Dashboard.tsx</div>
+              <div class="gp-node">AuthForm.tsx</div>
+            </div>
+          </div>
+          <div class="gp-edges" aria-hidden="true">
+            <svg viewBox="0 0 400 60" preserveAspectRatio="none">
+              <line x1="80" y1="0" x2="80" y2="60" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"/>
+              <line x1="200" y1="0" x2="200" y2="60" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"/>
+              <line x1="320" y1="0" x2="320" y2="60" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"/>
+            </svg>
+          </div>
+          <div class="gp-tier gp-tier--api">
+            <span>API / Services</span>
+            <div class="gp-nodes">
+              <div class="gp-node">router.ts</div>
+              <div class="gp-node">authService.ts</div>
+              <div class="gp-node">userController.ts</div>
+            </div>
+          </div>
+          <div class="gp-edges" aria-hidden="true">
+            <svg viewBox="0 0 400 60" preserveAspectRatio="none">
+              <line x1="80" y1="0" x2="200" y2="60" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"/>
+              <line x1="200" y1="0" x2="200" y2="60" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"/>
+              <line x1="320" y1="0" x2="200" y2="60" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"/>
+            </svg>
+          </div>
+          <div class="gp-tier gp-tier--data">
+            <span>Data / Storage</span>
+            <div class="gp-nodes">
+              <div class="gp-node">schema.prisma</div>
+              <div class="gp-node">migrations/</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features" id="features">
+      <h2 class="section-title">Why Architekton?</h2>
+      <div class="features__grid">
+        <div class="feature-card">
+          <div class="feature-card__icon">🔒</div>
+          <h3>100 % offline</h3>
+          <p>Your code never leaves the machine. Static analysis only — no AI cloud, no uploads, no telemetry.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon">⚡</div>
+          <h3>Seconds, not minutes</h3>
+          <p>Rust + tree-sitter parse thousands of files in a fraction of a second. SQLite caches incremental updates.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon">🗺</div>
+          <h3>Architecture → down to functions</h3>
+          <p>Navigate from system tiers to subsystems, files, call graphs, REST routes and the ER diagram — all in one view.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon">🎨</div>
+          <h3>Beautiful by default</h3>
+          <p>Soft neo-brutalist UI with light / dark / system themes. ELK auto-layout. Animated portal transitions.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon">🤖</div>
+          <h3>Optional local AI</h3>
+          <p>Plug in Ollama or llama.cpp to explain architecture decisions in plain language — still fully offline.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon">📦</div>
+          <h3>CLI included</h3>
+          <p>Export architecture.json from any CI pipeline with <code>architekton index &lt;repo&gt;</code>. Same deterministic output.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Download -->
+    <section class="download" id="download">
+      <h2 class="section-title">Download</h2>
+      <p class="download__sub">Free. Open source. No account needed.</p>
+      <div class="download__cards">
+        <div class="dl-card">
+          <div class="dl-card__os">🪟 Windows</div>
+          <div class="dl-card__desc">Windows 10+ (x64)</div>
+          <a class="ak-btn ak-btn--accent dl-card__btn"
+             href="https://github.com/IamSamk/Architekton/releases/latest/download/Architekton_0.2.0_x64-setup.exe">
+            .exe installer
+          </a>
+          <a class="dl-card__alt"
+             href="https://github.com/IamSamk/Architekton/releases/latest/download/Architekton_0.2.0_x64_en-US.msi">
+            .msi (silent install)
+          </a>
+        </div>
+        <div class="dl-card">
+          <div class="dl-card__os">🍎 macOS</div>
+          <div class="dl-card__desc">Apple Silicon + Intel universal</div>
+          <a class="ak-btn ak-btn--accent dl-card__btn"
+             href="https://github.com/IamSamk/Architekton/releases/latest/download/Architekton_0.2.0_universal.dmg">
+            .dmg
+          </a>
+          <span class="dl-card__note">Not notarized — right-click → Open on first launch</span>
+        </div>
+        <div class="dl-card">
+          <div class="dl-card__os">🐧 Linux</div>
+          <div class="dl-card__desc">x86-64</div>
+          <a class="ak-btn ak-btn--accent dl-card__btn"
+             href="https://github.com/IamSamk/Architekton/releases/latest">
+            Releases page ↗
+          </a>
+          <span class="dl-card__note">.AppImage / .deb / .rpm available</span>
+        </div>
+      </div>
+
+      <div class="download__cli">
+        <span class="download__cli-label">CLI via Cargo</span>
+        <code class="download__cli-cmd">cargo install ark-cli</code>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <span>© 2026 IamSamk · MIT OR Apache-2.0</span>
+      <a href="https://github.com/IamSamk/Architekton" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/IamSamk/Architekton/releases" target="_blank" rel="noopener">Releases</a>
+      <a href="https://github.com/IamSamk/Architekton/issues" target="_blank" rel="noopener">Issues</a>
+    </footer>
+  </main>
+
+  <script>
+    // Theme toggle
+    const root = document.documentElement;
+    const btn = document.getElementById("theme-toggle");
+    const stored = localStorage.getItem("ak-theme");
+    if (stored) root.dataset.theme = stored;
+    btn.addEventListener("click", () => {
+      const next = root.dataset.theme === "dark" ? "light" : "dark";
+      root.dataset.theme = next;
+      localStorage.setItem("ak-theme", next);
+    });
+  </script>
+</body>
+</html>

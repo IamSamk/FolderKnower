@@ -62,11 +62,14 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: apps/desktop
           tauriScript: pnpm tauri
           tagName: ${{ github.event.inputs.tag || github.ref_name }}
           releaseName: Architekton ${{ github.event.inputs.tag || github.ref_name }}
+          includeUpdaterJson: true
           releaseBody: |
             Offline codebase architecture explorer. Drop a repository folder and explore it from system tiers down to functions, API flows and the database.
 

@@ -171,6 +171,29 @@ export async function exportJson(graph: SystemArchitectureGraph): Promise<string
   return path;
 }
 
+// ---- in-app updater
+
+export interface UpdateInfo {
+  version: string;
+  body: string | null;
+  date: string | null;
+}
+
+/**
+ * Ask the Rust side whether a newer GitHub release is available.
+ * Returns `null` when already up to date, or in demo/browser mode.
+ */
+export async function checkForUpdate(): Promise<UpdateInfo | null> {
+  if (!checkIsTauri()) return null;
+  return invoke<UpdateInfo | null>("check_update");
+}
+
+/** Download and install the update then restart the app. */
+export async function installUpdate(): Promise<void> {
+  if (!checkIsTauri()) return;
+  await invoke("install_update");
+}
+
 // ---- optional local model
 
 export interface SlmStatus {

@@ -7,6 +7,7 @@ import { Setup } from "./components/Setup";
 import { Sidebar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
 import { UiMap } from "./components/UiMap";
+import { UpdateBanner } from "./components/UpdateBanner";
 import { ArchitectureView, ErView } from "./components/Views";
 import { Welcome } from "./components/Welcome";
 import { useStore } from "./store";
@@ -38,7 +39,9 @@ export default function App() {
   const error = useStore((s) => s.error);
   const reset = useStore((s) => s.reset);
   return (
-    <AnimatePresence mode="wait">
+    <>
+      <UpdateBanner />
+      <AnimatePresence mode="wait">
       <motion.div
         key={phase}
         className="h-full w-full"
@@ -64,5 +67,6 @@ export default function App() {
         )}
       </motion.div>
     </AnimatePresence>
+    </>
   );
 }
