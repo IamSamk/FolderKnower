@@ -114,36 +114,75 @@ fn export_json(path: String, graph: SystemArchitectureGraph) -> Result<(), Strin
 #[serde(rename_all = "camelCase")]
 struct UpdateInfo {
     version: String,
+    current_version: String,
     body: Option<String>,
     date: Option<String>,
 }
 
-/// Check GitHub Releases for a newer version. Returns `null` when already up to date.
+/// Download progress pushed to the UI as `update://progress`.
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateProgress {
+    downloaded: u64,
+    total: Option<u64>,
+    done: bool,
+}
+
+/// Check the signed `latest.json` on GitHub Releases. `null` when up to date.
 #[tauri::command]
 async fn check_update(app: AppHandle) -> Result<Option<UpdateInfo>, String> {
     let updater = app.updater_builder().build().map_err(|e| e.to_string())?;
-    match updater.check().await.map_err(|e| e.to_string())? {
-        Some(update) => Ok(Some(UpdateInfo {
-            version: update.version.clone(),
-            body: update.body.clone(),
-            date: update.date.map(|d| d.to_string()),
-        })),
-        None => Ok(None),
-    }
+    Ok(updater
+        .check()
+        .await
+        .map_err(|e| e.to_string())?
+        .map(|u| UpdateInfo {
+            version: u.version.clone(),
+            current_version: u.current_version.clone(),
+            body: u.body.clone(),
+            date: u.date.map(|d| d.to_string()),
+        }))
 }
 
-/// Download and silently install the pending update (restarts the app).
+/// Download (signature-verified by the plugin), install, then relaunch.
+/// Progress is streamed to the UI so the pop-up can draw a real bar.
 #[tauri::command]
 async fn install_update(app: AppHandle) -> Result<(), String> {
     let updater = app.updater_builder().build().map_err(|e| e.to_string())?;
-    if let Some(update) = updater.check().await.map_err(|e| e.to_string())? {
-        update
-            .download_and_install(|_chunk, _total| {}, || {})
-            .await
-            .map_err(|e| e.to_string())?;
-        app.restart();
-    }
-    Ok(())
+    let Some(update) = updater.check().await.map_err(|e| e.to_string())? else {
+        return Ok(());
+    };
+    let mut downloaded: u64 = 0;
+    let progress = app.clone();
+    let finished = app.clone();
+    update
+        .download_and_install(
+            move |chunk, total| {
+                downloaded += chunk as u64;
+                let _ = progress.emit(
+                    "update://progress",
+                    UpdateProgress {
+                        downloaded,
+                        total,
+                        done: false,
+                    },
+                );
+            },
+            move || {
+                let _ = finished.emit(
+                    "update://progress",
+                    UpdateProgress {
+                        downloaded: 0,
+                        total: None,
+                        done: true,
+                    },
+                );
+            },
+        )
+        .await
+        .map_err(|e| e.to_string())?;
+    // Windows: the NSIS installer already closed the app. macOS/Linux: relaunch.
+    app.restart();
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

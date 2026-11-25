@@ -175,12 +175,19 @@ export async function exportJson(graph: SystemArchitectureGraph): Promise<string
 
 export interface UpdateInfo {
   version: string;
+  currentVersion: string;
   body: string | null;
   date: string | null;
 }
 
+export interface UpdateProgress {
+  downloaded: number;
+  total: number | null;
+  done: boolean;
+}
+
 /**
- * Ask the Rust side whether a newer GitHub release is available.
+ * Ask the Rust side whether a newer signed release is on GitHub.
  * Returns `null` when already up to date, or in demo/browser mode.
  */
 export async function checkForUpdate(): Promise<UpdateInfo | null> {
@@ -188,10 +195,18 @@ export async function checkForUpdate(): Promise<UpdateInfo | null> {
   return invoke<UpdateInfo | null>("check_update");
 }
 
-/** Download and install the update then restart the app. */
-export async function installUpdate(): Promise<void> {
+/** Download, verify and install the update, streaming progress, then relaunch. */
+export async function installUpdate(onProgress?: (p: UpdateProgress) => void): Promise<void> {
   if (!checkIsTauri()) return;
-  await invoke("install_update");
+  const { listen } = await import("@tauri-apps/api/event");
+  const un = onProgress
+    ? await listen<UpdateProgress>("update://progress", (e) => onProgress(e.payload))
+    : null;
+  try {
+    await invoke("install_update");
+  } finally {
+    un?.();
+  }
 }
 
 // ---- optional local model
