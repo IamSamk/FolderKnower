@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type { TierLabel } from "../gen";
 import { aiStartNarrator, CONCEPT_BY_ID, type Sentence, slmExplain } from "../lib/backend";
 import type { Indexed } from "../lib/graph";
+import { DSA_EXPLAIN, DSA_LABEL } from "../lib/insights";
 import {
   BASIS_TEXT,
   BIGO_COLOR,
@@ -243,6 +244,7 @@ function Details({ id, ix }: { id: string; ix: Indexed }) {
             <span className="ak-muted ml-auto text-[11px]">{r.framework}</span>
           </div>
         ))}
+        <FnInsights fnId={f.id} ix={ix} hasFlow={Boolean(f.flow?.length)} />
         <Section title="Complexity">
           <div className="grid grid-cols-2 gap-2">
             <BigOCard label="time" o={f.complexity.timeBigO} />
@@ -441,6 +443,37 @@ function TraceList({ ix }: { ix: Indexed }) {
           </motion.div>
         ))}
       </div>
+    </Section>
+  );
+}
+
+function FnInsights({ fnId, ix, hasFlow }: { fnId: string; ix: Indexed; hasFlow: boolean }) {
+  const openWorkflow = useStore((s) => s.openWorkflow);
+  const dsa = (ix.g.insights?.dataStructures ?? []).filter((d) => d.functionId === fnId);
+  if (!hasFlow && !dsa.length) return null;
+  return (
+    <Section title="How it runs">
+      {dsa.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1">
+          {dsa.map((d) => (
+            <button
+              key={d.id}
+              type="button"
+              className="ak-chip"
+              title={DSA_EXPLAIN[d.kind]}
+              onClick={() => useStore.setState({ view: "insights" })}
+            >
+              {DSA_LABEL[d.kind]}
+              {d.subject ? `: ${d.subject}` : ""}
+            </button>
+          ))}
+        </div>
+      )}
+      {hasFlow && (
+        <button type="button" className="ak-btn w-full" onClick={() => openWorkflow(fnId)}>
+          Show the clean path through this function
+        </button>
+      )}
     </Section>
   );
 }

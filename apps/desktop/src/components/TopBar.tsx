@@ -1,11 +1,14 @@
 import {
+  Activity,
   Boxes,
+  Brain,
   Database,
   Download,
   Laptop,
   Moon,
   MousePointer2,
   Network,
+  Route,
   Search,
   Sparkles,
   Sun,
@@ -77,11 +80,17 @@ export function TopBar() {
   const reset = useStore((s) => s.reset);
   const setPalette = useStore((s) => s.setPalette);
   const go = useStore((s) => s.go);
+  const workflowOpen = useStore((s) => s.workflowOpen);
+  const openWorkflow = useStore((s) => s.openWorkflow);
+  const closeWorkflow = useStore((s) => s.closeWorkflow);
   if (!ix) return null;
+  const top = stack[stack.length - 1];
   const views: { k: View; label: string; icon: React.ReactNode }[] = [
     { k: "architecture", label: "Architecture", icon: <Network size={15} strokeWidth={2.2} /> },
     { k: "ui", label: "UI map", icon: <Boxes size={15} strokeWidth={2.2} /> },
     { k: "er", label: "Data", icon: <Database size={15} strokeWidth={2.2} /> },
+    { k: "insights", label: "How it works", icon: <Brain size={15} strokeWidth={2.2} /> },
+    { k: "live", label: "Live", icon: <Activity size={15} strokeWidth={2.2} /> },
   ];
   const switchView = (k: View, el: Element) => {
     if (k === view) return;
@@ -146,6 +155,24 @@ export function TopBar() {
         </nav>
       )}
       <div className="ml-auto flex items-center gap-2">
+        {view !== "live" && (
+          <button
+            type="button"
+            className={`ak-tool ak-tool-label ${workflowOpen ? "on" : ""}`}
+            title="Workflow: the clean path through the code at this zoom level"
+            aria-pressed={workflowOpen}
+            onClick={() =>
+              workflowOpen
+                ? closeWorkflow()
+                : openWorkflow(
+                    view === "architecture" && top.level === "function" ? top.fnId : null,
+                  )
+            }
+          >
+            <Route size={15} strokeWidth={2.4} />
+            Workflow
+          </button>
+        )}
         <button
           type="button"
           className="ak-tool"

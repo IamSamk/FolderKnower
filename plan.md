@@ -393,6 +393,16 @@ Milestones:
 - Benchmarks on TodoMVC, FastAPI RealWorld, Express, a Rust/axum service and an Ollama-sized repo.
 - Installers, and a privacy audit (zero outbound connections, verified with a network-deny test).
 
+### Milestone 6: Live insight (memory, data structures, AI architecture). Plan: [`docs/milestones/m6-live-insight/`](docs/milestones/m6-live-insight/README.md)
+- **M6.1 (done 2026-11-25):**
+  - `ark-patterns`: DSA, AI pipeline, memory-technique, library and OKF recognition.
+  - Enrich pass: identifiers, call arguments and control-flow outline.
+  - `ark-telemetry` sampler and model-server parsers.
+  - Desktop: How it works, Workflow (clean path) at every zoom level, Live with the KV cache calculator.
+- **M6.2:** precision fixes, py-spy / PEP 669 runtime overlay, OTLP + OpenInference ingest.
+- **M6.3:** scale (paging, LOD, WebGL), dependency and native-binary views, low-end budgets in CI.
+- **M7–M9:** domain packs in order: networks, security, IoT.
+
 ---
 
 ## Technical Challenges and Mitigations

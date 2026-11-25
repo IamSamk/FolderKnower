@@ -12,7 +12,7 @@ import {
 } from "./lib/backend";
 import { type Hop, type Indexed, index, trace } from "./lib/graph";
 
-export type View = "architecture" | "er" | "ui";
+export type View = "architecture" | "er" | "ui" | "insights" | "live";
 export type Focus =
   | { level: "system" }
   | { level: "tier"; tier: TierLabel }
@@ -48,6 +48,11 @@ interface State {
   portal: PortalOrigin | null;
   lens: { id: number; x: number; y: number; label?: string; color?: string } | null;
   setupOpen: boolean;
+  /** The clean-path (workflow) drawer; `workflowFn` picks the function shown. */
+  workflowOpen: boolean;
+  workflowFn: string | null;
+  openWorkflow: (fnId?: string | null) => void;
+  closeWorkflow: () => void;
   /** Run a scene change with a portal transition from `origin`. */
   go: (origin: Omit<PortalOrigin, "dir">, dir: PortalOrigin["dir"], change: () => void) => void;
 
@@ -91,6 +96,11 @@ export const useStore = create<State>((set, get) => ({
   portal: null,
   lens: null,
   setupOpen: false,
+  workflowOpen: false,
+  workflowFn: null,
+  openWorkflow: (fnId) =>
+    set((s) => ({ workflowOpen: true, workflowFn: fnId === undefined ? s.workflowFn : fnId })),
+  closeWorkflow: () => set({ workflowOpen: false }),
   go(origin, dir, change) {
     set({
       portal: { ...origin, dir },
@@ -118,6 +128,8 @@ export const useStore = create<State>((set, get) => ({
         selected: null,
         hops: [],
         view: "architecture",
+        workflowOpen: false,
+        workflowFn: null,
       });
       void get().refreshSlm();
     } catch (e) {

@@ -1,7 +1,14 @@
 import { FolderOpen, Sparkles } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
-import { checkIsTauri, DEMO_ROOT, isTauri, onFolderDrop, pickFolder } from "../lib/backend";
+import {
+  checkIsTauri,
+  DEMO_AI_ROOT,
+  DEMO_ROOT,
+  isTauri,
+  onFolderDrop,
+  pickFolder,
+} from "../lib/backend";
 import { TIER_COLOR } from "../lib/theme";
 import { useStore } from "../store";
 import { ThemeSwitch } from "./TopBar";
@@ -146,11 +153,16 @@ export function Welcome() {
             ))}
           </div>
         </motion.button>
-        {inTauri && (
-          <button type="button" className="ak-btn mt-6" onClick={() => void start(DEMO_ROOT)}>
-            Try the demo full-stack app
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          {inTauri && (
+            <button type="button" className="ak-btn" onClick={() => void start(DEMO_ROOT)}>
+              Try the demo full-stack app
+            </button>
+          )}
+          <button type="button" className="ak-btn" onClick={() => void start(DEMO_AI_ROOT)}>
+            Try the AI demo: RAG + agent + tiny GPT
           </button>
-        )}
+        </div>
       </div>
     </div>
   );

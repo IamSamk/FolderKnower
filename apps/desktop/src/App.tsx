@@ -1,6 +1,9 @@
 import { AnimatePresence, motion } from "motion/react";
 import { Analyzing } from "./components/Analyzing";
 import { Inspector } from "./components/Inspector";
+import { InsightsView } from "./components/insights/InsightsView";
+import { WorkflowDrawer } from "./components/insights/Workflow";
+import { LiveView } from "./components/live/LiveView";
 import { Palette } from "./components/Palette";
 import { Lens, PortalScene } from "./components/Portal";
 import { Setup } from "./components/Setup";
@@ -18,16 +21,19 @@ function Workspace() {
     <div className="ak-shell">
       <TopBar />
       <div className="ak-body">
-        <Sidebar />
+        {view !== "insights" && view !== "live" && <Sidebar />}
         <main className="ak-main">
           <PortalScene sceneKey={view}>
             {view === "architecture" && <ArchitectureView />}
             {view === "er" && <ErView />}
             {view === "ui" && <UiMap />}
+            {view === "insights" && <InsightsView />}
+            {view === "live" && <LiveView />}
           </PortalScene>
           <Lens />
+          <WorkflowDrawer />
         </main>
-        <Inspector />
+        {view !== "live" && view !== "insights" && <Inspector />}
       </div>
       <Palette />
     </div>
