@@ -119,7 +119,7 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
 name = "architekton-desktop"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "ark-core",
  "ark-ontology",
@@ -138,7 +138,7 @@ dependencies = [
 
 [[package]]
 name = "ark-chunk"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "serde",
  "tree-sitter",
@@ -147,7 +147,7 @@ dependencies = [
 
 [[package]]
 name = "ark-cli"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "ark-core",
  "ark-ontology",
@@ -157,7 +157,7 @@ dependencies = [
 
 [[package]]
 name = "ark-core"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "ark-link",
  "ark-metrics",
@@ -178,7 +178,7 @@ dependencies = [
 
 [[package]]
 name = "ark-link"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "ark-parse",
  "ark-scan",
@@ -189,7 +189,7 @@ dependencies = [
 
 [[package]]
 name = "ark-metrics"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "ark-scan",
  "ark-schema",
@@ -198,7 +198,7 @@ dependencies = [
 
 [[package]]
 name = "ark-ontology"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "ark-schema",
  "regex",
@@ -208,7 +208,7 @@ dependencies = [
 
 [[package]]
 name = "ark-parse"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "ark-metrics",
  "ark-scan",
@@ -225,11 +225,11 @@ dependencies = [
 
 [[package]]
 name = "ark-probe"
-version = "0.3.1"
+version = "0.3.2"
 
 [[package]]
 name = "ark-scan"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "blake3",
  "ignore",
@@ -241,7 +241,7 @@ dependencies = [
 
 [[package]]
 name = "ark-schema"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "jsonschema",
  "schemars 1.2.3",
@@ -252,7 +252,7 @@ dependencies = [
 
 [[package]]
 name = "ark-store"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "rusqlite",
  "tempfile",
@@ -261,7 +261,7 @@ dependencies = [
 
 [[package]]
 name = "ark-structure"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "ark-link",
  "ark-parse",
@@ -274,7 +274,7 @@ dependencies = [
 
 [[package]]
 name = "ark-telemetry"
-version = "0.3.1"
+version = "0.3.2"
 
 [[package]]
 name = "arrayvec"

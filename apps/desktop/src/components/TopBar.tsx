@@ -6,6 +6,7 @@ import {
   Moon,
   MousePointer2,
   Network,
+  RefreshCw,
   Search,
   Sparkles,
   Sun,
@@ -16,6 +17,7 @@ import { TIER_COLOR } from "../lib/theme";
 import { type ThemePref, useTheme } from "../lib/themeMode";
 import { type Focus, useStore, type View } from "../store";
 import { originOf } from "./Portal";
+import { requestUpdateCheck } from "./UpdatePopup";
 
 function crumb(f: Focus, label: (id: string) => string): { text: string; color?: string } {
   switch (f.level) {
@@ -182,6 +184,14 @@ export function TopBar() {
           onClick={() => void exportJson(ix.g)}
         >
           <Download size={15} strokeWidth={2.4} />
+        </button>
+        <button
+          type="button"
+          className="ak-tool"
+          title="Check for updates"
+          onClick={requestUpdateCheck}
+        >
+          <RefreshCw size={15} strokeWidth={2.4} />
         </button>
         <ThemeSwitch />
       </div>

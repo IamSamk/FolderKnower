@@ -16,6 +16,12 @@ import {
 const FIRST_CHECK_MS = 4_000;
 const RECHECK_MS = 6 * 60 * 60 * 1000;
 const SKIP_KEY = "ak.update.skip";
+const CHECK_EVENT = "ak:check-update";
+
+/** Ask the pop-up to check now (manual "Check for updates"); ignores Skip. */
+export function requestUpdateCheck() {
+  window.dispatchEvent(new Event(CHECK_EVENT));
+}
 
 function readSkip(): string | null {
   try {
@@ -62,27 +68,40 @@ export function UpdatePopup() {
   const [progress, setProgress] = useState<UpdateProgress | null>(null);
   const [installing, setInstalling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
-  const check = useCallback(async () => {
+  const check = useCallback(async (manual: boolean) => {
     try {
       const info = await checkForUpdate();
-      if (info && info.version !== readSkip()) {
+      if (info && (manual || info.version !== readSkip())) {
         setUpdate(info);
         setOpen(true);
+      } else if (manual) {
+        setToast("You have the latest version.");
       }
-    } catch {
+    } catch (e) {
       // offline or feed unreachable: the app keeps working, we try again later
+      if (manual) setToast(`Could not check for updates: ${String(e)}`);
     }
   }, []);
 
   useEffect(() => {
-    const first = setTimeout(check, FIRST_CHECK_MS);
-    const every = setInterval(check, RECHECK_MS);
+    const first = setTimeout(() => check(false), FIRST_CHECK_MS);
+    const every = setInterval(() => check(false), RECHECK_MS);
+    const manual = () => check(true);
+    window.addEventListener(CHECK_EVENT, manual);
     return () => {
       clearTimeout(first);
       clearInterval(every);
+      window.removeEventListener(CHECK_EVENT, manual);
     };
   }, [check]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3_500);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   const notes = useMemo(() => parseNotes(update?.body ?? null), [update]);
 
@@ -105,6 +124,18 @@ export function UpdatePopup() {
 
   return (
     <AnimatePresence>
+      {toast && (
+        <motion.div
+          key="update-toast"
+          role="status"
+          className="update-toast"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -20, opacity: 0 }}
+        >
+          {toast}
+        </motion.div>
+      )}
       {open && update && (
         <motion.div
           key="update-scrim"

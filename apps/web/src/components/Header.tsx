@@ -36,14 +36,17 @@ export function Header() {
         </a>
 
         <nav className="hidden md:flex items-center gap-7 font-bold text-sm text-[var(--ink-2)]">
-          <a href="#explorer" className="hover:text-[var(--ink)] transition-colors">
+          <a href="/#explorer" className="hover:text-[var(--ink)] transition-colors">
             Explorer
           </a>
-          <a href="#features" className="hover:text-[var(--ink)] transition-colors">
+          <a href="/#features" className="hover:text-[var(--ink)] transition-colors">
             Features
           </a>
-          <a href="#download" className="hover:text-[var(--ink)] transition-colors">
+          <a href="/#download" className="hover:text-[var(--ink)] transition-colors">
             Downloads
+          </a>
+          <a href="/releases" className="hover:text-[var(--ink)] transition-colors">
+            Releases
           </a>
           <a
             href="https://github.com/IamSamk/Architekton"
@@ -65,7 +68,7 @@ export function Header() {
           >
             {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
           </button>
-          <a href="#download" className="ak-btn ak-btn-mark hidden sm:inline-flex">
+          <a href="/#download" className="ak-btn ak-btn-mark hidden sm:inline-flex">
             Get App
           </a>
         </div>

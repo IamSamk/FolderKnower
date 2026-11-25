@@ -1813,3 +1813,18 @@ a {
 .update-card__skip:hover {
   color: var(--ink);
 }
+.update-toast {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 9999;
+  padding: 8px 14px;
+  background: var(--mark);
+  color: #1f1d36;
+  border: var(--b) solid var(--line);
+  border-radius: var(--r-sm);
+  box-shadow: var(--sh);
+  font-size: 13px;
+  font-weight: 700;
+}

@@ -27,13 +27,11 @@ export function Footer() {
             <GithubIcon size={16} />
             Repository
           </a>
-          <a
-            href="https://github.com/IamSamk/Architekton/releases"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-[var(--ink)]"
-          >
+          <a href="/releases" className="hover:text-[var(--ink)]">
             Releases
+          </a>
+          <a href="/code-signing" className="hover:text-[var(--ink)]">
+            Code signing policy
           </a>
           <a
             href="https://github.com/IamSamk/Architekton/issues"
