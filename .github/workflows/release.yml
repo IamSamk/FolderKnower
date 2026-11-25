@@ -22,6 +22,10 @@ on:
       tag:
         description: "Tag to release (e.g. v0.3.1)"
         required: true
+      commit:
+        description: "Commit to tag when the tag does not exist yet (full SHA). Leave empty for an existing tag."
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -29,6 +33,8 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   TAG: ${{ github.event.inputs.tag || github.ref_name }}
+  # Source revision: an explicit commit (dispatch, tag created by the release) or the tag itself.
+  SRC: ${{ github.event.inputs.commit || github.event.inputs.tag || github.ref_name }}
 
 jobs:
   preflight:
@@ -39,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ env.SRC }}
       - name: Updater signing key must exist
         env:
           KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -108,7 +114,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ env.SRC }}
 
       - name: Linux system libraries for WebKitGTK
         if: runner.os == 'Linux'
@@ -157,6 +163,7 @@ jobs:
           projectPath: apps/desktop
           tauriScript: pnpm tauri
           tagName: ${{ env.TAG }}
+          releaseCommitish: ${{ github.event.inputs.commit || github.sha }}
           releaseName: Architekton ${{ env.TAG }}
           includeUpdaterJson: true
           releaseBody: |
@@ -195,7 +202,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ env.SRC }}
       - run: rustup show active-toolchain || rustup toolchain install
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --release -p ark-cli
