@@ -13,6 +13,7 @@ ark-scan = { workspace = true }
 ark-store = { workspace = true }
 ark-parse = { workspace = true }
 ark-link = { workspace = true }
+ark-patterns = { workspace = true }
 ark-metrics = { workspace = true }
 ark-ontology = { workspace = true }
 ark-structure = { workspace = true }

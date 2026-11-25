@@ -1,0 +1,38 @@
+//! `ark-patterns`: deterministic recognizers that run over parsed facts.
+//!
+//! - [`dsa`]: stacks, queues, heaps, trees, graphs, recursion, memoization ...
+//! - [`ai`]: AI/ML pipeline stages (loader, splitter, embedder, vector store, retriever,
+//!   reranker, prompt, model, router, tools ...), their literal settings (chunk_size,
+//!   top-k, model ids) and the data flow between them, plus memory techniques
+//!   (PagedAttention, prefix/prompt caching, rolling caches, quantization) and
+//!   named libraries/formats from `ontology/ai-catalog.yaml`.
+//!
+//! No model is involved: every finding carries the rule id that produced it.
+
+pub mod ai;
+pub mod catalog;
+pub mod dsa;
+
+use ark_link::ParsedFile;
+use ark_schema::Insights;
+
+/// Bump when rules or the catalog change meaningfully.
+pub const RULESET_VERSION: &str = "patterns 0.1.0";
+
+/// Run every recognizer. `okf_evidence` lists Open Knowledge Format bundle paths the
+/// scanner found (markdown with `type:` frontmatter, index.md + log.md).
+pub fn analyze(files: &[ParsedFile], okf_evidence: &[String]) -> Option<Insights> {
+    let data_structures = dsa::analyze(files);
+    let ai = ai::analyze(files, okf_evidence);
+    let ins = Insights {
+        ruleset_version: format!("{RULESET_VERSION} / catalog {}", catalog::CATALOG.version),
+        data_structures,
+        ai: ai.ai,
+        libraries: ai.libraries,
+        memory_techniques: ai.memory,
+    };
+    (!ins.is_empty()).then_some(ins)
+}
+
+#[cfg(test)]
+mod tests;

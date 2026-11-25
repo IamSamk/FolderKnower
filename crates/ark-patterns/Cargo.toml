@@ -1,0 +1,21 @@
+[package]
+name = "ark-patterns"
+description = "Architekton ark-patterns: data-structure, AI/ML pipeline, library and memory-technique recognition"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+ark-schema = { workspace = true }
+ark-parse = { workspace = true }
+ark-link = { workspace = true }
+ark-scan = { workspace = true }
+serde = { workspace = true }
+serde_yaml_ng = { workspace = true }
+regex = { workspace = true }
+
+[lints]
+workspace = true

@@ -96,6 +96,33 @@
                       "ruleId": "data.state.server-cache"
                     }
                   ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 7,
+                      "label": "const qc = useQueryClient();"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 8,
+                      "label": "const [title, setTitle] = useState(\"\");"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 9,
+                      "label": "const todos = useQuery({ queryKey: [\"todos\"], queryFn: listT…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 10,
+                      "label": "const add = useMutation({ mutationFn: createTodo, onSuccess:…"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 18,
+                      "label": "return ("
+                    }
+                  ],
                   "calls": [
                     {
                       "target": "fn:web/src/components/TodoList.tsx#TodoRow",
@@ -144,6 +171,13 @@
                     "memoryFlags": []
                   },
                   "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 10,
+                      "label": "qc.invalidateQueries()"
+                    }
+                  ],
                   "calls": [],
                   "calledBy": []
                 },
@@ -174,6 +208,30 @@
                     "memoryFlags": []
                   },
                   "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "branch",
+                      "line": 13,
+                      "label": "if title.trim().length === 0",
+                      "children": [
+                        {
+                          "kind": "return",
+                          "line": 13,
+                          "label": "return;"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "call",
+                      "line": 14,
+                      "label": "add.mutate({ title });"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 15,
+                      "label": "setTitle(\"\");"
+                    }
+                  ],
                   "calls": [],
                   "calledBy": []
                 },
@@ -209,6 +267,13 @@
                     "memoryFlags": []
                   },
                   "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 32,
+                      "label": "return ("
+                    }
+                  ],
                   "calls": [
                     {
                       "target": "fn:web/src/lib/api.ts#completeTodo",
@@ -277,6 +342,18 @@
                       "ruleId": "net.http.client"
                     }
                   ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 6,
+                      "label": "const res = await fetch(`${BASE}/api/todos`);"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 7,
+                      "label": "return res.json();"
+                    }
+                  ],
                   "calls": [],
                   "calledBy": [
                     "fn:web/src/components/TodoList.tsx#TodoList"
@@ -326,6 +403,18 @@
                       "ruleId": "net.http.client"
                     }
                   ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 11,
+                      "label": "const res = await fetch(`${BASE}/api/todos`,"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 16,
+                      "label": "return res.json();"
+                    }
+                  ],
                   "calls": [],
                   "calledBy": [
                     "fn:web/src/components/TodoList.tsx#TodoList"
@@ -373,6 +462,18 @@
                       "concept": "HTTP request",
                       "layer": "network",
                       "ruleId": "net.http.client"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 20,
+                      "label": "const res = await fetch(`${BASE}/api/todos/${id}/complete`, …"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 21,
+                      "label": "return res.json();"
                     }
                   ],
                   "calls": [],
@@ -431,6 +532,28 @@
                       "concept": "HTTP request",
                       "layer": "network",
                       "ruleId": "net.http.client"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 25,
+                      "label": "const res = await fetch(`${BASE}/api/auth/login`,"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 29,
+                      "label": "const data = await res.json();"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 30,
+                      "label": "localStorage.setItem(\"token\", data.access_token);"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 31,
+                      "label": "return data.access_token;"
                     }
                   ],
                   "calls": [],
@@ -517,6 +640,18 @@
                       "ruleId": "data.state.client"
                     }
                   ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 6,
+                      "label": "const [token, setToken] = useState<string | null>(null);"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 7,
+                      "label": "return token ? <TodoList /> : <LoginForm onDone={setToken} /…"
+                    }
+                  ],
                   "calls": [
                     {
                       "target": "fn:web/src/components/LoginForm.tsx#LoginForm",
@@ -587,6 +722,23 @@
                       "ruleId": "data.state.client"
                     }
                   ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 5,
+                      "label": "const [email, setEmail] = useState(\"\");"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 6,
+                      "label": "const [password, setPassword] = useState(\"\");"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 13,
+                      "label": "return ("
+                    }
+                  ],
                   "calls": [],
                   "calledBy": [
                     "fn:web/src/App.tsx#App"
@@ -619,6 +771,18 @@
                     "memoryFlags": []
                   },
                   "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 9,
+                      "label": "const token = await login(email, password);"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 10,
+                      "label": "onDone(token);"
+                    }
+                  ],
                   "calls": [
                     {
                       "target": "fn:web/src/lib/api.ts#login",
@@ -704,6 +868,13 @@
                       "ruleId": "net.auth.password"
                     }
                   ],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 12,
+                      "label": "return pwd_context.hash(raw)"
+                    }
+                  ],
                   "calls": [],
                   "calledBy": []
                 },
@@ -750,6 +921,13 @@
                       "ruleId": "net.auth.password"
                     }
                   ],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 16,
+                      "label": "return pwd_context.verify(raw, hashed)"
+                    }
+                  ],
                   "calls": [],
                   "calledBy": [
                     "fn:api/app/routers/auth.py#login"
@@ -794,6 +972,18 @@
                       "ruleId": "net.auth.jwt"
                     }
                   ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 20,
+                      "label": "exp = datetime.utcnow() + timedelta(hours=8)"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 21,
+                      "label": "return jwt.encode({\"sub\": str(user_id), \"exp\": exp}, SECRET)"
+                    }
+                  ],
                   "calls": [],
                   "calledBy": [
                     "fn:api/app/routers/auth.py#login"
@@ -835,6 +1025,31 @@
                       "concept": "JWT auth",
                       "layer": "network",
                       "ruleId": "net.auth.jwt"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 25,
+                      "label": "header = request.headers.get(\"Authorization\", \"\")"
+                    },
+                    {
+                      "kind": "branch",
+                      "line": 26,
+                      "label": "if not header.startswith(\"Bearer \"",
+                      "children": [
+                        {
+                          "kind": "raise",
+                          "line": 27,
+                          "label": "raise HTTPException(status_code=401)",
+                          "error": true
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "return",
+                      "line": 28,
+                      "label": "return jwt.decode(header[7:], SECRET)"
                     }
                   ],
                   "calls": [],
@@ -931,6 +1146,13 @@
                       "ruleId": "data.migration"
                     }
                   ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 15,
+                      "label": "Base.metadata.create_all(bind=engine)"
+                    }
+                  ],
                   "calls": [],
                   "calledBy": []
                 }
@@ -1018,6 +1240,31 @@
                       "concept": "JWT auth",
                       "layer": "network",
                       "ruleId": "net.auth.jwt"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 13,
+                      "label": "user = db.query(User).filter_by(email=body.email).first()"
+                    },
+                    {
+                      "kind": "branch",
+                      "line": 14,
+                      "label": "if user is None or not verify_password(body.password, user.pass…",
+                      "children": [
+                        {
+                          "kind": "raise",
+                          "line": 15,
+                          "label": "raise HTTPException(status_code=401)",
+                          "error": true
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "return",
+                      "line": 16,
+                      "label": "return TokenOut(access_token=create_access_token(user.id))"
                     }
                   ],
                   "calls": [
@@ -1115,6 +1362,13 @@
                       "ruleId": "data.sql.query"
                     }
                   ],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 14,
+                      "label": "return db.query(Todo).order_by(Todo.id).all()"
+                    }
+                  ],
                   "calls": [],
                   "calledBy": []
                 },
@@ -1164,6 +1418,33 @@
                       "concept": "ORM write",
                       "layer": "data",
                       "ruleId": "data.orm.write"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 19,
+                      "label": "todo = Todo(title=body.title)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 20,
+                      "label": "db.add(todo)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 21,
+                      "label": "db.commit()"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 22,
+                      "label": "send_digest.delay(todo.owner_id)"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 23,
+                      "label": "return todo"
                     }
                   ],
                   "calls": [
@@ -1223,6 +1504,36 @@
                       "ruleId": "data.orm.write"
                     }
                   ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 28,
+                      "label": "todo = db.get(Todo, todo_id)"
+                    },
+                    {
+                      "kind": "branch",
+                      "line": 29,
+                      "label": "if todo is None",
+                      "children": [
+                        {
+                          "kind": "raise",
+                          "line": 30,
+                          "label": "raise HTTPException(status_code=404)",
+                          "error": true
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "call",
+                      "line": 32,
+                      "label": "db.commit()"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 33,
+                      "label": "return todo"
+                    }
+                  ],
                   "calls": [],
                   "calledBy": []
                 },
@@ -1264,6 +1575,39 @@
                     ]
                   },
                   "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "loop",
+                      "line": 38,
+                      "label": "for a in todos",
+                      "children": [
+                        {
+                          "kind": "loop",
+                          "line": 39,
+                          "label": "for b in todos",
+                          "children": [
+                            {
+                              "kind": "branch",
+                              "line": 40,
+                              "label": "if a.title < b.title",
+                              "children": [
+                                {
+                                  "kind": "call",
+                                  "line": 41,
+                                  "label": "out.append((a, b))"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "return",
+                      "line": 42,
+                      "label": "return sorted(out)"
+                    }
+                  ],
                   "calls": [],
                   "calledBy": []
                 }
@@ -1341,6 +1685,30 @@
                     "memoryFlags": []
                   },
                   "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 15,
+                      "label": "db = SessionLocal()"
+                    },
+                    {
+                      "kind": "try",
+                      "line": 16,
+                      "label": "try"
+                    },
+                    {
+                      "kind": "finally",
+                      "line": 18,
+                      "label": "finally",
+                      "children": [
+                        {
+                          "kind": "call",
+                          "line": 19,
+                          "label": "db.close()"
+                        }
+                      ]
+                    }
+                  ],
                   "calls": [],
                   "calledBy": []
                 }
@@ -1432,6 +1800,18 @@
                       "concept": "Email delivery",
                       "layer": "cloud",
                       "ruleId": "cloud.email"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 10,
+                      "label": "with smtplib.SMTP(\"localhost\") as smtp"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 11,
+                      "label": "smtp.sendmail(\"noreply@example.com\", [f\"user{user_id}@exampl…"
                     }
                   ],
                   "calls": [],
@@ -1976,5 +2356,46 @@
       "handler": "fn:web/src/lib/api.ts#completeTodo"
     }
   ],
-  "questions": []
+  "questions": [],
+  "insights": {
+    "rulesetVersion": "patterns 0.1.0 / catalog 0.1.0",
+    "dataStructures": [],
+    "libraries": [
+      {
+        "name": "FastAPI",
+        "category": "web framework",
+        "explain": "Python web API framework; routes are typed functions validated with Pydantic.",
+        "evidence": [
+          "fastapi",
+          "fastapi.middleware.cors"
+        ]
+      },
+      {
+        "name": "React",
+        "category": "UI library",
+        "explain": "Builds UIs from components; re-renders when state changes.",
+        "evidence": [
+          "react"
+        ]
+      },
+      {
+        "name": "Celery",
+        "category": "task queue",
+        "explain": "Distributed task queue: workers pull jobs from a broker (Redis/RabbitMQ).",
+        "evidence": [
+          "celery"
+        ]
+      },
+      {
+        "name": "SQLAlchemy",
+        "category": "ORM",
+        "explain": "Python SQL toolkit and ORM.",
+        "evidence": [
+          "sqlalchemy",
+          "sqlalchemy.orm"
+        ]
+      }
+    ],
+    "memoryTechniques": []
+  }
 }

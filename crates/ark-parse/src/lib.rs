@@ -3,6 +3,7 @@
 //! Extraction is purely syntactic and deterministic. A malformed file yields partial
 //! facts plus a diagnostic, never a panic.
 
+mod enrich;
 mod facts;
 mod go;
 mod js;
@@ -16,7 +17,7 @@ use ark_scan::Language;
 use tree_sitter::Parser;
 
 /// Bump when extraction output changes, so cached facts are invalidated.
-pub const EXTRACTOR_VERSION: &str = "2";
+pub const EXTRACTOR_VERSION: &str = "3";
 
 fn ts_language(lang: Language) -> tree_sitter::Language {
     match lang {
@@ -72,6 +73,7 @@ pub fn parse_file(lang: Language, path: &str, src: &str) -> FileFacts {
         Language::Rust => rust::extract(root, bytes, &mut facts),
         Language::Go => go::extract(root, bytes, &mut facts),
     }
+    enrich::enrich(lang, root, bytes, &mut facts);
     facts.finish();
     facts
 }

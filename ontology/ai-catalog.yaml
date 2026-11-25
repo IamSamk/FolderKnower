@@ -1,0 +1,405 @@
+# AI / ML architecture catalog v0. Deterministic recognition of pipeline stages.
+#
+# components: each entry tags a call as one pipeline stage.
+#   match:    regexes over "<receiver>.<callee>" (or "<callee>"), like rules.yaml
+#   requires: the file must import a module starting with one of these (optional)
+#   params:   keyword / option names copied from the call as literal settings
+#   positional: name given to the first string argument (e.g. a model id)
+# memory: memory-management techniques. `kwarg` limits the rule to calls that pass it.
+# libraries: named libraries/formats, recognized from import specifiers.
+version: "0.1.0"
+
+components:
+  # ---------------- loading ----------------
+  - id: ai.load.langchain
+    role: loader
+    library: LangChain
+    match: ['(PyPDFLoader|PyMuPDFLoader|TextLoader|DirectoryLoader|WebBaseLoader|CSVLoader|UnstructuredFileLoader|JSONLoader|Docx2txtLoader|RecursiveUrlLoader|PDFLoader)$']
+    params: [glob, encoding, chunk_size]
+    positional: path
+  - id: ai.load.llamaindex
+    role: loader
+    library: LlamaIndex
+    match: ['SimpleDirectoryReader$', 'SimpleWebPageReader$', 'PDFReader$']
+    params: [input_dir, input_files, recursive, required_exts]
+  - id: ai.load.unstructured
+    role: loader
+    library: unstructured / docling
+    match: ['(partition|partition_pdf|partition_html)$', 'DocumentConverter$']
+    requires: [unstructured, docling]
+    params: [strategy, chunking_strategy, max_characters]
+  # ---------------- chunking ----------------
+  - id: ai.split.langchain
+    role: splitter
+    library: LangChain
+    match: ['(RecursiveCharacterTextSplitter|CharacterTextSplitter|TokenTextSplitter|MarkdownHeaderTextSplitter|MarkdownTextSplitter|PythonCodeTextSplitter|SentenceTransformersTokenTextSplitter|HTMLHeaderTextSplitter)$', 'RecursiveCharacterTextSplitter\.(from_tiktoken_encoder|from_language)$']
+    params: [chunk_size, chunk_overlap, chunkSize, chunkOverlap, separators, separator, encoding_name, language, headers_to_split_on]
+  - id: ai.split.semantic
+    role: splitter
+    library: LangChain experimental
+    match: ['SemanticChunker$']
+    params: [breakpoint_threshold_type, breakpoint_threshold_amount, buffer_size]
+    explain: Semantic chunking. Instead of cutting every N characters, it embeds sentences and starts a new chunk where the meaning jumps (the embedding distance crosses a threshold).
+  - id: ai.split.llamaindex
+    role: splitter
+    library: LlamaIndex
+    match: ['(SentenceSplitter|TokenTextSplitter|SemanticSplitterNodeParser|HierarchicalNodeParser|MarkdownNodeParser|SentenceWindowNodeParser|CodeSplitter)$']
+    params: [chunk_size, chunk_overlap, chunk_sizes, window_size, buffer_size]
+  - id: ai.split.chonkie
+    role: splitter
+    library: Chonkie
+    match: ['(TokenChunker|SentenceChunker|SemanticChunker|RecursiveChunker|LateChunker|SDPMChunker)$']
+    requires: [chonkie]
+    params: [chunk_size, chunk_overlap, threshold]
+  # ---------------- embeddings ----------------
+  - id: ai.embed.sentence-transformers
+    role: embedder
+    library: sentence-transformers
+    match: ['^SentenceTransformer$', 'HuggingFaceEmbeddings$', 'HuggingFaceBgeEmbeddings$', 'HuggingFaceEmbedding$', 'FastEmbedEmbeddings$', 'TextEmbedding$']
+    params: [model_name, model, device, normalize_embeddings, truncate_dim]
+    positional: model
+  - id: ai.embed.openai
+    role: embedder
+    library: OpenAI embeddings
+    match: ['OpenAIEmbeddings$', 'OpenAIEmbedding$', 'embeddings\.create$', 'AzureOpenAIEmbeddings$']
+    params: [model, dimensions, model_name, chunk_size]
+  - id: ai.embed.other
+    role: embedder
+    library: hosted / local embeddings
+    match: ['(CohereEmbeddings|OllamaEmbeddings|VoyageEmbeddings|GoogleGenerativeAIEmbeddings|VertexAIEmbeddings|BedrockEmbeddings|MistralAIEmbeddings|NomicEmbeddings|JinaEmbeddings)$', 'ollama\.embed(dings)?$', '\.embed_documents$', '\.embed_query$', '^embed(Many)?$']
+    params: [model, model_name, dimensions, input_type]
+  # ---------------- stores / indexes ----------------
+  - id: ai.store.vector
+    role: vectorStore
+    library: vector store
+    match: ['^(Chroma|FAISS|Qdrant|QdrantVectorStore|Pinecone|PineconeVectorStore|Weaviate|WeaviateVectorStore|Milvus|PGVector|LanceDB|ElasticsearchStore|OpenSearchVectorSearch|Redis|MongoDBAtlasVectorSearch|InMemoryVectorStore|SupabaseVectorStore|ChromaVectorStore|VectorStoreIndex)(\.from_documents|\.from_texts|\.from_existing_index)?$', '(Chroma|FAISS|Qdrant|PineconeStore|MemoryVectorStore|HNSWLib)\.(from_documents|from_texts|fromDocuments|fromTexts|load_local)$', 'VectorStoreIndex\.from_documents$']
+    params: [collection_name, persist_directory, index_name, distance_strategy, embedding_function]
+  - id: ai.store.client
+    role: vectorStore
+    library: vector database client
+    match: ['(PersistentClient|HttpClient|QdrantClient|MilvusClient|connect)$', '\.(create_collection|get_or_create_collection|upsert|add_documents|add_texts)$']
+    requires: [chromadb, qdrant_client, pymilvus, lancedb, pinecone, weaviate]
+    params: [path, collection_name, name, metadata, vectors_config]
+  - id: ai.store.faiss-index
+    role: vectorStore
+    library: FAISS
+    match: ['faiss\.(IndexFlatL2|IndexFlatIP|IndexHNSWFlat|IndexIVFFlat|IndexIVFPQ)$', '^(IndexFlatL2|IndexFlatIP|IndexHNSWFlat|IndexIVFFlat|IndexIVFPQ)$']
+    explain: A FAISS index holds vectors in RAM. Flat indexes compare the query with every vector (exact, O(N)); HNSW and IVF build a graph or clusters so a search only visits a small part of the data (approximate, much faster).
+  - id: ai.keyword.bm25
+    role: keywordIndex
+    library: BM25
+    match: ['^BM25Retriever(\.from_documents|\.from_texts|\.from_defaults)?$', '^BM25Okapi$', '^BM25$', 'bm25s\.(BM25|tokenize)$']
+    params: [k, similarity_top_k, k1, b]
+    explain: BM25 is keyword search. It scores chunks by how often the query words appear in them, discounted by how common those words are everywhere. It finds exact names and codes that embeddings miss.
+  # ---------------- retrieval ----------------
+  - id: ai.retrieve.as-retriever
+    role: retriever
+    library: LangChain / LlamaIndex
+    match: ['\.as_retriever$', '\.asRetriever$', '\.as_query_engine$', '\.as_chat_engine$', 'VectorIndexRetriever$', 'MultiQueryRetriever(\.from_llm)?$', 'ParentDocumentRetriever$', 'SelfQueryRetriever(\.from_llm)?$', 'ContextualCompressionRetriever$']
+    params: [search_type, search_kwargs, k, fetch_k, lambda_mult, score_threshold, similarity_top_k, top_k]
+  - id: ai.retrieve.search
+    role: retriever
+    library: vector search
+    match: ['\.(similarity_search|similarity_search_with_score|similarity_search_with_relevance_scores|max_marginal_relevance_search|similaritySearch|similaritySearchWithScore|maxMarginalRelevanceSearch)$', '\.(query_points|search)$', '\.(get_relevant_documents|retrieve)$']
+    params: [k, n_results, top_k, limit, filter, fetch_k, score_threshold]
+  - id: ai.retrieve.chroma-query
+    role: retriever
+    library: Chroma
+    match: ['\.query$']
+    requires: [chromadb]
+    params: [n_results, where, include]
+  - id: ai.fusion.ensemble
+    role: fusion
+    library: hybrid search
+    match: ['EnsembleRetriever$', 'QueryFusionRetriever$', 'reciprocal_rank_fusion$', '^rrf$', 'HybridSearch$']
+    params: [weights, mode, similarity_top_k, num_queries, c]
+    explain: Fusion merges two ranked lists (dense vectors and BM25 keywords) into one. Reciprocal Rank Fusion gives each chunk 1/(60 + rank) from every list and adds them up, so chunks that rank well in both win.
+  # ---------------- reranking ----------------
+  - id: ai.rerank.cross-encoder
+    role: reranker
+    library: sentence-transformers
+    match: ['^CrossEncoder$', 'HuggingFaceCrossEncoder$', 'CrossEncoderReranker$', 'SentenceTransformerRerank$', 'FlagReranker$', 'FlagLLMReranker$', 'FlashrankRerank$', 'Ranker$']
+    params: [model, model_name, top_n, top_k, max_length, use_fp16]
+    positional: model
+  - id: ai.rerank.hosted
+    role: reranker
+    library: hosted rerank
+    match: ['CohereRerank$', '\.rerank$', 'JinaRerank$', 'VoyageAIRerank$', 'LLMRerank$', 'RankGPTRerank$']
+    params: [model, top_n, top_k, choice_batch_size]
+  # ---------------- prompts ----------------
+  - id: ai.prompt.template
+    role: prompt
+    library: prompt template
+    match: ['(ChatPromptTemplate|PromptTemplate)(\.from_messages|\.from_template|\.fromMessages|\.fromTemplate)?$', '^hub\.pull$', 'RichPromptTemplate$']
+    params: [template, input_variables]
+    positional: template
+  - id: ai.prompt.dspy
+    role: prompt
+    library: DSPy
+    match: ['dspy\.(Predict|ChainOfThought|ReAct|Signature|ProgramOfThought)$']
+    params: [max_iters, tools]
+    explain: DSPy writes the prompt for you. You declare inputs and outputs (a Signature), and a DSPy module such as ChainOfThought or ReAct builds and optimizes the prompt text.
+  # ---------------- models ----------------
+  - id: ai.llm.chat-wrapper
+    role: llm
+    library: LangChain chat model
+    match: ['^(ChatOpenAI|ChatAnthropic|ChatOllama|ChatGoogleGenerativeAI|ChatVertexAI|ChatMistralAI|ChatGroq|ChatBedrock|ChatBedrockConverse|AzureChatOpenAI|ChatHuggingFace|ChatLlamaCpp|ChatDeepSeek|ChatXAI|OllamaLLM|init_chat_model)$']
+    params: [model, model_name, temperature, max_tokens, num_ctx, base_url, streaming]
+    positional: model
+  - id: ai.llm.sdk
+    role: llm
+    library: model SDK
+    match: ['\.(chat\.completions\.create|completions\.create|messages\.create|messages\.stream|responses\.create)$', '\.(create|stream)$', '\.generate_content$', '^(ollama\.)?chat$', '^generateText$', '^streamText$', '^generateObject$', '^completion$', '^acompletion$']
+    requires: [openai, anthropic, google, ollama, litellm, ai, "@ai-sdk", "@anthropic-ai", groq, mistralai, cohere]
+    params: [model, temperature, max_tokens, max_completion_tokens, top_p, top_k, stream, tools, tool_choice, response_format, reasoning_effort, thinking]
+  - id: ai.llm.local
+    role: llm
+    library: local inference
+    match: ['^Llama$', 'Llama\.from_pretrained$', '^LLM$', 'AutoModelForCausalLM\.from_pretrained$', '^pipeline$', '\.generate$', 'mlx_lm\.(load|generate)$']
+    requires: [llama_cpp, vllm, transformers, mlx_lm, ctransformers, gpt4all]
+    params: [model, model_path, n_ctx, n_gpu_layers, max_model_len, gpu_memory_utilization, tensor_parallel_size, dtype, torch_dtype, device_map, max_new_tokens, temperature, do_sample, quantization]
+    positional: model
+  - id: ai.tokenizer
+    role: tokenizer
+    library: tokenizer
+    match: ['AutoTokenizer\.from_pretrained$', 'tiktoken\.(get_encoding|encoding_for_model)$', 'Tokenizer\.from_pretrained$', '\.apply_chat_template$']
+    params: [model_max_length, padding_side, add_generation_prompt]
+    positional: model
+  # ---------------- agents / routing / tools ----------------
+  - id: ai.agent.langchain
+    role: agent
+    library: LangChain / LangGraph
+    match: ['(create_react_agent|create_tool_calling_agent|create_openai_tools_agent|create_agent|initialize_agent|create_supervisor|create_swarm)$', '^AgentExecutor$', '\.bind_tools$', '\.bindTools$']
+    params: [tools, max_iterations, prompt, checkpointer, state_schema]
+  - id: ai.agent.other
+    role: agent
+    library: agent framework
+    match: ['^(Agent|Crew|ReActAgent|FunctionAgent|AgentWorkflow|AssistantAgent|ToolCallingAgent|CodeAgent|Swarm)$', 'ReActAgent\.from_tools$', '\.(kickoff|run_sync)$', '^Runner\.run(_sync)?$']
+    requires: [crewai, llama_index, autogen, smolagents, pydantic_ai, agents, swarm, google.adk, strands]
+    params: [model, tools, max_iterations, max_steps, instructions, role, goal, verbose]
+  - id: ai.router.langgraph
+    role: router
+    library: LangGraph
+    match: ['\.add_conditional_edges$', '\.addConditionalEdges$', '^StateGraph$', '^Command$']
+    requires: [langgraph, "@langchain/langgraph"]
+    params: [path_map]
+    explain: A router (decision step). After a node runs, a function looks at the state and picks the next node, for example "call a tool again" or "finish". This is what turns a straight pipeline into a loop.
+  - id: ai.router.semantic
+    role: router
+    library: semantic routing
+    match: ['(RouterQueryEngine|LLMSingleSelector|PydanticSingleSelector|SemanticRouter|RouteLayer|RunnableBranch)$', 'with_structured_output$', 'withStructuredOutput$']
+    params: [routes, method, include_raw]
+  - id: ai.tool.decorator
+    role: tool
+    library: tool definition
+    match: ['^(tool|StructuredTool|Tool|FunctionTool|QueryEngineTool)(\.from_function|\.from_defaults)?$', '^function_tool$', '^createTool$', '^DynamicStructuredTool$', '^ToolNode$', '^MCPServer(Stdio|Sse|StreamableHttp)?$', '^MultiServerMCPClient$', '^FastMCP$']
+    params: [name, description, return_direct, args_schema]
+  # ---------------- memory / cache / guards / eval ----------------
+  - id: ai.memory.chat
+    role: memory
+    library: conversation memory
+    match: ['(ConversationBufferWindowMemory|ConversationBufferMemory|ConversationSummaryMemory|ConversationSummaryBufferMemory|ChatMemoryBuffer|MemorySaver|InMemorySaver|SqliteSaver|PostgresSaver|InMemoryStore|RedisChatMessageHistory|Mem0|MemoryClient)(\.from_defaults|\.from_conn_string)?$']
+    params: [k, max_token_limit, token_limit, memory_key]
+  - id: ai.cache.llm
+    role: cache
+    library: LLM response cache
+    match: ['^set_llm_cache$', '(InMemoryCache|SQLiteCache|RedisCache|RedisSemanticCache|GPTCache)$']
+    params: [database_path, score_threshold]
+  - id: ai.guard
+    role: guardrail
+    library: guardrails
+    match: ['(Guard|RailsConfig\.from_path|LLMRails|LlamaGuard)$', 'moderations\.create$']
+    requires: [guardrails, nemoguardrails, openai, llama_guard]
+  - id: ai.eval
+    role: evaluator
+    library: evaluation
+    match: ['^evaluate$', '(Faithfulness|AnswerRelevancy|ContextPrecision|ContextRecall|FaithfulnessEvaluator|RelevancyEvaluator|GEval)$']
+    requires: [ragas, llama_index, deepeval, trulens]
+    params: [metrics]
+  # ---------------- serving ----------------
+  - id: ai.serve
+    role: modelServer
+    library: model server
+    match: ['^(AsyncLLMEngine|LLMEngine)(\.from_engine_args)?$', '^(AsyncEngineArgs|EngineArgs)$', '^serve$', 'Llama\.server$']
+    requires: [vllm, sglang, llama_cpp, text_generation, ray]
+    params: [model, max_model_len, gpu_memory_utilization, enable_prefix_caching, max_num_seqs, kv_cache_dtype, block_size]
+  # ---------------- neural network internals ----------------
+  - id: ai.nn.attention
+    role: neuralLayer
+    library: PyTorch
+    match: ['nn\.MultiheadAttention$', '(^|\.)scaled_dot_product_attention$', 'flash_attn_func$', 'nn\.TransformerEncoderLayer$', 'nn\.TransformerDecoderLayer$', 'nn\.Transformer$']
+    params: [embed_dim, num_heads, d_model, nhead, dim_feedforward, dropout, is_causal, batch_first]
+    explain: Attention. Every token makes a query, key and value vector; each token's output is a weighted mix of the other tokens' values, weighted by softmax(query . key / sqrt(d)). Multi-head attention runs several of these in parallel.
+  - id: ai.nn.blocks
+    role: neuralLayer
+    library: PyTorch
+    match: ['nn\.(Embedding|LayerNorm|RMSNorm|Linear|Dropout|GELU|SiLU|Conv1d|Conv2d|LSTM|GRU)$']
+    params: [num_embeddings, embedding_dim, in_features, out_features, normalized_shape, eps, p]
+  - id: ai.train
+    role: trainer
+    library: training loop
+    match: ['^(Trainer|SFTTrainer|DPOTrainer|GRPOTrainer|Seq2SeqTrainer)$', 'optim\.(AdamW|Adam|SGD)$', '\.backward$', '^(LoraConfig|get_peft_model)$', 'TrainingArguments$']
+    requires: [torch, transformers, trl, peft, accelerate, lightning]
+    params: [learning_rate, lr, per_device_train_batch_size, gradient_accumulation_steps, num_train_epochs, r, lora_alpha, target_modules, bf16, fp16]
+
+memory:
+  - id: mem.vllm.paged
+    name: PagedAttention KV cache
+    engine: vLLM
+    match: ['^LLM$', '^(AsyncEngineArgs|EngineArgs)$']
+    requires: [vllm]
+    explain: vLLM stores the KV cache in fixed-size blocks (pages) like an OS stores memory in pages. A request's cache does not need one contiguous slab, so almost no memory is wasted and many requests fit at once. gpu_memory_utilization sets how much of the GPU vLLM may claim.
+  - id: mem.vllm.prefix
+    name: Automatic prefix caching
+    engine: vLLM
+    match: ['^LLM$', '^(AsyncEngineArgs|EngineArgs)$']
+    kwarg: enable_prefix_caching
+    explain: When two prompts start with the same tokens (same system prompt, same document), vLLM reuses the KV blocks it already computed for that prefix instead of recomputing them. Time-to-first-token drops for repeated prefixes.
+  - id: mem.kv.quant
+    name: KV cache quantization
+    engine: vLLM / llama.cpp
+    match: ['^LLM$', '^(AsyncEngineArgs|EngineArgs)$', '^Llama$']
+    kwarg: '(kv_cache_dtype|type_k|type_v|cache_type_k)'
+    explain: Stores keys and values in 8-bit (or 4-bit) instead of 16-bit, roughly halving KV cache memory so longer contexts fit, at a small accuracy cost.
+  - id: mem.llamacpp.ctx
+    name: Context window (n_ctx) and GPU offload
+    engine: llama.cpp
+    match: ['^Llama$', 'Llama\.from_pretrained$']
+    requires: [llama_cpp]
+    explain: n_ctx sets how many tokens the KV cache can hold; memory grows linearly with it. n_gpu_layers decides how many transformer layers live in GPU memory; the rest run on the CPU from RAM (memory-mapped from the model file).
+  - id: mem.hf.cache
+    name: KV cache implementation
+    engine: Hugging Face transformers
+    match: ['^(DynamicCache|StaticCache|SinkCache|OffloadedCache|QuantizedCache|SlidingWindowCache|HybridCache|OffloadedStaticCache)$', '\.generate$']
+    requires: [transformers]
+    kwarg: '(cache_implementation|past_key_values|use_cache)'
+    explain: transformers keeps past keys/values so each new token only computes attention for itself. DynamicCache grows as text grows; StaticCache pre-allocates (fast with torch.compile); SinkCache keeps the first few "attention sink" tokens plus a rolling window of recent tokens (StreamingLLM); OffloadedCache parks layers in CPU RAM.
+  - id: mem.hf.sinkcache
+    name: Rolling cache with attention sinks (StreamingLLM)
+    engine: Hugging Face transformers
+    match: ['^SinkCache$']
+    explain: A rolling KV cache. It keeps the first few tokens (the model leans on them as "attention sinks") plus the most recent window, and drops the middle. Memory stays constant however long the stream runs.
+  - id: mem.hf.quant-weights
+    name: Weight quantization
+    engine: Hugging Face / bitsandbytes
+    match: ['^BitsAndBytesConfig$', '\.from_pretrained$', '^GPTQConfig$', '^AwqConfig$']
+    kwarg: '(load_in_4bit|load_in_8bit|quantization_config|bnb_4bit_quant_type)'
+    explain: Stores the model's weights in 4 or 8 bits instead of 16, so a 7B model needs about 4 GB instead of 14 GB.
+  - id: mem.attn.impl
+    name: Memory-efficient attention
+    engine: Hugging Face transformers
+    match: ['\.from_pretrained$']
+    kwarg: attn_implementation
+    explain: Picks the attention kernel (sdpa, flash_attention_2). FlashAttention computes attention in tiles that fit in fast on-chip memory and never builds the full N x N attention matrix, so memory grows linearly with sequence length instead of quadratically.
+  - id: mem.attn.sdpa
+    name: Fused attention kernel
+    engine: PyTorch / FlashAttention
+    match: ['(^|\.)scaled_dot_product_attention$', 'flash_attn_func$']
+    explain: A fused attention kernel. It never builds the full N x N attention matrix in memory; it streams over tiles, so memory grows linearly with sequence length.
+  - id: mem.anthropic.prompt-cache
+    name: Prompt caching (cache_control)
+    engine: Anthropic API
+    ident: cache_control
+    explain: Marks a long, stable prompt prefix (system prompt, documents, tool list) with cache_control. The provider keeps its processed state for a few minutes; later calls that start with the same prefix read it from cache, which is cheaper and faster. Usage reports cache_creation and cache_read tokens.
+  - id: mem.openai.prompt-cache
+    name: Prompt caching (automatic prefix reuse)
+    engine: OpenAI API
+    match: ['\.(chat\.completions\.create|responses\.create)$', '\.create$']
+    requires: [openai]
+    kwarg: '(prompt_cache_key|prompt_cache_retention)'
+    explain: OpenAI caches prompt prefixes automatically (1024+ tokens). prompt_cache_key groups requests so they land on the same cache. Usage reports cached_tokens.
+  - id: mem.chat.window
+    name: Rolling conversation window
+    engine: LangChain / LlamaIndex
+    match: ['(ConversationBufferWindowMemory|ChatMemoryBuffer|trim_messages|ConversationSummaryBufferMemory)(\.from_defaults)?$']
+    explain: Keeps only the last k turns (or the last N tokens) of the chat in the prompt and drops or summarizes older turns, so the prompt never outgrows the context window.
+  - id: mem.semantic-cache
+    name: Semantic response cache
+    engine: LangChain / GPTCache
+    match: ['(RedisSemanticCache|GPTCache|SemanticCache)$']
+    explain: Stores past answers keyed by the embedding of the question. A new question that is close enough in meaning gets the stored answer without calling the model.
+  - id: mem.torch.ckpt
+    name: Gradient checkpointing
+    engine: PyTorch
+    match: ['\.gradient_checkpointing_enable$', 'checkpoint\.checkpoint$', '^checkpoint$']
+    requires: [torch, transformers]
+    explain: During training, drops most intermediate activations and recomputes them on the backward pass. Trades about 30% more compute for much less memory.
+  - id: mem.torch.amp
+    name: Mixed precision
+    engine: PyTorch
+    match: ['(^|\.)autocast$', 'GradScaler$']
+    explain: Runs most math in 16-bit (bf16/fp16) while keeping master weights in 32-bit. Activations take half the memory and tensor cores run faster.
+  - id: mem.torch.empty
+    name: CUDA caching allocator release
+    engine: PyTorch
+    match: ['cuda\.empty_cache$']
+    explain: PyTorch keeps freed GPU memory in its own cache for reuse. empty_cache hands the unused part back to the driver so other processes can use it; it does not free live tensors.
+  - id: mem.ollama.keepalive
+    name: Model residency (keep_alive) and context size
+    engine: Ollama
+    match: ['^(ollama\.)?(chat|generate|embed)$', '^ChatOllama$', '^OllamaLLM$']
+    kwarg: '(keep_alive|num_ctx|options)'
+    explain: keep_alive decides how long Ollama keeps the model loaded in RAM/VRAM after a request. num_ctx sets the context length, which sizes the KV cache.
+
+libraries:
+  # ---- AI / ML ----
+  - { name: LangChain, category: LLM framework, imports: [langchain, langchain_core, langchain_community, "@langchain/core", langchain_openai, langchain_anthropic], explain: "Building blocks for LLM apps: prompts, chat models, retrievers, tools, chains wired together with the | operator (LCEL)." }
+  - { name: LangGraph, category: agent framework, imports: [langgraph, "@langchain/langgraph"], explain: "Builds agents as a state machine graph: nodes are steps, conditional edges are decisions, and the state is checkpointed between steps." }
+  - { name: LlamaIndex, category: RAG framework, imports: [llama_index, llamaindex], explain: "Data framework for RAG: readers load documents, node parsers chunk them, indexes store embeddings, query engines retrieve and answer." }
+  - { name: Haystack, category: RAG framework, imports: [haystack], explain: "Pipelines of components (converters, splitters, embedders, retrievers, rankers, generators) connected explicitly." }
+  - { name: DSPy, category: prompt programming, imports: [dspy], explain: "Declare what a step takes and returns; DSPy writes and optimizes the prompts and few-shot examples." }
+  - { name: CrewAI, category: agent framework, imports: [crewai], explain: "Multi-agent framework: agents with roles and goals work through tasks in a crew." }
+  - { name: AutoGen / AG2, category: agent framework, imports: [autogen, autogen_agentchat, ag2], explain: "Agents that talk to each other in a conversation to solve a task." }
+  - { name: smolagents, category: agent framework, imports: [smolagents], explain: "Hugging Face's small agent library; CodeAgent writes Python to call tools." }
+  - { name: Pydantic AI, category: agent framework, imports: [pydantic_ai], explain: "Type-safe agents: tools and outputs are validated with Pydantic models." }
+  - { name: OpenAI Agents SDK, category: agent framework, imports: [agents], explain: "Agents, handoffs, guardrails and tracing from OpenAI; Runner.run drives the tool loop." }
+  - { name: Google ADK, category: agent framework, imports: [google.adk], explain: "Google's Agent Development Kit for multi-agent apps." }
+  - { name: Model Context Protocol, category: tool protocol, imports: [mcp, "@modelcontextprotocol/sdk", fastmcp, langchain_mcp_adapters], explain: "MCP: a standard way for an AI app to discover and call tools and read resources from separate server processes over stdio or HTTP." }
+  - { name: OpenAI SDK, category: model API, imports: [openai], explain: "Client for OpenAI models (chat, responses, embeddings)." }
+  - { name: Anthropic SDK, category: model API, imports: [anthropic, "@anthropic-ai/sdk"], explain: "Client for Claude models (messages API, tool use, prompt caching)." }
+  - { name: Vercel AI SDK, category: model API, imports: [ai, "@ai-sdk"], explain: "TypeScript toolkit: generateText/streamText with tools, across many providers." }
+  - { name: LiteLLM, category: model gateway, imports: [litellm], explain: "One completion() call for 100+ providers, with routing and fallbacks." }
+  - { name: Ollama, category: local inference, imports: [ollama], explain: "Runs local models behind an HTTP API on port 11434; models load into RAM/VRAM on demand." }
+  - { name: llama.cpp, category: local inference, imports: [llama_cpp, node-llama-cpp], explain: "C/C++ inference for GGUF models on CPU and GPU, with quantized weights and KV cache." }
+  - { name: vLLM, category: model serving, imports: [vllm], explain: "High-throughput serving with PagedAttention, continuous batching and prefix caching." }
+  - { name: SGLang, category: model serving, imports: [sglang], explain: "Serving engine with RadixAttention, which shares KV cache across requests through a prefix tree." }
+  - { name: Hugging Face Transformers, category: model library, imports: [transformers], explain: "Load and run pretrained models; AutoModel/AutoTokenizer, generate(), Trainer." }
+  - { name: sentence-transformers, category: embeddings, imports: [sentence_transformers], explain: "Embedding models (bi-encoders) and rerankers (cross-encoders)." }
+  - { name: FlagEmbedding (BGE), category: embeddings, imports: [FlagEmbedding], explain: "BAAI's BGE embedding and reranker models." }
+  - { name: PyTorch, category: deep learning, imports: [torch], explain: "Tensors on CPU/GPU with autograd; nn.Module layers; the base of most ML code." }
+  - { name: JAX / Flax, category: deep learning, imports: [jax, flax], explain: "NumPy-like arrays compiled with XLA; functional transforms grad, jit, vmap." }
+  - { name: TensorFlow / Keras, category: deep learning, imports: [tensorflow, keras], explain: "Deep learning framework; Keras is its high-level layer API." }
+  - { name: PEFT (LoRA), category: fine-tuning, imports: [peft], explain: "Parameter-efficient fine-tuning: LoRA trains small low-rank matrices instead of all weights." }
+  - { name: TRL, category: fine-tuning, imports: [trl], explain: "Trainers for SFT, DPO, GRPO and other post-training methods." }
+  - { name: Accelerate, category: training infra, imports: [accelerate], explain: "Runs the same training loop on one GPU, many GPUs or mixed precision." }
+  - { name: bitsandbytes, category: quantization, imports: [bitsandbytes], explain: "8-bit and 4-bit (NF4) quantization kernels for loading big models in less memory." }
+  - { name: FAISS, category: vector index, imports: [faiss], explain: "Facebook's library for fast nearest-neighbour search over vectors (Flat, IVF, HNSW, PQ)." }
+  - { name: Chroma, category: vector database, imports: [chromadb], explain: "Embedded vector database; stores chunks, embeddings and metadata, queried by similarity." }
+  - { name: Qdrant, category: vector database, imports: [qdrant_client, "@qdrant/js-client-rest"], explain: "Vector database with HNSW indexes, payload filters and hybrid (sparse + dense) search." }
+  - { name: Pinecone, category: vector database, imports: [pinecone, "@pinecone-database/pinecone"], explain: "Hosted vector database." }
+  - { name: Weaviate, category: vector database, imports: [weaviate], explain: "Vector database with built-in hybrid BM25 + vector search." }
+  - { name: Milvus, category: vector database, imports: [pymilvus], explain: "Distributed vector database for very large collections." }
+  - { name: LanceDB, category: vector database, imports: [lancedb], explain: "Embedded columnar (Lance format) vector database." }
+  - { name: pgvector, category: vector database, imports: [pgvector], explain: "Postgres extension that stores vectors in a table column with HNSW/IVFFlat indexes." }
+  - { name: rank-bm25 / bm25s, category: keyword search, imports: [rank_bm25, bm25s], explain: "BM25 keyword ranking in pure Python." }
+  - { name: tiktoken, category: tokenizer, imports: [tiktoken], explain: "OpenAI's BPE tokenizer; counts tokens to size chunks and prompts." }
+  - { name: Ragas, category: RAG evaluation, imports: [ragas], explain: "Scores RAG answers: faithfulness, answer relevancy, context precision and recall." }
+  - { name: OpenTelemetry, category: observability, imports: [opentelemetry, "@opentelemetry/api", openinference], explain: "Traces and metrics. Its GenAI conventions (gen_ai.*) and OpenInference record model calls, retrieval documents, rerankers and tool calls as spans." }
+  - { name: Langfuse / LangSmith, category: LLM observability, imports: [langfuse, langsmith], explain: "Record each LLM call, retrieval and tool step of a run for debugging." }
+  - { name: NumPy, category: numerics, imports: [numpy], explain: "N-dimensional arrays stored as contiguous typed memory; vectorized math in C." }
+  - { name: pandas, category: dataframes, imports: [pandas], explain: "Tables (DataFrames) of typed columns in memory." }
+  - { name: scikit-learn, category: classical ML, imports: [sklearn], explain: "Classical ML: fit/predict estimators, pipelines, metrics." }
+  - { name: NetworkX, category: graphs, imports: [networkx], explain: "Graph data structures and algorithms (BFS, shortest paths, PageRank) in Python." }
+  # ---- formats / knowledge ----
+  - { name: Open Knowledge Format (OKF), category: knowledge format, imports: [], explain: "Google Cloud's vendor-neutral format (2026) for agent knowledge: a folder of Markdown files with YAML frontmatter (a required `type` field), plus reserved index.md and log.md files." }
+  # ---- web / infra (common) ----
+  - { name: FastAPI, category: web framework, imports: [fastapi], explain: "Python web API framework; routes are typed functions validated with Pydantic." }
+  - { name: Express, category: web framework, imports: [express], explain: "Minimal Node.js HTTP server with middleware and routes." }
+  - { name: Next.js, category: web framework, imports: [next], explain: "React framework with server rendering and file-based routes." }
+  - { name: React, category: UI library, imports: [react], explain: "Builds UIs from components; re-renders when state changes." }
+  - { name: Celery, category: task queue, imports: [celery], explain: "Distributed task queue: workers pull jobs from a broker (Redis/RabbitMQ)." }
+  - { name: Redis, category: in-memory store, imports: [redis, ioredis], explain: "In-memory key-value store used for caches, queues and pub/sub." }
+  - { name: SQLAlchemy, category: ORM, imports: [sqlalchemy], explain: "Python SQL toolkit and ORM." }
+  - { name: Prisma, category: ORM, imports: ["@prisma/client"], explain: "Type-safe ORM generated from a schema.prisma file." }
+  - { name: Tokio, category: async runtime, imports: [tokio], explain: "Rust async runtime: a work-stealing thread pool runs futures." }
+  - { name: Tauri, category: desktop shell, imports: [tauri, "@tauri-apps/api"], explain: "Desktop apps with a Rust backend and the OS web view as UI." }

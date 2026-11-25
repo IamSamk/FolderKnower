@@ -1,0 +1,10 @@
+langchain==1.1.0
+langchain-community==1.1.0
+langchain-text-splitters==1.0.0
+langchain-huggingface==1.0.0
+langchain-chroma==1.0.0
+langgraph==1.0.0
+sentence-transformers==5.1.0
+rank-bm25==0.2.2
+vllm==0.23.0
+torch==2.10.0

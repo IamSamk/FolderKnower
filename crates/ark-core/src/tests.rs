@@ -147,8 +147,20 @@ fn deterministic_and_incremental() {
 /// Golden snapshot. Regenerate with `UPDATE_GOLDEN=1 cargo test -p ark-core golden`.
 #[test]
 fn golden_fullstack_todo() {
+    golden("fullstack-todo");
+}
+
+#[test]
+fn golden_rag_agent() {
+    golden("rag-agent");
+}
+
+fn golden(name: &str) {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../fixtures/repos")
+        .join(name);
     let (g, _) = analyze(
-        &fixture(),
+        &dir,
         &Options {
             no_cache: true,
             ..Options::default()
@@ -157,11 +169,11 @@ fn golden_fullstack_todo() {
     )
     .unwrap();
     let mut g = g;
-    g.repo_name = "fullstack-todo".to_owned();
+    g.repo_name = name.to_owned();
     g.generator.version = "golden".to_owned();
     let json = ark_schema::to_canonical_json(&g).unwrap();
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../fixtures/expected/fullstack-todo.json");
+        .join(format!("../../fixtures/expected/{name}.json"));
     if std::env::var_os("UPDATE_GOLDEN").is_some() {
         fs::write(&path, &json).unwrap();
     }

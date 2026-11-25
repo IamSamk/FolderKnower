@@ -3,6 +3,7 @@
 
 mod ai;
 mod slm;
+mod telemetry;
 
 use std::{
     collections::BTreeMap,
@@ -152,6 +153,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .manage(ai::AiState::default())
+        .manage(telemetry::TelemetryState::default())
         .invoke_handler(tauri::generate_handler![
             analyze,
             read_source,
@@ -167,6 +169,11 @@ pub fn run() {
             ai::ai_remove,
             ai::ai_start_narrator,
             ai::ai_decide,
+            telemetry::telemetry_system,
+            telemetry::telemetry_processes,
+            telemetry::telemetry_process,
+            telemetry::telemetry_find,
+            telemetry::telemetry_runtimes,
         ])
         .build(tauri::generate_context!())
         .expect("error while building Architekton");

@@ -24,6 +24,17 @@
     "generator": {
       "$ref": "#/$defs/GeneratorInfo"
     },
+    "insights": {
+      "description": "Recognized data structures, AI/ML pipelines, named libraries and memory techniques.",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Insights"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "nonCodeNodes": {
       "description": "Config, docs, tests, migrations, infra and manifests.",
       "type": "array",
@@ -90,6 +101,191 @@
     "questions"
   ],
   "$defs": {
+    "AiArchitecture": {
+      "description": "The recognized AI/ML system: its stages in data-flow order and the edges between them.",
+      "type": "object",
+      "properties": {
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AiEdge"
+          }
+        },
+        "frameworks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "headline": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/AiSystemKind"
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AiStage"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "headline",
+        "frameworks",
+        "stages",
+        "edges"
+      ]
+    },
+    "AiEdge": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "loopBack": {
+          "description": "True for the edge that closes an agent / re-query loop.",
+          "type": "boolean"
+        },
+        "to": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to",
+        "label"
+      ]
+    },
+    "AiRole": {
+      "type": "string",
+      "enum": [
+        "loader",
+        "splitter",
+        "embedder",
+        "vectorStore",
+        "keywordIndex",
+        "retriever",
+        "fusion",
+        "reranker",
+        "prompt",
+        "router",
+        "llm",
+        "tool",
+        "agent",
+        "memory",
+        "cache",
+        "guardrail",
+        "evaluator",
+        "modelServer",
+        "tokenizer",
+        "neuralLayer",
+        "trainer"
+      ]
+    },
+    "AiStage": {
+      "type": "object",
+      "properties": {
+        "explain": {
+          "description": "Student-facing explanation of what this stage does.",
+          "type": "string"
+        },
+        "fileId": {
+          "type": "string"
+        },
+        "functionId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "library": {
+          "type": "string"
+        },
+        "line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "name": {
+          "description": "The class or function as written, e.g. `RecursiveCharacterTextSplitter`.",
+          "type": "string"
+        },
+        "params": {
+          "description": "Literal settings found at the call: chunk_size, chunk_overlap, k, top_n, model, temperature ...",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "role": {
+          "$ref": "#/$defs/AiRole"
+        },
+        "ruleId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "role",
+        "name",
+        "library",
+        "fileId",
+        "line",
+        "params",
+        "ruleId",
+        "explain"
+      ]
+    },
+    "AiSystemKind": {
+      "oneOf": [
+        {
+          "description": "Retrieve-then-generate over one index.",
+          "type": "string",
+          "const": "rag"
+        },
+        {
+          "description": "Dense + keyword (BM25) retrieval fused, usually followed by a reranker.",
+          "type": "string",
+          "const": "hybridRag"
+        },
+        {
+          "description": "A model that picks tools in a loop.",
+          "type": "string",
+          "const": "agent"
+        },
+        {
+          "description": "An agent whose tools include retrieval.",
+          "type": "string",
+          "const": "agenticRag"
+        },
+        {
+          "description": "Calls a model, no retrieval or tools.",
+          "type": "string",
+          "const": "inference"
+        },
+        {
+          "description": "Defines or trains a neural network.",
+          "type": "string",
+          "const": "modelTraining"
+        },
+        {
+          "description": "Serves a model (vLLM, llama.cpp, TGI, Ollama).",
+          "type": "string",
+          "const": "modelServing"
+        }
+      ]
+    },
     "BigO": {
       "type": "string",
       "enum": [
@@ -354,6 +550,113 @@
         }
       ]
     },
+    "DsaFinding": {
+      "description": "A data structure or algorithmic pattern used inside one function.",
+      "type": "object",
+      "properties": {
+        "confidence": {
+          "type": "number",
+          "format": "double"
+        },
+        "evidence": {
+          "description": "Short facts that fired the rule, e.g. `stack.append (line 12)`.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fileId": {
+          "type": "string"
+        },
+        "functionId": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/DsaKind"
+        },
+        "line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "ops": {
+          "description": "Operations in source order, replayed by the animated view.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DsaOp"
+          }
+        },
+        "ruleId": {
+          "type": "string"
+        },
+        "subject": {
+          "description": "Variable or type the structure lives in, when known.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "fileId",
+        "functionId",
+        "line",
+        "ruleId",
+        "confidence",
+        "evidence",
+        "ops"
+      ]
+    },
+    "DsaKind": {
+      "type": "string",
+      "enum": [
+        "stack",
+        "queue",
+        "deque",
+        "heap",
+        "hashMap",
+        "hashSet",
+        "linkedList",
+        "binaryTree",
+        "trie",
+        "graph",
+        "unionFind",
+        "recursion",
+        "memoization",
+        "binarySearch",
+        "sorting"
+      ]
+    },
+    "DsaOp": {
+      "type": "object",
+      "properties": {
+        "call": {
+          "description": "The call as written, e.g. `heapq.heappush`.",
+          "type": "string"
+        },
+        "line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "op": {
+          "description": "Normalized: push, pop, peek, enqueue, dequeue, insert, extract, visit, lookup, recurse, union, find.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "line",
+        "call"
+      ]
+    },
     "Edge": {
       "description": "A directed edge, shared by imports and calls. Every edge carries provenance.",
       "type": "object",
@@ -409,6 +712,56 @@
         "evidence"
       ]
     },
+    "FlowKind": {
+      "type": "string",
+      "enum": [
+        "branch",
+        "else",
+        "loop",
+        "try",
+        "catch",
+        "finally",
+        "switch",
+        "case",
+        "call",
+        "return",
+        "raise"
+      ]
+    },
+    "FlowNode": {
+      "description": "One step of a function's control-flow outline. Built from the syntax tree only.",
+      "type": "object",
+      "properties": {
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FlowNode"
+          }
+        },
+        "error": {
+          "description": "True when this step leaves the function on an error path (raise, throw,\npanic, `return Err`, `return nil, err`, `?`).",
+          "type": "boolean"
+        },
+        "kind": {
+          "$ref": "#/$defs/FlowKind"
+        },
+        "label": {
+          "description": "Condition, loop header, callee or statement text, clipped.",
+          "type": "string"
+        },
+        "line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "line",
+        "label"
+      ]
+    },
     "FunctionNode": {
       "description": "A function or method.",
       "type": "object",
@@ -445,6 +798,16 @@
         },
         "complexity": {
           "$ref": "#/$defs/Complexity"
+        },
+        "flow": {
+          "description": "Control-flow outline (branches, loops, try, early exits) for the ideal-path view.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/FlowNode"
+          }
         },
         "id": {
           "description": "SCIP symbol if available, else `fn:<path>#<qualname>`.",
@@ -566,6 +929,79 @@
         "model"
       ]
     },
+    "Insights": {
+      "description": "Everything the pattern recognizers found. Deterministic: rule ids, sorted output.",
+      "type": "object",
+      "properties": {
+        "ai": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AiArchitecture"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dataStructures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DsaFinding"
+          }
+        },
+        "libraries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/KnownLibrary"
+          }
+        },
+        "memoryTechniques": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MemoryTechnique"
+          }
+        },
+        "rulesetVersion": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "rulesetVersion",
+        "dataStructures",
+        "libraries",
+        "memoryTechniques"
+      ]
+    },
+    "KnownLibrary": {
+      "description": "A named library, framework or format the project uses, with a plain explanation.",
+      "type": "object",
+      "properties": {
+        "category": {
+          "type": "string"
+        },
+        "evidence": {
+          "description": "Import specifiers or files that proved it.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "explain": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "category",
+        "explain",
+        "evidence"
+      ]
+    },
     "LiveTelemetry": {
       "type": "object",
       "properties": {
@@ -596,6 +1032,45 @@
         "cpuPercent",
         "rssBytes",
         "activeThreads"
+      ]
+    },
+    "MemoryTechnique": {
+      "description": "A memory-management technique configured in code (KV cache, prompt caching, quantization ...).",
+      "type": "object",
+      "properties": {
+        "engine": {
+          "type": "string"
+        },
+        "explain": {
+          "type": "string"
+        },
+        "fileId": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "name": {
+          "type": "string"
+        },
+        "setting": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "engine",
+        "fileId",
+        "line",
+        "setting",
+        "explain"
       ]
     },
     "NonCodeKind": {

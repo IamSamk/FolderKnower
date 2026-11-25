@@ -182,6 +182,8 @@ impl X<'_, '_> {
             complexity,
             is_component: false,
             is_async,
+            idents: Vec::new(),
+            flow: Vec::new(),
         });
         self.fn_stack.push(self.facts.functions.len() - 1);
         for c in named_children(node) {
@@ -488,6 +490,7 @@ impl X<'_, '_> {
             line: line(node),
             first_string: first_string.clone(),
             ident_args: ident_args.clone(),
+            ..CallFact::default()
         };
 
         let recv_last = receiver
@@ -619,6 +622,7 @@ impl X<'_, '_> {
                 line: line(node),
                 first_string: None,
                 ident_args: Vec::new(),
+                ..CallFact::default()
             });
         }
         let mut event = None;

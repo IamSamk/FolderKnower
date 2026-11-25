@@ -2,6 +2,7 @@
 import type { CrossTierEdge } from "./CrossTierEdge";
 import type { DataModel } from "./DataModel";
 import type { GeneratorInfo } from "./GeneratorInfo";
+import type { Insights } from "./Insights";
 import type { NonCodeNode } from "./NonCodeNode";
 import type { ProjectSummary } from "./ProjectSummary";
 import type { Question } from "./Question";
@@ -45,4 +46,8 @@ uiElements: Array<UiElement>,
 /**
  * Ambiguities the classifier wants a human (or the local model) to settle.
  */
-questions: Array<Question>, };
+questions: Array<Question>, 
+/**
+ * Recognized data structures, AI/ML pipelines, named libraries and memory techniques.
+ */
+insights?: Insights, };

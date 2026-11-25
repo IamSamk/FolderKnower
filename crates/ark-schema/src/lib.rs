@@ -48,6 +48,10 @@ pub struct SystemArchitectureGraph {
     pub ui_elements: Vec<UiElement>,
     /// Ambiguities the classifier wants a human (or the local model) to settle.
     pub questions: Vec<Question>,
+    /// Recognized data structures, AI/ML pipelines, named libraries and memory techniques.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub insights: Option<Insights>,
 }
 
 /// Project-level classification with its evidence.
@@ -390,6 +394,10 @@ pub struct FunctionNode {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub live_telemetry: Option<LiveTelemetry>,
+    /// Control-flow outline (branches, loops, try, early exits) for the ideal-path view.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub flow: Option<Vec<FlowNode>>,
     pub calls: Vec<Edge>,
     pub called_by: Vec<String>,
 }
@@ -563,6 +571,250 @@ pub enum Protocol {
     #[ts(rename = "IPC")]
     Ipc,
     Queue,
+}
+
+// ---------------------------------------------------------------------------
+// Control flow (ideal-path view)
+// ---------------------------------------------------------------------------
+
+/// One step of a function's control-flow outline. Built from the syntax tree only.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct FlowNode {
+    pub kind: FlowKind,
+    pub line: u32,
+    /// Condition, loop header, callee or statement text, clipped.
+    pub label: String,
+    /// True when this step leaves the function on an error path (raise, throw,
+    /// panic, `return Err`, `return nil, err`, `?`).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(as = "Option<bool>", optional)]
+    pub error: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<FlowNode>>", optional)]
+    pub children: Vec<FlowNode>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "lowercase")]
+#[ts(rename_all = "lowercase")]
+pub enum FlowKind {
+    Branch,
+    Else,
+    Loop,
+    Try,
+    Catch,
+    Finally,
+    Switch,
+    Case,
+    Call,
+    Return,
+    Raise,
+}
+
+// ---------------------------------------------------------------------------
+// Insights: data structures, AI/ML architecture, libraries, memory techniques
+// ---------------------------------------------------------------------------
+
+/// Everything the pattern recognizers found. Deterministic: rule ids, sorted output.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct Insights {
+    pub ruleset_version: String,
+    pub data_structures: Vec<DsaFinding>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub ai: Option<AiArchitecture>,
+    pub libraries: Vec<KnownLibrary>,
+    pub memory_techniques: Vec<MemoryTechnique>,
+}
+
+impl Insights {
+    pub fn is_empty(&self) -> bool {
+        self.data_structures.is_empty()
+            && self.ai.is_none()
+            && self.libraries.is_empty()
+            && self.memory_techniques.is_empty()
+    }
+}
+
+/// A data structure or algorithmic pattern used inside one function.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct DsaFinding {
+    pub id: String,
+    pub kind: DsaKind,
+    pub file_id: String,
+    pub function_id: String,
+    pub line: u32,
+    /// Variable or type the structure lives in, when known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub subject: Option<String>,
+    pub rule_id: String,
+    pub confidence: f64,
+    /// Short facts that fired the rule, e.g. `stack.append (line 12)`.
+    pub evidence: Vec<String>,
+    /// Operations in source order, replayed by the animated view.
+    pub ops: Vec<DsaOp>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct DsaOp {
+    /// Normalized: push, pop, peek, enqueue, dequeue, insert, extract, visit, lookup, recurse, union, find.
+    pub op: String,
+    pub line: u32,
+    /// The call as written, e.g. `heapq.heappush`.
+    pub call: String,
+}
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema, TS,
+)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub enum DsaKind {
+    Stack,
+    Queue,
+    Deque,
+    Heap,
+    HashMap,
+    HashSet,
+    LinkedList,
+    BinaryTree,
+    Trie,
+    Graph,
+    UnionFind,
+    Recursion,
+    Memoization,
+    BinarySearch,
+    Sorting,
+}
+
+/// The recognized AI/ML system: its stages in data-flow order and the edges between them.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct AiArchitecture {
+    pub kind: AiSystemKind,
+    pub headline: String,
+    pub frameworks: Vec<String>,
+    pub stages: Vec<AiStage>,
+    pub edges: Vec<AiEdge>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub enum AiSystemKind {
+    /// Retrieve-then-generate over one index.
+    Rag,
+    /// Dense + keyword (BM25) retrieval fused, usually followed by a reranker.
+    HybridRag,
+    /// A model that picks tools in a loop.
+    Agent,
+    /// An agent whose tools include retrieval.
+    AgenticRag,
+    /// Calls a model, no retrieval or tools.
+    Inference,
+    /// Defines or trains a neural network.
+    ModelTraining,
+    /// Serves a model (vLLM, llama.cpp, TGI, Ollama).
+    ModelServing,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct AiStage {
+    pub id: String,
+    pub role: AiRole,
+    /// The class or function as written, e.g. `RecursiveCharacterTextSplitter`.
+    pub name: String,
+    pub library: String,
+    pub file_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub function_id: Option<String>,
+    pub line: u32,
+    /// Literal settings found at the call: chunk_size, chunk_overlap, k, top_n, model, temperature ...
+    pub params: BTreeMap<String, String>,
+    pub rule_id: String,
+    /// Student-facing explanation of what this stage does.
+    pub explain: String,
+}
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema, TS,
+)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub enum AiRole {
+    Loader,
+    Splitter,
+    Embedder,
+    VectorStore,
+    KeywordIndex,
+    Retriever,
+    Fusion,
+    Reranker,
+    Prompt,
+    Router,
+    Llm,
+    Tool,
+    Agent,
+    Memory,
+    Cache,
+    Guardrail,
+    Evaluator,
+    ModelServer,
+    Tokenizer,
+    NeuralLayer,
+    Trainer,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct AiEdge {
+    pub from: String,
+    pub to: String,
+    pub label: String,
+    /// True for the edge that closes an agent / re-query loop.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(as = "Option<bool>", optional)]
+    pub loop_back: bool,
+}
+
+/// A named library, framework or format the project uses, with a plain explanation.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct KnownLibrary {
+    pub name: String,
+    pub category: String,
+    pub explain: String,
+    /// Import specifiers or files that proved it.
+    pub evidence: Vec<String>,
+}
+
+/// A memory-management technique configured in code (KV cache, prompt caching, quantization ...).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct MemoryTechnique {
+    pub id: String,
+    pub name: String,
+    pub engine: String,
+    pub file_id: String,
+    pub line: u32,
+    pub setting: String,
+    pub explain: String,
 }
 
 /// JSON Schema for [`SystemArchitectureGraph`], pretty-printed with a trailing newline.

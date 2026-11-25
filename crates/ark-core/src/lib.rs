@@ -330,6 +330,7 @@ pub fn analyze(
                     ),
                     inferred_role: None,
                     live_telemetry: None,
+                    flow: (!x.flow.is_empty()).then(|| x.flow.clone()),
                     calls: linked.fn_calls.get(&id).cloned().unwrap_or_default(),
                     called_by: linked
                         .called_by
@@ -426,6 +427,16 @@ pub fn analyze(
     let mut ui = linked.ui_elements.clone();
     ui.sort_by(|a, b| a.id.cmp(&b.id));
 
+    // ---- insights: data structures, AI/ML pipeline, libraries, memory techniques
+    say(
+        Stage::Classify,
+        "Recognizing data structures and AI pipelines".into(),
+        0,
+        0,
+    );
+    let okf = detect_okf(root, &scanned.files);
+    let insights = ark_patterns::analyze(&app, &okf);
+
     let repo_name = fs::canonicalize(root)
         .ok()
         .and_then(|p| p.file_name().map(|n| n.to_string_lossy().into_owned()))
@@ -455,6 +466,7 @@ pub fn analyze(
         routes: linked.routes,
         ui_elements: ui,
         questions: structure.questions,
+        insights,
     };
     let stats = RunStats {
         files: scanned.files.len(),
@@ -473,6 +485,46 @@ pub fn analyze(
         total,
     );
     Ok((graph, stats))
+}
+
+/// Open Knowledge Format bundles: markdown files whose YAML frontmatter has a `type:`
+/// key, inside a folder that also has the reserved `index.md` and `log.md`.
+fn detect_okf(root: &Path, files: &[ark_scan::ScannedFile]) -> Vec<String> {
+    let mut dirs: BTreeMap<String, (bool, bool, u32)> = BTreeMap::new();
+    for f in files {
+        if !f.path.to_ascii_lowercase().ends_with(".md") {
+            continue;
+        }
+        let (dir, name) = f.path.rsplit_once('/').unwrap_or(("", f.path.as_str()));
+        let e = dirs.entry(dir.to_owned()).or_default();
+        match name {
+            "index.md" => e.0 = true,
+            "log.md" => e.1 = true,
+            _ => {
+                if e.2 < 3
+                    && f.size < 256 * 1024
+                    && let Ok(s) = fs::read_to_string(root.join(&f.path))
+                    && let Some(rest) = s.strip_prefix("---")
+                    && let Some(end) = rest.find("\n---")
+                    && rest[..end]
+                        .lines()
+                        .any(|l| l.trim_start().starts_with("type:"))
+                {
+                    e.2 += 1;
+                }
+            }
+        }
+    }
+    dirs.into_iter()
+        .filter(|(_, (i, l, typed))| *typed > 0 && (*i || *l))
+        .map(|(d, _)| {
+            if d.is_empty() {
+                "./".to_owned()
+            } else {
+                format!("{d}/")
+            }
+        })
+        .collect()
 }
 
 #[cfg(test)]

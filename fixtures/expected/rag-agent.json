@@ -1,0 +1,2339 @@
+{
+  "schemaVersion": "2.0",
+  "repoName": "rag-agent",
+  "rootPath": ".",
+  "generator": {
+    "version": "golden",
+    "rulesetVersion": "ontology 0.1.0 / tiers 0.1.0",
+    "grammars": {
+      "tree-sitter-go": "0.25.0",
+      "tree-sitter-javascript": "0.25.0",
+      "tree-sitter-python": "0.25.0",
+      "tree-sitter-rust": "0.24.2",
+      "tree-sitter-typescript": "0.23.2"
+    }
+  },
+  "contentRoot": "968917de2f8506b5da63019a2e739ad8ca29993cfc862b12e868b309aa8db618",
+  "tiers": [
+    {
+      "id": "tier:storage",
+      "label": "Storage",
+      "evidence": [
+        "tier.db.dir"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:storage:model",
+          "name": "model",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:model/tiny_gpt.py",
+              "path": "model/tiny_gpt.py",
+              "language": "python",
+              "contentHash": "6488d24d81a875d41c1bc7af9ec88cc52baedd24f2b4d3edc2db51c4b06f93a9",
+              "lines": 53,
+              "tierConfidence": 0.85,
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:model/tiny_gpt.py#CausalSelfAttention.__init__",
+                  "name": "__init__",
+                  "visibility": "public",
+                  "lineRange": [
+                    7,
+                    9
+                  ],
+                  "byteRange": [
+                    153,
+                    325
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "d_model",
+                        "type": "int"
+                      },
+                      {
+                        "name": "n_heads",
+                        "type": "int"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.recursion.linear",
+                      "space.recursion-stack"
+                    ],
+                    "memoryFlags": [
+                      "recursion-stack"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 8,
+                      "label": "super().__init__()"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 9,
+                      "label": "self.attn = nn.MultiheadAttention(embed_dim=d_model, num_hea…"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:algorithms/structures.py#TreeNode.__init__",
+                      "provenance": "ts_name_match",
+                      "confidence": 0.4
+                    }
+                  ],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:model/tiny_gpt.py#CausalSelfAttention.forward",
+                  "name": "forward",
+                  "visibility": "public",
+                  "lineRange": [
+                    11,
+                    15
+                  ],
+                  "byteRange": [
+                    331,
+                    517
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "x"
+                      },
+                      {
+                        "name": "cache",
+                        "defaultValue": "None"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "GPU compute",
+                      "layer": "os",
+                      "ruleId": "os.gpu"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "branch",
+                      "line": 12,
+                      "label": "if cache is not None",
+                      "children": [
+                        {
+                          "kind": "call",
+                          "line": 13,
+                          "label": "x = torch.cat([cache, x], dim=1)"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "call",
+                      "line": 14,
+                      "label": "out, _ = self.attn(x, x, x, need_weights=False)"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 15,
+                      "label": "return out, x"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:model/tiny_gpt.py#MLP.__init__",
+                  "name": "__init__",
+                  "visibility": "public",
+                  "lineRange": [
+                    19,
+                    22
+                  ],
+                  "byteRange": [
+                    546,
+                    708
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "d_model",
+                        "type": "int"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.recursion.linear",
+                      "space.recursion-stack"
+                    ],
+                    "memoryFlags": [
+                      "recursion-stack"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 20,
+                      "label": "super().__init__()"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 21,
+                      "label": "self.up = nn.Linear(d_model, 4 * d_model)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 22,
+                      "label": "self.down = nn.Linear(4 * d_model, d_model)"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:algorithms/structures.py#TreeNode.__init__",
+                      "provenance": "ts_name_match",
+                      "confidence": 0.4
+                    }
+                  ],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:model/tiny_gpt.py#MLP.forward",
+                  "name": "forward",
+                  "visibility": "public",
+                  "lineRange": [
+                    24,
+                    25
+                  ],
+                  "byteRange": [
+                    714,
+                    798
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "x"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "GPU compute",
+                      "layer": "os",
+                      "ruleId": "os.gpu"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 25,
+                      "label": "return self.down(torch.nn.functional.gelu(self.up(x)))"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:model/tiny_gpt.py#Block.__init__",
+                  "name": "__init__",
+                  "visibility": "public",
+                  "lineRange": [
+                    29,
+                    34
+                  ],
+                  "byteRange": [
+                    829,
+                    1079
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "d_model",
+                        "type": "int"
+                      },
+                      {
+                        "name": "n_heads",
+                        "type": "int"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.recursion.linear",
+                      "space.recursion-stack"
+                    ],
+                    "memoryFlags": [
+                      "recursion-stack"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 30,
+                      "label": "super().__init__()"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 31,
+                      "label": "self.norm1 = nn.LayerNorm(d_model)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 32,
+                      "label": "self.attn = CausalSelfAttention(d_model, n_heads)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 33,
+                      "label": "self.norm2 = nn.LayerNorm(d_model)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 34,
+                      "label": "self.mlp = MLP(d_model)"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:algorithms/structures.py#TreeNode.__init__",
+                      "provenance": "ts_name_match",
+                      "confidence": 0.4
+                    }
+                  ],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:model/tiny_gpt.py#Block.forward",
+                  "name": "forward",
+                  "visibility": "public",
+                  "lineRange": [
+                    36,
+                    39
+                  ],
+                  "byteRange": [
+                    1085,
+                    1207
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "x"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 37,
+                      "label": "a, _ = self.attn(self.norm1(x))"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 39,
+                      "label": "return x + self.mlp(self.norm2(x))"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:model/tiny_gpt.py#TinyGPT.__init__",
+                  "name": "__init__",
+                  "visibility": "public",
+                  "lineRange": [
+                    43,
+                    47
+                  ],
+                  "byteRange": [
+                    1240,
+                    1576
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "vocab",
+                        "type": "int",
+                        "defaultValue": "32000"
+                      },
+                      {
+                        "name": "d_model",
+                        "type": "int",
+                        "defaultValue": "256"
+                      },
+                      {
+                        "name": "n_heads",
+                        "type": "int",
+                        "defaultValue": "4"
+                      },
+                      {
+                        "name": "n_layers",
+                        "type": "int",
+                        "defaultValue": "4"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(N^2)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.loop.depth-1",
+                      "bigo.recursion.linear",
+                      "space.alloc-in-loop",
+                      "space.recursion-stack"
+                    ],
+                    "memoryFlags": [
+                      "alloc-in-loop",
+                      "recursion-stack"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 44,
+                      "label": "super().__init__()"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 45,
+                      "label": "self.embed = nn.Embedding(num_embeddings=vocab, embedding_di…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 46,
+                      "label": "self.blocks = nn.ModuleList([Block(d_model, n_heads) for _ i…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 47,
+                      "label": "self.head = nn.Linear(d_model, vocab)"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:algorithms/structures.py#TreeNode.__init__",
+                      "provenance": "ts_name_match",
+                      "confidence": 0.4
+                    }
+                  ],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:model/tiny_gpt.py#TinyGPT.forward",
+                  "name": "forward",
+                  "visibility": "public",
+                  "lineRange": [
+                    49,
+                    53
+                  ],
+                  "byteRange": [
+                    1582,
+                    1712
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "ids"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.loop.depth-1"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 50,
+                      "label": "x = self.embed(ids)"
+                    },
+                    {
+                      "kind": "loop",
+                      "line": 51,
+                      "label": "for b in self.blocks",
+                      "children": [
+                        {
+                          "kind": "call",
+                          "line": 52,
+                          "label": "x = b(x)"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "return",
+                      "line": 53,
+                      "label": "return self.head(x)"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tier:shared",
+      "label": "Shared",
+      "evidence": [],
+      "clusters": [
+        {
+          "id": "cluster:shared:agent",
+          "name": "agent",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:app/agent.py",
+              "path": "app/agent.py",
+              "language": "python",
+              "contentHash": "558976a8213817da5f50d7b353fb8351dab72cec259a88e49874d50fb4f58187",
+              "lines": 44,
+              "tierConfidence": 0.3,
+              "imports": [
+                {
+                  "target": "file:app/retrieve.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:app/agent.py#search_book",
+                  "name": "search_book",
+                  "visibility": "public",
+                  "lineRange": [
+                    17,
+                    21
+                  ],
+                  "byteRange": [
+                    574,
+                    776
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "question",
+                        "type": "str"
+                      }
+                    ],
+                    "returnType": "str"
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.loop.depth-1"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 20,
+                      "label": "docs = hybrid_search(STORE, KEYWORDS, question)"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 21,
+                      "label": "return \"\\n\\n\".join(d.page_content for d in docs)"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:app/retrieve.py#hybrid_search",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:app/agent.py#call_model",
+                  "name": "call_model",
+                  "visibility": "public",
+                  "lineRange": [
+                    24,
+                    27
+                  ],
+                  "byteRange": [
+                    779,
+                    1037
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "state",
+                        "type": "dict"
+                      }
+                    ],
+                    "returnType": "dict"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 25,
+                      "label": "model = llm.bind_tools([search_book])"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 26,
+                      "label": "reply = model.invoke(prompt.format_messages(context=state.ge…"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 27,
+                      "label": "return {\"messages\": [reply], \"steps\": state.get(\"steps\", 0) …"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:app/agent.py#should_continue",
+                  "name": "should_continue",
+                  "visibility": "public",
+                  "lineRange": [
+                    30,
+                    36
+                  ],
+                  "byteRange": [
+                    1040,
+                    1229
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "state",
+                        "type": "dict"
+                      }
+                    ],
+                    "returnType": "str"
+                  },
+                  "complexity": {
+                    "cyclomatic": 3,
+                    "cognitive": 2,
+                    "maxNesting": 1,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "branch",
+                      "line": 32,
+                      "label": "if state.get(\"steps\", 0) >= 4",
+                      "children": [
+                        {
+                          "kind": "return",
+                          "line": 33,
+                          "label": "return END"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "branch",
+                      "line": 34,
+                      "label": "if last.tool_calls",
+                      "children": [
+                        {
+                          "kind": "return",
+                          "line": 35,
+                          "label": "return \"tools\""
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "return",
+                      "line": 36,
+                      "label": "return END"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                }
+              ]
+            },
+            {
+              "id": "file:app/ingest.py",
+              "path": "app/ingest.py",
+              "language": "python",
+              "contentHash": "09d07c1e2db9ed444a590483f1e6430ca350f801cad1c694a52c24a02b514b5b",
+              "lines": 21,
+              "tierConfidence": 0.3,
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:app/ingest.py#build_index",
+                  "name": "build_index",
+                  "visibility": "public",
+                  "lineRange": [
+                    12,
+                    21
+                  ],
+                  "byteRange": [
+                    390,
+                    968
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "pdf_path",
+                        "type": "str"
+                      },
+                      {
+                        "name": "persist_dir",
+                        "type": "str",
+                        "defaultValue": "\"./index\""
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 13,
+                      "label": "docs = PyPDFLoader(pdf_path).load()"
+                    },
+                    {
+                      "kind": "branch",
+                      "line": 14,
+                      "label": "if not docs",
+                      "children": [
+                        {
+                          "kind": "raise",
+                          "line": 15,
+                          "label": "raise ValueError(f\"{pdf_path} has no pages\")",
+                          "error": true
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "call",
+                      "line": 16,
+                      "label": "splitter = RecursiveCharacterTextSplitter(chunk_size=800, ch…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 17,
+                      "label": "chunks = splitter.split_documents(docs)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 18,
+                      "label": "embeddings = HuggingFaceEmbeddings(model_name=\"BAAI/bge-smal…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 19,
+                      "label": "store = Chroma.from_documents(chunks, embeddings, persist_di…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 20,
+                      "label": "keywords = BM25Retriever.from_documents(chunks, k=8)"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 21,
+                      "label": "return store, keywords, len(chunks)"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                }
+              ]
+            },
+            {
+              "id": "file:app/retrieve.py",
+              "path": "app/retrieve.py",
+              "language": "python",
+              "contentHash": "37b795da2349b9bb5ee4c48aab41c27aaf607c45ee88e97754b743a6a294a49f",
+              "lines": 19,
+              "tierConfidence": 0.3,
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:app/retrieve.py#hybrid_search",
+                  "name": "hybrid_search",
+                  "visibility": "public",
+                  "lineRange": [
+                    11,
+                    19
+                  ],
+                  "byteRange": [
+                    274,
+                    771
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "store"
+                      },
+                      {
+                        "name": "keywords"
+                      },
+                      {
+                        "name": "question",
+                        "type": "str"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 4,
+                    "cognitive": 3,
+                    "maxNesting": 1,
+                    "timeBigO": "O(N log N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.loop.depth-1",
+                      "bigo.lib.sort",
+                      "space.alloc-in-loop",
+                      "space.lib.sort"
+                    ],
+                    "memoryFlags": [
+                      "alloc-in-loop"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 12,
+                      "label": "dense = store.as_retriever(search_type=\"similarity\", search_…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 13,
+                      "label": "fused = EnsembleRetriever(retrievers=[dense, keywords], weig…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 14,
+                      "label": "candidates = fused.invoke(question)"
+                    },
+                    {
+                      "kind": "branch",
+                      "line": 15,
+                      "label": "if not candidates",
+                      "children": [
+                        {
+                          "kind": "return",
+                          "line": 16,
+                          "label": "return []"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "call",
+                      "line": 17,
+                      "label": "scores = reranker.predict([(question, c.page_content) for c …"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 18,
+                      "label": "ranked = sorted(zip(scores, candidates), key=lambda p: p[0],…"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 19,
+                      "label": "return [doc for _, doc in ranked[:TOP_N]]"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:app/agent.py#search_book"
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "file:app/serve.py",
+              "path": "app/serve.py",
+              "language": "python",
+              "contentHash": "ed07bf108a85c235cef02a2ad9261eef21ee4f764d094c57a812ac8ec96a2217",
+              "lines": 15,
+              "tierConfidence": 0.3,
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:app/serve.py#answer",
+                  "name": "answer",
+                  "visibility": "public",
+                  "lineRange": [
+                    13,
+                    15
+                  ],
+                  "byteRange": [
+                    277,
+                    413
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "prompts",
+                        "type": "list[str]"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 14,
+                      "label": "params = SamplingParams(temperature=0.0, max_tokens=512)"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 15,
+                      "label": "return engine.generate(prompts, params)"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cluster:shared:algorithms",
+          "name": "algorithms",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:algorithms/structures.py",
+              "path": "algorithms/structures.py",
+              "language": "python",
+              "contentHash": "fa4a5e703dd1a221d10918df896cbd57f0d314b05879e497ca37f8a7ade809ba",
+              "lines": 73,
+              "tierConfidence": 0.3,
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:algorithms/structures.py#balanced",
+                  "name": "balanced",
+                  "visibility": "public",
+                  "lineRange": [
+                    7,
+                    16
+                  ],
+                  "byteRange": [
+                    144,
+                    437
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "text",
+                        "type": "str"
+                      }
+                    ],
+                    "returnType": "bool"
+                  },
+                  "complexity": {
+                    "cyclomatic": 6,
+                    "cognitive": 9,
+                    "maxNesting": 4,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.loop.depth-1",
+                      "space.alloc-in-loop"
+                    ],
+                    "memoryFlags": [
+                      "alloc-in-loop"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "loop",
+                      "line": 10,
+                      "label": "for ch in text",
+                      "children": [
+                        {
+                          "kind": "branch",
+                          "line": 11,
+                          "label": "if ch in \"([{\"",
+                          "children": [
+                            {
+                              "kind": "call",
+                              "line": 12,
+                              "label": "stack.append(ch)"
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "else",
+                          "line": 13,
+                          "label": "elif ch in pairs",
+                          "children": [
+                            {
+                              "kind": "branch",
+                              "line": 14,
+                              "label": "if not stack or stack.pop() != pairs[ch]",
+                              "children": [
+                                {
+                                  "kind": "return",
+                                  "line": 15,
+                                  "label": "return False"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "return",
+                      "line": 16,
+                      "label": "return not stack"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:algorithms/structures.py#bfs",
+                  "name": "bfs",
+                  "visibility": "public",
+                  "lineRange": [
+                    19,
+                    30
+                  ],
+                  "byteRange": [
+                    440,
+                    758
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "graph",
+                        "type": "dict"
+                      },
+                      {
+                        "name": "start"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 4,
+                    "cognitive": 6,
+                    "maxNesting": 3,
+                    "timeBigO": "O(N^2)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.loop.depth-2",
+                      "space.alloc-in-loop"
+                    ],
+                    "memoryFlags": [
+                      "alloc-in-loop"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 21,
+                      "label": "queue = deque([start])"
+                    },
+                    {
+                      "kind": "loop",
+                      "line": 23,
+                      "label": "while queue",
+                      "children": [
+                        {
+                          "kind": "call",
+                          "line": 24,
+                          "label": "node = queue.popleft()"
+                        },
+                        {
+                          "kind": "call",
+                          "line": 25,
+                          "label": "order.append(node)"
+                        },
+                        {
+                          "kind": "loop",
+                          "line": 26,
+                          "label": "for nxt in graph[node]",
+                          "children": [
+                            {
+                              "kind": "branch",
+                              "line": 27,
+                              "label": "if nxt not in visited",
+                              "children": [
+                                {
+                                  "kind": "call",
+                                  "line": 28,
+                                  "label": "visited.add(nxt)"
+                                },
+                                {
+                                  "kind": "call",
+                                  "line": 29,
+                                  "label": "queue.append(nxt)"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "return",
+                      "line": 30,
+                      "label": "return order"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:algorithms/structures.py#k_smallest",
+                  "name": "k_smallest",
+                  "visibility": "public",
+                  "lineRange": [
+                    33,
+                    37
+                  ],
+                  "byteRange": [
+                    761,
+                    946
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "nums",
+                        "type": "list[int]"
+                      },
+                      {
+                        "name": "k",
+                        "type": "int"
+                      }
+                    ],
+                    "returnType": "list[int]"
+                  },
+                  "complexity": {
+                    "cyclomatic": 3,
+                    "cognitive": 2,
+                    "maxNesting": 1,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.loop.depth-1",
+                      "space.alloc-in-loop"
+                    ],
+                    "memoryFlags": [
+                      "alloc-in-loop"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "loop",
+                      "line": 35,
+                      "label": "for n in nums",
+                      "children": [
+                        {
+                          "kind": "call",
+                          "line": 36,
+                          "label": "heapq.heappush(heap, n)"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "return",
+                      "line": 37,
+                      "label": "return [heapq.heappop(heap) for _ in range(min(k, len(heap))…"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:algorithms/structures.py#fib",
+                  "name": "fib",
+                  "visibility": "public",
+                  "lineRange": [
+                    40,
+                    44
+                  ],
+                  "byteRange": [
+                    974,
+                    1063
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "n",
+                        "type": "int"
+                      }
+                    ],
+                    "returnType": "int"
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(2^N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.recursion.fanout",
+                      "space.recursion-stack"
+                    ],
+                    "memoryFlags": [
+                      "recursion-stack"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "branch",
+                      "line": 42,
+                      "label": "if n < 2",
+                      "children": [
+                        {
+                          "kind": "return",
+                          "line": 43,
+                          "label": "return n"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "return",
+                      "line": 44,
+                      "label": "return fib(n - 1) + fib(n - 2)"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:algorithms/structures.py#binary_search",
+                  "name": "binary_search",
+                  "visibility": "public",
+                  "lineRange": [
+                    47,
+                    57
+                  ],
+                  "byteRange": [
+                    1066,
+                    1368
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "items",
+                        "type": "list[int]"
+                      },
+                      {
+                        "name": "target",
+                        "type": "int"
+                      }
+                    ],
+                    "returnType": "int"
+                  },
+                  "complexity": {
+                    "cyclomatic": 4,
+                    "cognitive": 5,
+                    "maxNesting": 2,
+                    "timeBigO": "O(log N)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.loop.halving"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 48,
+                      "label": "lo, hi = 0, len(items) - 1"
+                    },
+                    {
+                      "kind": "loop",
+                      "line": 49,
+                      "label": "while lo <= hi",
+                      "children": [
+                        {
+                          "kind": "branch",
+                          "line": 51,
+                          "label": "if items[mid] == target",
+                          "children": [
+                            {
+                              "kind": "return",
+                              "line": 52,
+                              "label": "return mid"
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "branch",
+                          "line": 53,
+                          "label": "if items[mid] < target"
+                        },
+                        {
+                          "kind": "else",
+                          "line": 55,
+                          "label": "else"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "return",
+                      "line": 57,
+                      "label": "return -1"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:algorithms/structures.py#TreeNode.__init__",
+                  "name": "__init__",
+                  "visibility": "public",
+                  "lineRange": [
+                    61,
+                    64
+                  ],
+                  "byteRange": [
+                    1391,
+                    1513
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "val"
+                      },
+                      {
+                        "name": "left",
+                        "defaultValue": "None"
+                      },
+                      {
+                        "name": "right",
+                        "defaultValue": "None"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:model/tiny_gpt.py#Block.__init__",
+                    "fn:model/tiny_gpt.py#CausalSelfAttention.__init__",
+                    "fn:model/tiny_gpt.py#MLP.__init__",
+                    "fn:model/tiny_gpt.py#TinyGPT.__init__"
+                  ]
+                },
+                {
+                  "id": "fn:algorithms/structures.py#inorder",
+                  "name": "inorder",
+                  "visibility": "public",
+                  "lineRange": [
+                    67,
+                    73
+                  ],
+                  "byteRange": [
+                    1516,
+                    1692
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "node",
+                        "type": "TreeNode"
+                      },
+                      {
+                        "name": "out",
+                        "type": "list"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(2^N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.recursion.fanout",
+                      "space.recursion-stack"
+                    ],
+                    "memoryFlags": [
+                      "recursion-stack"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "branch",
+                      "line": 68,
+                      "label": "if node is None",
+                      "children": [
+                        {
+                          "kind": "return",
+                          "line": 69,
+                          "label": "return out"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "call",
+                      "line": 70,
+                      "label": "inorder(node.left, out)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 71,
+                      "label": "out.append(node.val)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 72,
+                      "label": "inorder(node.right, out)"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 73,
+                      "label": "return out"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "crossTierEdges": [],
+  "nonCodeNodes": [
+    {
+      "id": "noncode:README.md",
+      "path": "README.md",
+      "kind": "doc",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:knowledge/chunking.md",
+      "path": "knowledge/chunking.md",
+      "kind": "doc",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:knowledge/index.md",
+      "path": "knowledge/index.md",
+      "kind": "doc",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:knowledge/log.md",
+      "path": "knowledge/log.md",
+      "kind": "doc",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:requirements.txt",
+      "path": "requirements.txt",
+      "kind": "manifest",
+      "relatesTo": []
+    }
+  ],
+  "summary": {
+    "kind": "library",
+    "headline": "Library with 6 modules.",
+    "findings": [
+      {
+        "text": "Sorted 6 files by what they do, not where they live: 0 frontend, 0 gateway/middleware, 0 backend, 1 data, 0 worker, 5 shared.",
+        "evidence": [
+          "tier.*"
+        ]
+      }
+    ],
+    "stats": {
+      "files": 6,
+      "functions": 21,
+      "lines": 225,
+      "languages": {
+        "python": 6
+      }
+    }
+  },
+  "dataModels": [],
+  "routes": [],
+  "uiElements": [],
+  "questions": [
+    {
+      "id": "q:algorithms/",
+      "text": "I'm only 30% sure `algorithms/` (1 files) belongs to Shared. What is it?",
+      "subject": "algorithms/",
+      "options": [
+        "Shared",
+        "Workers",
+        "Backend"
+      ],
+      "suggested": "Shared",
+      "confidence": 0.3
+    },
+    {
+      "id": "q:app/",
+      "text": "I'm only 30% sure `app/` (4 files) belongs to Shared. What is it?",
+      "subject": "app/",
+      "options": [
+        "Shared",
+        "Workers",
+        "Backend"
+      ],
+      "suggested": "Shared",
+      "confidence": 0.3
+    }
+  ],
+  "insights": {
+    "rulesetVersion": "patterns 0.1.0 / catalog 0.1.0",
+    "dataStructures": [
+      {
+        "id": "dsa:fn:algorithms/structures.py#TreeNode.__init__:binaryTree:",
+        "kind": "binaryTree",
+        "fileId": "file:algorithms/structures.py",
+        "functionId": "fn:algorithms/structures.py#TreeNode.__init__",
+        "line": 61,
+        "ruleId": "dsa.tree.left-right",
+        "confidence": 0.7,
+        "evidence": [
+          "follows .left / .right links"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:algorithms/structures.py#balanced:stack:stack",
+        "kind": "stack",
+        "fileId": "file:algorithms/structures.py",
+        "functionId": "fn:algorithms/structures.py#balanced",
+        "line": 12,
+        "subject": "stack",
+        "ruleId": "dsa.stack.lifo",
+        "confidence": 0.85,
+        "evidence": [
+          "stack.append (line 12)",
+          "stack.pop (line 14)"
+        ],
+        "ops": [
+          {
+            "op": "push",
+            "line": 12,
+            "call": "stack.append"
+          },
+          {
+            "op": "pop",
+            "line": 14,
+            "call": "stack.pop"
+          }
+        ]
+      },
+      {
+        "id": "dsa:fn:algorithms/structures.py#bfs:graph:graph",
+        "kind": "graph",
+        "fileId": "file:algorithms/structures.py",
+        "functionId": "fn:algorithms/structures.py#bfs",
+        "line": 19,
+        "subject": "graph",
+        "ruleId": "dsa.graph.traversal",
+        "confidence": 0.8,
+        "evidence": [
+          "`graph` + `visited`: breadth-first search"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:algorithms/structures.py#bfs:queue:queue",
+        "kind": "queue",
+        "fileId": "file:algorithms/structures.py",
+        "functionId": "fn:algorithms/structures.py#bfs",
+        "line": 24,
+        "subject": "queue",
+        "ruleId": "dsa.queue.fifo",
+        "confidence": 0.85,
+        "evidence": [
+          "queue.popleft (line 24)",
+          "queue.append (line 29)"
+        ],
+        "ops": [
+          {
+            "op": "dequeue",
+            "line": 24,
+            "call": "queue.popleft"
+          },
+          {
+            "op": "enqueue",
+            "line": 29,
+            "call": "queue.append"
+          }
+        ]
+      },
+      {
+        "id": "dsa:fn:algorithms/structures.py#binary_search:binarySearch:",
+        "kind": "binarySearch",
+        "fileId": "file:algorithms/structures.py",
+        "functionId": "fn:algorithms/structures.py#binary_search",
+        "line": 47,
+        "ruleId": "dsa.bsearch.mid",
+        "confidence": 0.75,
+        "evidence": [
+          "halves a range with lo/hi/mid"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:algorithms/structures.py#fib:memoization:fib",
+        "kind": "memoization",
+        "fileId": "file:algorithms/structures.py",
+        "functionId": "fn:algorithms/structures.py#fib",
+        "line": 40,
+        "subject": "fib",
+        "ruleId": "dsa.memo.decorator",
+        "confidence": 0.9,
+        "evidence": [
+          "@lru_cache(maxsize=None)"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:algorithms/structures.py#fib:recursion:fib",
+        "kind": "recursion",
+        "fileId": "file:algorithms/structures.py",
+        "functionId": "fn:algorithms/structures.py#fib",
+        "line": 40,
+        "subject": "fib",
+        "ruleId": "dsa.recursion.self-call",
+        "confidence": 0.95,
+        "evidence": [
+          "fib branches into several recursive calls (a recursion tree)"
+        ],
+        "ops": [
+          {
+            "op": "recurse",
+            "line": 44,
+            "call": "fib"
+          },
+          {
+            "op": "recurse",
+            "line": 44,
+            "call": "fib"
+          }
+        ]
+      },
+      {
+        "id": "dsa:fn:algorithms/structures.py#inorder:binaryTree:node",
+        "kind": "binaryTree",
+        "fileId": "file:algorithms/structures.py",
+        "functionId": "fn:algorithms/structures.py#inorder",
+        "line": 67,
+        "subject": "node",
+        "ruleId": "dsa.tree.left-right",
+        "confidence": 0.85,
+        "evidence": [
+          "follows .left / .right links"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:algorithms/structures.py#inorder:recursion:inorder",
+        "kind": "recursion",
+        "fileId": "file:algorithms/structures.py",
+        "functionId": "fn:algorithms/structures.py#inorder",
+        "line": 67,
+        "subject": "inorder",
+        "ruleId": "dsa.recursion.self-call",
+        "confidence": 0.95,
+        "evidence": [
+          "inorder branches into several recursive calls (a recursion tree)"
+        ],
+        "ops": [
+          {
+            "op": "recurse",
+            "line": 70,
+            "call": "inorder"
+          },
+          {
+            "op": "recurse",
+            "line": 72,
+            "call": "inorder"
+          }
+        ]
+      },
+      {
+        "id": "dsa:fn:algorithms/structures.py#k_smallest:heap:heap",
+        "kind": "heap",
+        "fileId": "file:algorithms/structures.py",
+        "functionId": "fn:algorithms/structures.py#k_smallest",
+        "line": 36,
+        "subject": "heap",
+        "ruleId": "dsa.heap.heapq",
+        "confidence": 0.9,
+        "evidence": [
+          "heapq.heappush (line 36)",
+          "heapq.heappop (line 37)"
+        ],
+        "ops": [
+          {
+            "op": "insert",
+            "line": 36,
+            "call": "heapq.heappush"
+          },
+          {
+            "op": "extract",
+            "line": 37,
+            "call": "heapq.heappop"
+          }
+        ]
+      }
+    ],
+    "ai": {
+      "kind": "agenticRag",
+      "headline": "Agentic RAG: a model decides, in a loop, when to retrieve and which tools to call",
+      "frameworks": [
+        "BM25",
+        "LangChain",
+        "LangChain / LangGraph",
+        "LangChain / LlamaIndex",
+        "LangChain chat model",
+        "LangGraph",
+        "PyTorch",
+        "hybrid search",
+        "local inference",
+        "prompt template",
+        "sentence-transformers",
+        "vector store"
+      ],
+      "stages": [
+        {
+          "id": "ai:loader:PyPDFLoader",
+          "role": "loader",
+          "name": "PyPDFLoader",
+          "library": "LangChain",
+          "fileId": "file:app/ingest.py",
+          "functionId": "fn:app/ingest.py#build_index",
+          "line": 13,
+          "params": {},
+          "ruleId": "ai.load.langchain",
+          "explain": "Loads raw documents (PDF, web pages, files) and turns them into text plus metadata."
+        },
+        {
+          "id": "ai:splitter:RecursiveCharacterTextSplitter",
+          "role": "splitter",
+          "name": "RecursiveCharacterTextSplitter",
+          "library": "LangChain",
+          "fileId": "file:app/ingest.py",
+          "functionId": "fn:app/ingest.py#build_index",
+          "line": 16,
+          "params": {
+            "chunk_overlap": "120",
+            "chunk_size": "800"
+          },
+          "ruleId": "ai.split.langchain",
+          "explain": "Chunking. Cuts long text into overlapping pieces small enough to embed and to fit in the prompt. chunk_size is the piece length, chunk_overlap repeats the end of one chunk at the start of the next so a sentence is not lost at the cut."
+        },
+        {
+          "id": "ai:embedder:HuggingFaceEmbeddings",
+          "role": "embedder",
+          "name": "HuggingFaceEmbeddings",
+          "library": "sentence-transformers",
+          "fileId": "file:app/ingest.py",
+          "functionId": "fn:app/ingest.py#build_index",
+          "line": 18,
+          "params": {
+            "model_name": "BAAI/bge-small-en-v1.5"
+          },
+          "ruleId": "ai.embed.sentence-transformers",
+          "explain": "Embedding model. Turns each chunk (and later the question) into a vector of numbers so that similar meaning means nearby vectors."
+        },
+        {
+          "id": "ai:vectorStore:Chroma.from_documents",
+          "role": "vectorStore",
+          "name": "Chroma.from_documents",
+          "library": "vector store",
+          "fileId": "file:app/ingest.py",
+          "functionId": "fn:app/ingest.py#build_index",
+          "line": 19,
+          "params": {
+            "collection_name": "book",
+            "persist_directory": "persist_dir"
+          },
+          "ruleId": "ai.store.vector",
+          "explain": "Vector store. Keeps every chunk's vector with its text and metadata, indexed (often HNSW) for fast nearest-neighbour search."
+        },
+        {
+          "id": "ai:keywordIndex:BM25Retriever.from_documents",
+          "role": "keywordIndex",
+          "name": "BM25Retriever.from_documents",
+          "library": "BM25",
+          "fileId": "file:app/ingest.py",
+          "functionId": "fn:app/ingest.py#build_index",
+          "line": 20,
+          "params": {
+            "k": "8"
+          },
+          "ruleId": "ai.keyword.bm25",
+          "explain": "BM25 is keyword search. It scores chunks by how often the query words appear in them, discounted by how common those words are everywhere. It finds exact names and codes that embeddings miss."
+        },
+        {
+          "id": "ai:retriever:as_retriever",
+          "role": "retriever",
+          "name": "as_retriever",
+          "library": "LangChain / LlamaIndex",
+          "fileId": "file:app/retrieve.py",
+          "functionId": "fn:app/retrieve.py#hybrid_search",
+          "line": 12,
+          "params": {
+            "k": "8",
+            "search_kwargs": "{\"k\": 8}",
+            "search_type": "similarity"
+          },
+          "ruleId": "ai.retrieve.as-retriever",
+          "explain": "Retriever. Embeds the question and returns the k chunks whose vectors are closest (top-k)."
+        },
+        {
+          "id": "ai:fusion:EnsembleRetriever",
+          "role": "fusion",
+          "name": "EnsembleRetriever",
+          "library": "hybrid search",
+          "fileId": "file:app/retrieve.py",
+          "functionId": "fn:app/retrieve.py#hybrid_search",
+          "line": 13,
+          "params": {
+            "weights": "[0.6, 0.4]"
+          },
+          "ruleId": "ai.fusion.ensemble",
+          "explain": "Fusion merges two ranked lists (dense vectors and BM25 keywords) into one. Reciprocal Rank Fusion gives each chunk 1/(60 + rank) from every list and adds them up, so chunks that rank well in both win."
+        },
+        {
+          "id": "ai:reranker:CrossEncoder",
+          "role": "reranker",
+          "name": "CrossEncoder",
+          "library": "sentence-transformers",
+          "fileId": "file:app/retrieve.py",
+          "line": 8,
+          "params": {
+            "model": "cross-encoder/ms-marco-MiniLM-L-6-v2"
+          },
+          "ruleId": "ai.rerank.cross-encoder",
+          "explain": "Reranker (cross-encoder). Reads the question and each candidate chunk together and scores how well they match. Slower than vector search but much more precise, so it re-orders the top-k candidates and keeps the best top-n."
+        },
+        {
+          "id": "ai:prompt:ChatPromptTemplate.from_messages",
+          "role": "prompt",
+          "name": "ChatPromptTemplate.from_messages",
+          "library": "prompt template",
+          "fileId": "file:app/agent.py",
+          "line": 11,
+          "params": {},
+          "ruleId": "ai.prompt.template",
+          "explain": "Prompt template. Puts the instructions, the retrieved chunks and the question into the text the model will read."
+        },
+        {
+          "id": "ai:router:StateGraph",
+          "role": "router",
+          "name": "StateGraph",
+          "library": "LangGraph",
+          "fileId": "file:app/agent.py",
+          "line": 39,
+          "params": {
+            "nodes": "agent, tools"
+          },
+          "ruleId": "ai.router.langgraph",
+          "explain": "A router (decision step). After a node runs, a function looks at the state and picks the next node, for example \"call a tool again\" or \"finish\". This is what turns a straight pipeline into a loop."
+        },
+        {
+          "id": "ai:router:add_conditional_edges",
+          "role": "router",
+          "name": "add_conditional_edges",
+          "library": "LangGraph",
+          "fileId": "file:app/agent.py",
+          "line": 42,
+          "params": {},
+          "ruleId": "ai.router.langgraph",
+          "explain": "A router (decision step). After a node runs, a function looks at the state and picks the next node, for example \"call a tool again\" or \"finish\". This is what turns a straight pipeline into a loop."
+        },
+        {
+          "id": "ai:llm:ChatOllama",
+          "role": "llm",
+          "name": "ChatOllama",
+          "library": "LangChain chat model",
+          "fileId": "file:app/agent.py",
+          "line": 9,
+          "params": {
+            "model": "qwen3:4b",
+            "num_ctx": "8192",
+            "temperature": "0"
+          },
+          "ruleId": "ai.llm.chat-wrapper",
+          "explain": "Language model call. Reads the prompt and generates the answer token by token; with tools enabled it can answer with a tool call instead."
+        },
+        {
+          "id": "ai:llm:LLM",
+          "role": "llm",
+          "name": "LLM",
+          "library": "local inference",
+          "fileId": "file:app/serve.py",
+          "line": 4,
+          "params": {
+            "gpu_memory_utilization": "0.85",
+            "max_model_len": "8192",
+            "model": "Qwen/Qwen3-4B"
+          },
+          "ruleId": "ai.llm.local",
+          "explain": "Language model call. Reads the prompt and generates the answer token by token; with tools enabled it can answer with a tool call instead."
+        },
+        {
+          "id": "ai:llm:generate",
+          "role": "llm",
+          "name": "generate",
+          "library": "local inference",
+          "fileId": "file:app/serve.py",
+          "functionId": "fn:app/serve.py#answer",
+          "line": 15,
+          "params": {},
+          "ruleId": "ai.llm.local",
+          "explain": "Language model call. Reads the prompt and generates the answer token by token; with tools enabled it can answer with a tool call instead."
+        },
+        {
+          "id": "ai:tool:search_book",
+          "role": "tool",
+          "name": "search_book",
+          "library": "tool function",
+          "fileId": "file:app/agent.py",
+          "functionId": "fn:app/agent.py#search_book",
+          "line": 17,
+          "params": {},
+          "ruleId": "ai.tool.decorated-function",
+          "explain": "Tool. A function the model may ask to run (search, calculator, database query). Its result is fed back to the model."
+        },
+        {
+          "id": "ai:agent:bind_tools",
+          "role": "agent",
+          "name": "bind_tools",
+          "library": "LangChain / LangGraph",
+          "fileId": "file:app/agent.py",
+          "functionId": "fn:app/agent.py#call_model",
+          "line": 25,
+          "params": {},
+          "ruleId": "ai.agent.langchain",
+          "explain": "Agent loop. The model chooses a tool, the tool runs, the result goes back to the model, and this repeats until the model decides it is done."
+        },
+        {
+          "id": "ai:neuralLayer:Block",
+          "role": "neuralLayer",
+          "name": "Block",
+          "library": "PyTorch",
+          "fileId": "file:model/tiny_gpt.py",
+          "line": 28,
+          "params": {},
+          "ruleId": "ai.nn.custom-module",
+          "explain": "A transformer block: attention (tokens look at each other) then an MLP (each token is transformed), each wrapped in a residual connection and normalization."
+        },
+        {
+          "id": "ai:neuralLayer:CausalSelfAttention",
+          "role": "neuralLayer",
+          "name": "CausalSelfAttention",
+          "library": "PyTorch",
+          "fileId": "file:model/tiny_gpt.py",
+          "line": 6,
+          "params": {},
+          "ruleId": "ai.nn.custom-module",
+          "explain": "A custom attention module: projects tokens to queries, keys and values and mixes values by softmax(QK^T / sqrt(d)). During generation its keys and values are what the KV cache stores."
+        },
+        {
+          "id": "ai:neuralLayer:Embedding",
+          "role": "neuralLayer",
+          "name": "Embedding",
+          "library": "PyTorch",
+          "fileId": "file:model/tiny_gpt.py",
+          "functionId": "fn:model/tiny_gpt.py#TinyGPT.__init__",
+          "line": 45,
+          "params": {
+            "embedding_dim": "d_model",
+            "num_embeddings": "vocab"
+          },
+          "ruleId": "ai.nn.blocks",
+          "explain": "Neural network layer defined in code."
+        },
+        {
+          "id": "ai:neuralLayer:LayerNorm",
+          "role": "neuralLayer",
+          "name": "LayerNorm",
+          "library": "PyTorch",
+          "fileId": "file:model/tiny_gpt.py",
+          "functionId": "fn:model/tiny_gpt.py#Block.__init__",
+          "line": 31,
+          "params": {
+            "uses": "2"
+          },
+          "ruleId": "ai.nn.blocks",
+          "explain": "Neural network layer defined in code."
+        },
+        {
+          "id": "ai:neuralLayer:Linear",
+          "role": "neuralLayer",
+          "name": "Linear",
+          "library": "PyTorch",
+          "fileId": "file:model/tiny_gpt.py",
+          "functionId": "fn:model/tiny_gpt.py#MLP.__init__",
+          "line": 21,
+          "params": {
+            "uses": "3"
+          },
+          "ruleId": "ai.nn.blocks",
+          "explain": "Neural network layer defined in code."
+        },
+        {
+          "id": "ai:neuralLayer:MLP",
+          "role": "neuralLayer",
+          "name": "MLP",
+          "library": "PyTorch",
+          "fileId": "file:model/tiny_gpt.py",
+          "line": 18,
+          "params": {},
+          "ruleId": "ai.nn.custom-module",
+          "explain": "The feed-forward (MLP) part of a transformer block: two linear layers with a non-linearity, applied to each token on its own."
+        },
+        {
+          "id": "ai:neuralLayer:MultiheadAttention",
+          "role": "neuralLayer",
+          "name": "MultiheadAttention",
+          "library": "PyTorch",
+          "fileId": "file:model/tiny_gpt.py",
+          "functionId": "fn:model/tiny_gpt.py#CausalSelfAttention.__init__",
+          "line": 9,
+          "params": {
+            "batch_first": "True",
+            "embed_dim": "d_model",
+            "num_heads": "n_heads"
+          },
+          "ruleId": "ai.nn.attention",
+          "explain": "Attention. Every token makes a query, key and value vector; each token's output is a weighted mix of the other tokens' values, weighted by softmax(query . key / sqrt(d)). Multi-head attention runs several of these in parallel."
+        },
+        {
+          "id": "ai:neuralLayer:TinyGPT",
+          "role": "neuralLayer",
+          "name": "TinyGPT",
+          "library": "PyTorch",
+          "fileId": "file:model/tiny_gpt.py",
+          "line": 42,
+          "params": {},
+          "ruleId": "ai.nn.custom-module",
+          "explain": "A custom neural network module (nn.Module): its forward() defines how input tensors flow through the layers."
+        }
+      ],
+      "edges": [
+        {
+          "from": "ai:agent:bind_tools",
+          "to": "ai:router:StateGraph",
+          "label": "runs"
+        },
+        {
+          "from": "ai:embedder:HuggingFaceEmbeddings",
+          "to": "ai:vectorStore:Chroma.from_documents",
+          "label": "vectors"
+        },
+        {
+          "from": "ai:fusion:EnsembleRetriever",
+          "to": "ai:reranker:CrossEncoder",
+          "label": "fused candidates"
+        },
+        {
+          "from": "ai:keywordIndex:BM25Retriever.from_documents",
+          "to": "ai:fusion:EnsembleRetriever",
+          "label": "keyword hits"
+        },
+        {
+          "from": "ai:llm:ChatOllama",
+          "to": "ai:router:StateGraph",
+          "label": "decides next step"
+        },
+        {
+          "from": "ai:loader:PyPDFLoader",
+          "to": "ai:splitter:RecursiveCharacterTextSplitter",
+          "label": "documents"
+        },
+        {
+          "from": "ai:prompt:ChatPromptTemplate.from_messages",
+          "to": "ai:llm:ChatOllama",
+          "label": "prompt"
+        },
+        {
+          "from": "ai:reranker:CrossEncoder",
+          "to": "ai:prompt:ChatPromptTemplate.from_messages",
+          "label": "top-n chunks"
+        },
+        {
+          "from": "ai:retriever:as_retriever",
+          "to": "ai:fusion:EnsembleRetriever",
+          "label": "top-k chunks"
+        },
+        {
+          "from": "ai:router:StateGraph",
+          "to": "ai:retriever:as_retriever",
+          "label": "retrieve (as a tool)"
+        },
+        {
+          "from": "ai:router:StateGraph",
+          "to": "ai:tool:search_book",
+          "label": "call tool"
+        },
+        {
+          "from": "ai:splitter:RecursiveCharacterTextSplitter",
+          "to": "ai:embedder:HuggingFaceEmbeddings",
+          "label": "chunks"
+        },
+        {
+          "from": "ai:splitter:RecursiveCharacterTextSplitter",
+          "to": "ai:keywordIndex:BM25Retriever.from_documents",
+          "label": "chunks"
+        },
+        {
+          "from": "ai:tool:search_book",
+          "to": "ai:llm:ChatOllama",
+          "label": "tool result",
+          "loopBack": true
+        },
+        {
+          "from": "ai:vectorStore:Chroma.from_documents",
+          "to": "ai:retriever:as_retriever",
+          "label": "nearest-neighbour search"
+        }
+      ]
+    },
+    "libraries": [
+      {
+        "name": "LangChain",
+        "category": "LLM framework",
+        "explain": "Building blocks for LLM apps: prompts, chat models, retrievers, tools, chains wired together with the | operator (LCEL).",
+        "evidence": [
+          "langchain.retrievers",
+          "langchain_chroma",
+          "langchain_community.document_loaders",
+          "langchain_community.retrievers",
+          "langchain_core.prompts",
+          "langchain_core.tools"
+        ]
+      },
+      {
+        "name": "LangGraph",
+        "category": "agent framework",
+        "explain": "Builds agents as a state machine graph: nodes are steps, conditional edges are decisions, and the state is checkpointed between steps.",
+        "evidence": [
+          "langgraph.graph"
+        ]
+      },
+      {
+        "name": "vLLM",
+        "category": "model serving",
+        "explain": "High-throughput serving with PagedAttention, continuous batching and prefix caching.",
+        "evidence": [
+          "vllm"
+        ]
+      },
+      {
+        "name": "sentence-transformers",
+        "category": "embeddings",
+        "explain": "Embedding models (bi-encoders) and rerankers (cross-encoders).",
+        "evidence": [
+          "sentence_transformers"
+        ]
+      },
+      {
+        "name": "PyTorch",
+        "category": "deep learning",
+        "explain": "Tensors on CPU/GPU with autograd; nn.Module layers; the base of most ML code.",
+        "evidence": [
+          "torch"
+        ]
+      },
+      {
+        "name": "Open Knowledge Format (OKF)",
+        "category": "knowledge format",
+        "explain": "Google Cloud's vendor-neutral format (2026) for agent knowledge: a folder of Markdown files with YAML frontmatter (a required `type` field), plus reserved index.md and log.md files.",
+        "evidence": [
+          "knowledge/"
+        ]
+      }
+    ],
+    "memoryTechniques": [
+      {
+        "id": "mem:mem.kv.quant:app/serve.py",
+        "name": "KV cache quantization",
+        "engine": "vLLM / llama.cpp",
+        "fileId": "file:app/serve.py",
+        "line": 4,
+        "setting": "kv_cache_dtype=\"fp8\"",
+        "explain": "Stores keys and values in 8-bit (or 4-bit) instead of 16-bit, roughly halving KV cache memory so longer contexts fit, at a small accuracy cost."
+      },
+      {
+        "id": "mem:mem.ollama.keepalive:app/agent.py",
+        "name": "Model residency (keep_alive) and context size",
+        "engine": "Ollama",
+        "fileId": "file:app/agent.py",
+        "line": 9,
+        "setting": "num_ctx=8192, keep_alive=\"10m\"",
+        "explain": "keep_alive decides how long Ollama keeps the model loaded in RAM/VRAM after a request. num_ctx sets the context length, which sizes the KV cache."
+      },
+      {
+        "id": "mem:mem.vllm.paged:app/serve.py",
+        "name": "PagedAttention KV cache",
+        "engine": "vLLM",
+        "fileId": "file:app/serve.py",
+        "line": 4,
+        "setting": "LLM(model=\"Qwen/Qwen3-4B\", max_model_len=8192, gpu_memory_utilization=0.85, enable_prefix_caching=True)",
+        "explain": "vLLM stores the KV cache in fixed-size blocks (pages) like an OS stores memory in pages. A request's cache does not need one contiguous slab, so almost no memory is wasted and many requests fit at once. gpu_memory_utilization sets how much of the GPU vLLM may claim."
+      },
+      {
+        "id": "mem:mem.vllm.prefix:app/serve.py",
+        "name": "Automatic prefix caching",
+        "engine": "vLLM",
+        "fileId": "file:app/serve.py",
+        "line": 4,
+        "setting": "enable_prefix_caching=True",
+        "explain": "When two prompts start with the same tokens (same system prompt, same document), vLLM reuses the KV blocks it already computed for that prefix instead of recomputing them. Time-to-first-token drops for repeated prefixes."
+      }
+    ]
+  }
+}

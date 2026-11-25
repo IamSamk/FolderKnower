@@ -252,6 +252,8 @@ impl X<'_, '_> {
             complexity,
             is_component: false,
             is_async,
+            idents: Vec::new(),
+            flow: Vec::new(),
         });
         self.fn_stack.push(self.facts.functions.len() - 1);
         let saved = std::mem::take(&mut self.class_stack);
@@ -390,6 +392,7 @@ impl X<'_, '_> {
             line: line(node),
             first_string,
             ident_args,
+            ..CallFact::default()
         };
         match self.fn_stack.last() {
             Some(&i) => self.facts.functions[i].calls.push(fact),

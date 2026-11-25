@@ -178,3 +178,114 @@ fn deterministic() {
     let y = parse_file(Language::Python, "m.py", src);
     assert_eq!(x, y);
 }
+
+#[test]
+fn enrich_kwargs_idents_and_flow_python() {
+    let src = r#"
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+
+def dfs(root, target):
+    stack = [root]
+    while stack:
+        node = stack.pop()
+        if node is None:
+            raise ValueError("empty")
+        elif node.val == target:
+            return node
+        else:
+            stack.append(node.left)
+    return None
+"#;
+    let f = parse_file(Language::Python, "rag.py", src);
+    let top = f
+        .top_calls
+        .iter()
+        .find(|c| c.callee == "RecursiveCharacterTextSplitter")
+        .unwrap();
+    assert_eq!(top.n_args, 2);
+    assert_eq!(
+        top.kwargs,
+        vec![
+            ("chunk_size".to_owned(), "1000".to_owned()),
+            ("chunk_overlap".to_owned(), "200".to_owned())
+        ]
+    );
+    let dfs = f.functions.iter().find(|x| x.name == "dfs").unwrap();
+    assert!(dfs.idents.iter().any(|i| i == "left"));
+    let pop = dfs.calls.iter().find(|c| c.callee == "pop").unwrap();
+    assert_eq!(pop.n_args, 0);
+    use ark_schema::FlowKind::*;
+    let kinds: Vec<_> = dfs.flow.iter().map(|n| n.kind).collect();
+    assert_eq!(kinds, [Loop, Return], "{:#?}", dfs.flow);
+    let inner: Vec<_> = dfs.flow[0].children.iter().map(|n| n.kind).collect();
+    assert_eq!(inner, [Call, Branch, Else, Else], "{:#?}", dfs.flow[0]);
+    assert!(dfs.flow[0].children[1].children[0].error);
+}
+
+#[test]
+fn enrich_js_option_object_and_flow() {
+    let src = r#"
+export async function ask(q) {
+  const docs = await store.similaritySearch(q, 4, { k: 4, filter });
+  if (!docs.length) {
+    throw new Error("no docs");
+  } else if (docs.length > 10) {
+    return docs.slice(0, 10);
+  }
+  try {
+    return await llm.invoke(q);
+  } catch (e) {
+    console.error(e);
+  }
+}
+"#;
+    let f = parse_file(Language::TypeScript, "a.ts", src);
+    let ask = &f.functions[0];
+    let ss = ask
+        .calls
+        .iter()
+        .find(|c| c.callee == "similaritySearch")
+        .unwrap();
+    assert_eq!(ss.n_args, 3);
+    assert!(ss.kwargs.contains(&("k".to_owned(), "4".to_owned())));
+    use ark_schema::FlowKind::*;
+    let kinds: Vec<_> = ask.flow.iter().map(|n| n.kind).collect();
+    assert_eq!(kinds, [Call, Branch, Else, Try, Catch], "{:#?}", ask.flow);
+}
+
+#[test]
+fn enrich_rust_and_go_flow() {
+    let rs = r#"
+fn load(p: &str) -> Result<String, Error> {
+    let s = std::fs::read_to_string(p)?;
+    if s.is_empty() {
+        return Err(Error::Empty);
+    }
+    match s.len() {
+        0 => unreachable!(),
+        _ => Ok(s),
+    }
+}
+"#;
+    let f = parse_file(Language::Rust, "a.rs", rs);
+    use ark_schema::FlowKind::*;
+    let kinds: Vec<_> = f.functions[0].flow.iter().map(|n| n.kind).collect();
+    assert_eq!(kinds, [Call, Branch, Switch], "{:#?}", f.functions[0].flow);
+    assert!(f.functions[0].flow[1].children[0].error);
+    let go = r#"
+package main
+func get(id string) (*T, error) {
+	t, err := db.Find(id)
+	if err != nil {
+		return nil, err
+	}
+	return t, nil
+}
+"#;
+    let g = parse_file(Language::Go, "a.go", go);
+    let kinds: Vec<_> = g.functions[0].flow.iter().map(|n| n.kind).collect();
+    assert_eq!(kinds, [Call, Branch, Return], "{:#?}", g.functions[0].flow);
+    assert!(g.functions[0].flow[1].children[0].error);
+}

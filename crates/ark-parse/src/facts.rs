@@ -64,6 +64,13 @@ pub struct FnFact {
     /// Returns JSX: a UI component.
     pub is_component: bool,
     pub is_async: bool,
+    /// Distinct identifiers, field and type names used in the body (sorted, capped).
+    /// Feeds the data-structure and AI-pipeline recognizers.
+    #[serde(default)]
+    pub idents: Vec<String>,
+    /// Control-flow outline for the ideal-path view.
+    #[serde(default)]
+    pub flow: Vec<ark_schema::FlowNode>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -73,7 +80,7 @@ pub struct ParamFact {
     pub default: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CallFact {
     /// Last identifier, e.g. `get` in `router.get(...)`.
     pub callee: String,
@@ -84,6 +91,12 @@ pub struct CallFact {
     pub first_string: Option<String>,
     /// Identifiers passed as arguments (handlers, models).
     pub ident_args: Vec<String>,
+    /// Number of arguments (positional + keyword).
+    #[serde(default)]
+    pub n_args: u32,
+    /// Keyword / option-object arguments with literal-ish values: `chunk_size=1000`, `{ k: 4 }`.
+    #[serde(default)]
+    pub kwargs: Vec<(String, String)>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
