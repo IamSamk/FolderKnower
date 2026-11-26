@@ -3,7 +3,7 @@
   "repoName": "Architekton",
   "rootPath": ".",
   "generator": {
-    "version": "0.6.0",
+    "version": "0.7.0",
     "rulesetVersion": "ontology 0.1.0 / tiers 0.1.0",
     "grammars": {
       "tree-sitter-go": "0.25.0",
@@ -13,7 +13,7 @@
       "tree-sitter-typescript": "0.23.2"
     }
   },
-  "contentRoot": "4103e5c00054f22d683aa753aba0766d5d4b02bec7b3c56f9987a39db86eed08",
+  "contentRoot": "2155b54f9df2828ce40eaee67b31893ac2e5348bb607359c6177b1511ab5829c",
   "tiers": [
     {
       "id": "tier:frontend",
@@ -2678,8 +2678,8 @@
               "id": "file:apps/desktop/src/components/Setup.tsx",
               "path": "apps/desktop/src/components/Setup.tsx",
               "language": "typescript",
-              "contentHash": "0f953f802a24ea89ea9c1a29d21896d963bbc734bf902e79a73d016740615def",
-              "lines": 384,
+              "contentHash": "c968ed3770d9e37c2cea232060596b990940ec0bd2a13c2ef7b1277cc9a06a76",
+              "lines": 385,
               "tierConfidence": 0.99,
               "role": "component",
               "imports": [
@@ -2850,11 +2850,11 @@
                   "visibility": "internal",
                   "lineRange": [
                     55,
-                    73
+                    74
                   ],
                   "byteRange": [
                     1507,
-                    2210
+                    2342
                   ],
                   "signature": {
                     "parameters": []
@@ -2888,12 +2888,12 @@
                   "name": "LocalAi",
                   "visibility": "internal",
                   "lineRange": [
-                    75,
-                    285
+                    76,
+                    286
                   ],
                   "byteRange": [
-                    2212,
-                    9908
+                    2344,
+                    10040
                   ],
                   "signature": {
                     "parameters": []
@@ -2919,76 +2919,76 @@
                   "flow": [
                     {
                       "kind": "call",
-                      "line": 76,
+                      "line": 77,
                       "label": "const [st, setSt] = useState<AiStatus | null>(null);"
                     },
                     {
                       "kind": "call",
-                      "line": 77,
+                      "line": 78,
                       "label": "const [busy, setBusy] = useState<string | null>(null);"
                     },
                     {
                       "kind": "call",
-                      "line": 78,
+                      "line": 79,
                       "label": "const [prog, setProg] = useState<AiProgress | null>(null);"
                     },
                     {
                       "kind": "call",
-                      "line": 79,
+                      "line": 80,
                       "label": "const [err, setErr] = useState<string | null>(null);"
                     },
                     {
                       "kind": "call",
-                      "line": 80,
+                      "line": 81,
                       "label": "const [found, setFound] = useState<AiFound[] | null>(null);"
                     },
                     {
                       "kind": "call",
-                      "line": 81,
+                      "line": 82,
                       "label": "useEffect(() =>"
                     },
                     {
                       "kind": "branch",
-                      "line": 84,
+                      "line": 85,
                       "label": "if !isTauri && !checkIsTauri",
                       "children": [
                         {
                           "kind": "return",
-                          "line": 85,
+                          "line": 86,
                           "label": "return ("
                         }
                       ]
                     },
                     {
                       "kind": "branch",
-                      "line": 93,
+                      "line": 94,
                       "label": "if !st",
                       "children": [
                         {
                           "kind": "return",
-                          "line": 93,
+                          "line": 94,
                           "label": "return <div className=\"ak-legal\">Checking what is installed……"
                         }
                       ]
                     },
                     {
                       "kind": "call",
-                      "line": 94,
+                      "line": 95,
                       "label": "const runtime = st.components.find((c) => c.id === \"runtime\"…"
                     },
                     {
                       "kind": "call",
-                      "line": 147,
+                      "line": 148,
                       "label": "const missing = st.components.filter((c) => !c.installed).ma…"
                     },
                     {
                       "kind": "call",
-                      "line": 148,
+                      "line": 149,
                       "label": "const usable = (found ?? []).filter((f) => missing.includes(…"
                     },
                     {
                       "kind": "return",
-                      "line": 149,
+                      "line": 150,
                       "label": "return ("
                     }
                   ],
@@ -3043,12 +3043,12 @@
                   "name": "install",
                   "visibility": "internal",
                   "lineRange": [
-                    95,
-                    113
+                    96,
+                    114
                   ],
                   "byteRange": [
-                    2992,
-                    3418
+                    3124,
+                    3550
                   ],
                   "signature": {
                     "parameters": [
@@ -3073,78 +3073,78 @@
                   "flow": [
                     {
                       "kind": "call",
-                      "line": 96,
+                      "line": 97,
                       "label": "setErr(null);"
                     },
                     {
                       "kind": "call",
-                      "line": 97,
+                      "line": 98,
                       "label": "setBusy(id);"
                     },
                     {
                       "kind": "try",
-                      "line": 98,
+                      "line": 99,
                       "label": "try",
                       "children": [
                         {
                           "kind": "branch",
-                          "line": 100,
+                          "line": 101,
                           "label": "if id !== \"runtime\" && !runtime?.installed",
                           "children": [
                             {
                               "kind": "call",
-                              "line": 101,
+                              "line": 102,
                               "label": "s = await aiInstall(\"runtime\", setProg);"
                             },
                             {
                               "kind": "call",
-                              "line": 102,
+                              "line": 103,
                               "label": "setSt(s);"
                             }
                           ]
                         },
                         {
                           "kind": "call",
-                          "line": 104,
+                          "line": 105,
                           "label": "s = await aiInstall(id, setProg);"
                         },
                         {
                           "kind": "call",
-                          "line": 105,
+                          "line": 106,
                           "label": "setSt(s);"
                         },
                         {
                           "kind": "call",
-                          "line": 106,
+                          "line": 107,
                           "label": "void useStore.getState().refreshSlm();"
                         }
                       ]
                     },
                     {
                       "kind": "catch",
-                      "line": 107,
+                      "line": 108,
                       "label": "catch (e)",
                       "children": [
                         {
                           "kind": "call",
-                          "line": 108,
+                          "line": 109,
                           "label": "setErr(String(e));"
                         }
                       ]
                     },
                     {
                       "kind": "finally",
-                      "line": 109,
+                      "line": 110,
                       "label": "finally",
                       "children": [
                         {
                           "kind": "call",
-                          "line": 110,
+                          "line": 111,
                           "label": "setBusy(null);"
                         },
                         {
                           "kind": "call",
-                          "line": 111,
+                          "line": 112,
                           "label": "setProg(null);"
                         }
                       ]
@@ -3171,12 +3171,12 @@
                   "name": "link",
                   "visibility": "internal",
                   "lineRange": [
-                    114,
-                    134
+                    115,
+                    135
                   ],
                   "byteRange": [
-                    3435,
-                    3984
+                    3567,
+                    4116
                   ],
                   "signature": {
                     "parameters": [
@@ -3205,78 +3205,78 @@
                   "flow": [
                     {
                       "kind": "branch",
-                      "line": 115,
+                      "line": 116,
                       "label": "if !path",
                       "children": [
                         {
                           "kind": "return",
-                          "line": 115,
+                          "line": 116,
                           "label": "return;"
                         }
                       ]
                     },
                     {
                       "kind": "call",
-                      "line": 116,
+                      "line": 117,
                       "label": "setErr(null);"
                     },
                     {
                       "kind": "call",
-                      "line": 117,
+                      "line": 118,
                       "label": "setBusy(id);"
                     },
                     {
                       "kind": "try",
-                      "line": 118,
+                      "line": 119,
                       "label": "try",
                       "children": [
                         {
                           "kind": "call",
-                          "line": 119,
+                          "line": 120,
                           "label": "const s = await aiLink(id, path, setProg);"
                         },
                         {
                           "kind": "call",
-                          "line": 120,
+                          "line": 121,
                           "label": "setSt(s);"
                         },
                         {
                           "kind": "call",
-                          "line": 121,
+                          "line": 122,
                           "label": "setFound((f) =>"
                         },
                         {
                           "kind": "call",
-                          "line": 127,
+                          "line": 128,
                           "label": "void useStore.getState().refreshSlm();"
                         }
                       ]
                     },
                     {
                       "kind": "catch",
-                      "line": 128,
+                      "line": 129,
                       "label": "catch (e)",
                       "children": [
                         {
                           "kind": "call",
-                          "line": 129,
+                          "line": 130,
                           "label": "setErr(String(e));"
                         }
                       ]
                     },
                     {
                       "kind": "finally",
-                      "line": 130,
+                      "line": 131,
                       "label": "finally",
                       "children": [
                         {
                           "kind": "call",
-                          "line": 131,
+                          "line": 132,
                           "label": "setBusy(null);"
                         },
                         {
                           "kind": "call",
-                          "line": 132,
+                          "line": 133,
                           "label": "setProg(null);"
                         }
                       ]
@@ -3303,12 +3303,12 @@
                   "name": "look",
                   "visibility": "internal",
                   "lineRange": [
-                    135,
-                    145
+                    136,
+                    146
                   ],
                   "byteRange": [
-                    4001,
-                    4185
+                    4133,
+                    4317
                   ],
                   "signature": {
                     "parameters": []
@@ -3328,46 +3328,46 @@
                   "flow": [
                     {
                       "kind": "call",
-                      "line": 136,
+                      "line": 137,
                       "label": "setErr(null);"
                     },
                     {
                       "kind": "call",
-                      "line": 137,
+                      "line": 138,
                       "label": "setBusy(\"find\");"
                     },
                     {
                       "kind": "try",
-                      "line": 138,
+                      "line": 139,
                       "label": "try",
                       "children": [
                         {
                           "kind": "call",
-                          "line": 139,
+                          "line": 140,
                           "label": "setFound(await aiFind());"
                         }
                       ]
                     },
                     {
                       "kind": "catch",
-                      "line": 140,
+                      "line": 141,
                       "label": "catch (e)",
                       "children": [
                         {
                           "kind": "call",
-                          "line": 141,
+                          "line": 142,
                           "label": "setErr(String(e));"
                         }
                       ]
                     },
                     {
                       "kind": "finally",
-                      "line": 142,
+                      "line": 143,
                       "label": "finally",
                       "children": [
                         {
                           "kind": "call",
-                          "line": 143,
+                          "line": 144,
                           "label": "setBusy(null);"
                         }
                       ]
@@ -3387,12 +3387,12 @@
                   "name": "nameOf",
                   "visibility": "internal",
                   "lineRange": [
-                    146,
-                    146
+                    147,
+                    147
                   ],
                   "byteRange": [
-                    4204,
-                    4270
+                    4336,
+                    4402
                   ],
                   "signature": {
                     "parameters": [
@@ -3417,7 +3417,7 @@
                   "flow": [
                     {
                       "kind": "call",
-                      "line": 146,
+                      "line": 147,
                       "label": "st.components.find((c) => c.id === id)?.name ?? id"
                     }
                   ],
@@ -3431,12 +3431,12 @@
                   "name": "Setup",
                   "visibility": "public",
                   "lineRange": [
-                    287,
-                    384
+                    288,
+                    385
                   ],
                   "byteRange": [
-                    9917,
-                    13178
+                    10049,
+                    13310
                   ],
                   "signature": {
                     "parameters": []
@@ -3462,32 +3462,32 @@
                   "flow": [
                     {
                       "kind": "call",
-                      "line": 288,
+                      "line": 289,
                       "label": "const open = useStore((s) => s.setupOpen);"
                     },
                     {
                       "kind": "call",
-                      "line": 289,
+                      "line": 290,
                       "label": "const [step, setStep] = useState(0);"
                     },
                     {
                       "kind": "call",
-                      "line": 290,
+                      "line": 291,
                       "label": "const firstRun = !accepted();"
                     },
                     {
                       "kind": "call",
-                      "line": 291,
+                      "line": 292,
                       "label": "useEffect(() =>"
                     },
                     {
                       "kind": "call",
-                      "line": 294,
+                      "line": 295,
                       "label": "useEffect(() =>"
                     },
                     {
                       "kind": "return",
-                      "line": 309,
+                      "line": 310,
                       "label": "return ("
                     }
                   ],
@@ -3522,12 +3522,12 @@
                   "name": "close",
                   "visibility": "internal",
                   "lineRange": [
-                    297,
-                    300
+                    298,
+                    301
                   ],
                   "byteRange": [
-                    10241,
-                    10326
+                    10373,
+                    10458
                   ],
                   "signature": {
                     "parameters": []
@@ -3547,19 +3547,19 @@
                   "flow": [
                     {
                       "kind": "branch",
-                      "line": 298,
+                      "line": 299,
                       "label": "if !accepted",
                       "children": [
                         {
                           "kind": "return",
-                          "line": 298,
+                          "line": 299,
                           "label": "return;"
                         }
                       ]
                     },
                     {
                       "kind": "call",
-                      "line": 299,
+                      "line": 300,
                       "label": "useStore.setState({ setupOpen: false });"
                     }
                   ],
@@ -3577,12 +3577,12 @@
                   "name": "accept",
                   "visibility": "internal",
                   "lineRange": [
-                    301,
-                    308
+                    302,
+                    309
                   ],
                   "byteRange": [
-                    10345,
-                    10488
+                    10477,
+                    10620
                   ],
                   "signature": {
                     "parameters": []
@@ -3608,24 +3608,24 @@
                   "flow": [
                     {
                       "kind": "try",
-                      "line": 302,
+                      "line": 303,
                       "label": "try",
                       "children": [
                         {
                           "kind": "call",
-                          "line": 303,
+                          "line": 304,
                           "label": "localStorage.setItem(KEY, TERMS_VERSION);"
                         }
                       ]
                     },
                     {
                       "kind": "catch",
-                      "line": 304,
+                      "line": 305,
                       "label": "catch"
                     },
                     {
                       "kind": "call",
-                      "line": 307,
+                      "line": 308,
                       "label": "setStep(2);"
                     }
                   ],
@@ -76828,6 +76828,12 @@
       "relatesTo": []
     },
     {
+      "id": "noncode:docs/milestones/m9-self-desktop-models/README.md",
+      "path": "docs/milestones/m9-self-desktop-models/README.md",
+      "kind": "doc",
+      "relatesTo": []
+    },
+    {
       "id": "noncode:docs/phase1-checklist.md",
       "path": "docs/phase1-checklist.md",
       "kind": "doc",
@@ -77014,7 +77020,7 @@
     "stats": {
       "files": 169,
       "functions": 743,
-      "lines": 30960,
+      "lines": 30961,
       "languages": {
         "javascript": 3,
         "rust": 46,
@@ -77521,107 +77527,107 @@
       "event": "onAnimationComplete"
     },
     {
-      "id": "ui:apps/desktop/src/components/Setup.tsx:156:10",
+      "id": "ui:apps/desktop/src/components/Setup.tsx:157:10",
       "tag": "button",
       "label": "button",
       "fileId": "file:apps/desktop/src/components/Setup.tsx",
-      "line": 156,
+      "line": 157,
       "component": "fn:apps/desktop/src/components/Setup.tsx#LocalAi",
       "event": "onClick",
       "handler": "fn:apps/desktop/src/components/Setup.tsx#look"
     },
     {
-      "id": "ui:apps/desktop/src/components/Setup.tsx:182:14",
+      "id": "ui:apps/desktop/src/components/Setup.tsx:183:14",
       "tag": "button",
       "label": "button",
       "fileId": "file:apps/desktop/src/components/Setup.tsx",
-      "line": 182,
+      "line": 183,
       "component": "fn:apps/desktop/src/components/Setup.tsx#LocalAi",
       "event": "onClick",
       "handler": "fn:apps/desktop/src/components/Setup.tsx#link"
     },
     {
-      "id": "ui:apps/desktop/src/components/Setup.tsx:223:14",
+      "id": "ui:apps/desktop/src/components/Setup.tsx:224:14",
       "tag": "a",
       "label": "License and model card",
       "fileId": "file:apps/desktop/src/components/Setup.tsx",
-      "line": 223,
+      "line": 224,
       "component": "fn:apps/desktop/src/components/Setup.tsx#LocalAi"
     },
     {
-      "id": "ui:apps/desktop/src/components/Setup.tsx:227:16",
+      "id": "ui:apps/desktop/src/components/Setup.tsx:228:16",
       "tag": "button",
       "label": "button",
       "fileId": "file:apps/desktop/src/components/Setup.tsx",
-      "line": 227,
+      "line": 228,
       "component": "fn:apps/desktop/src/components/Setup.tsx#LocalAi",
       "event": "onClick",
       "handler": "fn:apps/desktop/src/lib/backend.ts#aiRemove"
     },
     {
-      "id": "ui:apps/desktop/src/components/Setup.tsx:238:18",
+      "id": "ui:apps/desktop/src/components/Setup.tsx:239:18",
       "tag": "button",
       "label": "Use a file I have",
       "fileId": "file:apps/desktop/src/components/Setup.tsx",
-      "line": 238,
+      "line": 239,
       "component": "fn:apps/desktop/src/components/Setup.tsx#LocalAi",
       "event": "onClick",
       "handler": "fn:apps/desktop/src/components/Setup.tsx#link"
     },
     {
-      "id": "ui:apps/desktop/src/components/Setup.tsx:246:18",
+      "id": "ui:apps/desktop/src/components/Setup.tsx:247:18",
       "tag": "button",
       "label": "button",
       "fileId": "file:apps/desktop/src/components/Setup.tsx",
-      "line": 246,
+      "line": 247,
       "component": "fn:apps/desktop/src/components/Setup.tsx#LocalAi",
       "event": "onClick",
       "handler": "fn:apps/desktop/src/components/Setup.tsx#install"
     },
     {
-      "id": "ui:apps/desktop/src/components/Setup.tsx:331:16",
+      "id": "ui:apps/desktop/src/components/Setup.tsx:332:16",
       "tag": "button",
       "label": "button",
       "fileId": "file:apps/desktop/src/components/Setup.tsx",
-      "line": 331,
+      "line": 332,
       "component": "fn:apps/desktop/src/components/Setup.tsx#Setup",
       "event": "onClick",
       "handler": "fn:apps/desktop/src/components/Setup.tsx#close"
     },
     {
-      "id": "ui:apps/desktop/src/components/Setup.tsx:359:16",
+      "id": "ui:apps/desktop/src/components/Setup.tsx:360:16",
       "tag": "button",
       "label": "I agree",
       "fileId": "file:apps/desktop/src/components/Setup.tsx",
-      "line": 359,
+      "line": 360,
       "component": "fn:apps/desktop/src/components/Setup.tsx#Setup",
       "event": "onClick"
     },
     {
-      "id": "ui:apps/desktop/src/components/Setup.tsx:365:18",
+      "id": "ui:apps/desktop/src/components/Setup.tsx:366:18",
       "tag": "button",
       "label": "Back",
       "fileId": "file:apps/desktop/src/components/Setup.tsx",
-      "line": 365,
+      "line": 366,
       "component": "fn:apps/desktop/src/components/Setup.tsx#Setup",
       "event": "onClick"
     },
     {
-      "id": "ui:apps/desktop/src/components/Setup.tsx:368:18",
+      "id": "ui:apps/desktop/src/components/Setup.tsx:369:18",
       "tag": "button",
       "label": "Got it",
       "fileId": "file:apps/desktop/src/components/Setup.tsx",
-      "line": 368,
+      "line": 369,
       "component": "fn:apps/desktop/src/components/Setup.tsx#Setup",
       "event": "onClick",
       "handler": "fn:apps/desktop/src/components/Setup.tsx#accept"
     },
     {
-      "id": "ui:apps/desktop/src/components/Setup.tsx:374:16",
+      "id": "ui:apps/desktop/src/components/Setup.tsx:375:16",
       "tag": "button",
       "label": "Done",
       "fileId": "file:apps/desktop/src/components/Setup.tsx",
-      "line": 374,
+      "line": 375,
       "component": "fn:apps/desktop/src/components/Setup.tsx#Setup",
       "event": "onClick",
       "handler": "fn:apps/desktop/src/components/Setup.tsx#close"
@@ -81214,17 +81220,17 @@
   },
   "exampleRuns": [
     {
-      "id": "run:ui:apps/desktop/src/components/Setup.tsx:182:14",
+      "id": "run:ui:apps/desktop/src/components/Setup.tsx:183:14",
       "title": "button → IPC ai_status",
-      "start": "ui:apps/desktop/src/components/Setup.tsx:182:14",
+      "start": "ui:apps/desktop/src/components/Setup.tsx:183:14",
       "hops": [
         {
-          "node": "ui:apps/desktop/src/components/Setup.tsx:182:14",
+          "node": "ui:apps/desktop/src/components/Setup.tsx:183:14",
           "kind": "ui",
           "label": "<button> “button”",
           "via": "start",
           "proof": [
-            "apps/desktop/src/components/Setup.tsx:182"
+            "apps/desktop/src/components/Setup.tsx:183"
           ],
           "confidence": 1.0,
           "explain": "The user clicks this button."
@@ -81235,7 +81241,7 @@
           "label": "link()",
           "via": "handler",
           "proof": [
-            "apps/desktop/src/components/Setup.tsx:114"
+            "apps/desktop/src/components/Setup.tsx:115"
           ],
           "confidence": 1.0,
           "explain": "Its onClick handler runs in the browser."
@@ -81275,7 +81281,7 @@
           "explain": "The browser sends HTTP; the backend route IPC ai_status receives it and runs ai_status()."
         },
         {
-          "node": "ui:apps/desktop/src/components/Setup.tsx:182:14",
+          "node": "ui:apps/desktop/src/components/Setup.tsx:183:14",
           "kind": "response",
           "label": "answer shown on screen",
           "via": "return",
@@ -81288,17 +81294,17 @@
       ]
     },
     {
-      "id": "run:ui:apps/desktop/src/components/Setup.tsx:238:18",
+      "id": "run:ui:apps/desktop/src/components/Setup.tsx:239:18",
       "title": "Use a file I have → IPC ai_status",
-      "start": "ui:apps/desktop/src/components/Setup.tsx:238:18",
+      "start": "ui:apps/desktop/src/components/Setup.tsx:239:18",
       "hops": [
         {
-          "node": "ui:apps/desktop/src/components/Setup.tsx:238:18",
+          "node": "ui:apps/desktop/src/components/Setup.tsx:239:18",
           "kind": "ui",
           "label": "<button> “Use a file I have”",
           "via": "start",
           "proof": [
-            "apps/desktop/src/components/Setup.tsx:238"
+            "apps/desktop/src/components/Setup.tsx:239"
           ],
           "confidence": 1.0,
           "explain": "The user clicks this button."
@@ -81309,7 +81315,7 @@
           "label": "link()",
           "via": "handler",
           "proof": [
-            "apps/desktop/src/components/Setup.tsx:114"
+            "apps/desktop/src/components/Setup.tsx:115"
           ],
           "confidence": 1.0,
           "explain": "Its onClick handler runs in the browser."
@@ -81349,7 +81355,7 @@
           "explain": "The browser sends HTTP; the backend route IPC ai_status receives it and runs ai_status()."
         },
         {
-          "node": "ui:apps/desktop/src/components/Setup.tsx:238:18",
+          "node": "ui:apps/desktop/src/components/Setup.tsx:239:18",
           "kind": "response",
           "label": "answer shown on screen",
           "via": "return",
@@ -81362,17 +81368,17 @@
       ]
     },
     {
-      "id": "run:ui:apps/desktop/src/components/Setup.tsx:246:18",
+      "id": "run:ui:apps/desktop/src/components/Setup.tsx:247:18",
       "title": "button → IPC ai_status",
-      "start": "ui:apps/desktop/src/components/Setup.tsx:246:18",
+      "start": "ui:apps/desktop/src/components/Setup.tsx:247:18",
       "hops": [
         {
-          "node": "ui:apps/desktop/src/components/Setup.tsx:246:18",
+          "node": "ui:apps/desktop/src/components/Setup.tsx:247:18",
           "kind": "ui",
           "label": "<button> “button”",
           "via": "start",
           "proof": [
-            "apps/desktop/src/components/Setup.tsx:246"
+            "apps/desktop/src/components/Setup.tsx:247"
           ],
           "confidence": 1.0,
           "explain": "The user clicks this button."
@@ -81383,7 +81389,7 @@
           "label": "install()",
           "via": "handler",
           "proof": [
-            "apps/desktop/src/components/Setup.tsx:95"
+            "apps/desktop/src/components/Setup.tsx:96"
           ],
           "confidence": 1.0,
           "explain": "Its onClick handler runs in the browser."
@@ -81423,7 +81429,7 @@
           "explain": "The browser sends HTTP; the backend route IPC ai_status receives it and runs ai_status()."
         },
         {
-          "node": "ui:apps/desktop/src/components/Setup.tsx:246:18",
+          "node": "ui:apps/desktop/src/components/Setup.tsx:247:18",
           "kind": "response",
           "label": "answer shown on screen",
           "via": "return",
@@ -81562,17 +81568,17 @@
       ]
     },
     {
-      "id": "run:ui:apps/desktop/src/components/Setup.tsx:156:10",
+      "id": "run:ui:apps/desktop/src/components/Setup.tsx:157:10",
       "title": "button → IPC ai_find",
-      "start": "ui:apps/desktop/src/components/Setup.tsx:156:10",
+      "start": "ui:apps/desktop/src/components/Setup.tsx:157:10",
       "hops": [
         {
-          "node": "ui:apps/desktop/src/components/Setup.tsx:156:10",
+          "node": "ui:apps/desktop/src/components/Setup.tsx:157:10",
           "kind": "ui",
           "label": "<button> “button”",
           "via": "start",
           "proof": [
-            "apps/desktop/src/components/Setup.tsx:156"
+            "apps/desktop/src/components/Setup.tsx:157"
           ],
           "confidence": 1.0,
           "explain": "The user clicks this button."
@@ -81583,7 +81589,7 @@
           "label": "look()",
           "via": "handler",
           "proof": [
-            "apps/desktop/src/components/Setup.tsx:135"
+            "apps/desktop/src/components/Setup.tsx:136"
           ],
           "confidence": 1.0,
           "explain": "Its onClick handler runs in the browser."
@@ -81612,7 +81618,7 @@
           "explain": "The browser sends HTTP; the backend route IPC ai_find receives it and runs ai_find()."
         },
         {
-          "node": "ui:apps/desktop/src/components/Setup.tsx:156:10",
+          "node": "ui:apps/desktop/src/components/Setup.tsx:157:10",
           "kind": "response",
           "label": "answer shown on screen",
           "via": "return",
@@ -81644,11 +81650,11 @@
         "ui:apps/desktop/src/components/Inspector.tsx:621:8",
         "ui:apps/desktop/src/components/Inspector.tsx:656:6",
         "ui:apps/desktop/src/components/Inspector.tsx:657:6",
-        "ui:apps/desktop/src/components/Setup.tsx:156:10",
-        "ui:apps/desktop/src/components/Setup.tsx:182:14",
-        "ui:apps/desktop/src/components/Setup.tsx:227:16",
-        "ui:apps/desktop/src/components/Setup.tsx:238:18",
-        "ui:apps/desktop/src/components/Setup.tsx:246:18"
+        "ui:apps/desktop/src/components/Setup.tsx:157:10",
+        "ui:apps/desktop/src/components/Setup.tsx:183:14",
+        "ui:apps/desktop/src/components/Setup.tsx:228:16",
+        "ui:apps/desktop/src/components/Setup.tsx:239:18",
+        "ui:apps/desktop/src/components/Setup.tsx:247:18"
       ],
       "files": [
         "file:crates/ark-core/src/memory.rs",
@@ -81789,9 +81795,9 @@
         "ui:apps/desktop/src/components/Inspector.tsx:621:8",
         "ui:apps/desktop/src/components/Inspector.tsx:656:6",
         "ui:apps/desktop/src/components/Inspector.tsx:657:6",
-        "ui:apps/desktop/src/components/Setup.tsx:182:14",
-        "ui:apps/desktop/src/components/Setup.tsx:238:18",
-        "ui:apps/desktop/src/components/Setup.tsx:246:18",
+        "ui:apps/desktop/src/components/Setup.tsx:183:14",
+        "ui:apps/desktop/src/components/Setup.tsx:239:18",
+        "ui:apps/desktop/src/components/Setup.tsx:247:18",
         "ui:apps/desktop/src/components/Sidebar.tsx:98:8"
       ],
       "files": [
@@ -82027,7 +82033,7 @@
       "holderName": "the user's browser",
       "lifetime": "persistent",
       "proof": [
-        "apps/desktop/src/components/Setup.tsx:303",
+        "apps/desktop/src/components/Setup.tsx:304",
         "apps/desktop/src/components/UpdatePopup.tsx:36",
         "apps/desktop/src/components/system/SystemView.tsx:66",
         "apps/desktop/src/lib/themeMode.ts:45"
