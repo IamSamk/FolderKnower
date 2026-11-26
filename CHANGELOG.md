@@ -2,6 +2,16 @@
 
 Notes for each version are shown in the in-app update pop-up and on the website's releases page.
 
+## [0.9.0] - 2026-11-26
+
+### Workflow diagrams
+- New **Flow** map in the System view: boxes in phases with arrows, like a hand-drawn architecture sheet. Three kinds: Request (one action step by step), AI pipeline (index once, then search, fuse, rerank, answer) and Memory and context (what is kept, what one model call is made of, caches and the KV cache). Every box links to the code that proves it.
+- Simple, Standard and Deep control how much each box says.
+
+### Fixes
+- A container built `FROM nginx`, `FROM postgres` or from a llama.cpp image is now named for what it is, not guessed from the files in its folder.
+- Code map edge labels show when zoomed in or selected, so they stop piling up.
+
 ## [0.8.0] - 2026-11-26
 
 ### Example run as a walkthrough

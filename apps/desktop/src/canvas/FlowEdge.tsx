@@ -1,4 +1,10 @@
-import { BaseEdge, EdgeLabelRenderer, type EdgeProps, getBezierPath } from "@xyflow/react";
+import {
+  BaseEdge,
+  EdgeLabelRenderer,
+  type EdgeProps,
+  getBezierPath,
+  useViewport,
+} from "@xyflow/react";
 import { useStore } from "../store";
 import type { FlowEdgeData } from "./build";
 
@@ -6,6 +12,8 @@ export function FlowEdge(props: EdgeProps) {
   const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, selected } =
     props;
   const data = props.data as FlowEdgeData | undefined;
+  // zoomed out, labels pile on top of each other: show them when zoomed in or selected
+  const { zoom } = useViewport();
   const travelling = useStore((s) => s.travelling === id);
   const [path, lx, ly] = getBezierPath({
     sourceX,
@@ -70,7 +78,7 @@ export function FlowEdge(props: EdgeProps) {
           </circle>
         </g>
       )}
-      {data?.label && !dim && (
+      {data?.label && !dim && (selected || travelling || zoom >= 0.7) && (
         <EdgeLabelRenderer>
           <div
             className="ak-edge-label nodrag nopan"

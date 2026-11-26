@@ -3804,3 +3804,168 @@ button.ak-sys-row:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ── Flow map: workflow diagrams ────────────────────────────── */
+.ak-wf-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.ak-wf-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px 0;
+}
+.ak-wf-headline {
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ak-wf-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px 20px 40px;
+}
+.ak-wf {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-right: 34px;
+}
+.ak-wf-arrows {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--ink-3);
+  overflow: visible;
+}
+.ak-wf-arrows path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+.ak-wf-arrows .dashed path {
+  stroke-dasharray: 5 4;
+}
+.ak-wf-phase {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  padding: 26px 18px 18px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+.ak-wf-phase-title {
+  position: absolute;
+  top: -14px;
+  left: 16px;
+  margin: 0;
+  padding: 3px 12px;
+  font-size: 13px;
+  font-weight: 750;
+  color: #1f1d36;
+  background: var(--mark);
+  border: var(--b) solid var(--line);
+  border-radius: 8px;
+}
+.ak-wf-row.grouped {
+  padding: 22px 12px 12px;
+  border: 1.5px dashed var(--line);
+  border-radius: var(--r-md, 12px);
+  position: relative;
+}
+.ak-wf-group {
+  position: absolute;
+  top: -10px;
+  left: 14px;
+  padding: 0 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  background: var(--paper);
+}
+.ak-wf-row-nodes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 34px;
+  justify-content: center;
+}
+.ak-wf-node {
+  flex: 1 1 200px;
+  max-width: 340px;
+  min-width: 170px;
+  padding: 10px 12px;
+  border: var(--b) solid var(--line);
+  border-radius: var(--r-md, 12px);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: center;
+}
+.ak-wf-title {
+  font-weight: 750;
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
+}
+.ak-wf-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+.ak-wf-explain {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.ak-wf-items {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  font-size: 11.5px;
+}
+.ak-wf-items li {
+  padding: 3px 8px;
+  margin-top: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+.ak-wf-tag {
+  margin-top: 6px;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--ink-3);
+}
+.ak-wf-node .ak-ev {
+  margin-top: 6px;
+}
+.ak-wf-node.k-store {
+  background: color-mix(in srgb, #7cf0a6 22%, var(--surface));
+}
+.ak-wf-node.k-model {
+  background: color-mix(in srgb, #ffd36b 26%, var(--surface));
+}
+.ak-wf-node.k-decision {
+  background: color-mix(in srgb, #ffd36b 26%, var(--surface));
+  border-style: double;
+}
+.ak-wf-node.k-join {
+  background: color-mix(in srgb, #c9a7ff 26%, var(--surface));
+}
+.ak-wf-node.k-job {
+  border-style: dashed;
+}
+.ak-wf-node.k-limit {
+  background: color-mix(in srgb, #ff8a6b 24%, var(--surface));
+}

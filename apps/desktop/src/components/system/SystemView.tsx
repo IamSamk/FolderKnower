@@ -51,6 +51,7 @@ import {
   svcLabel,
 } from "../../lib/system";
 import { useStore } from "../../store";
+import { FlowPane } from "./FlowPane";
 import { MemoryMap } from "./MemoryMap";
 
 function readPref<T extends string>(key: string, ok: readonly T[], fallback: T): T {
@@ -507,7 +508,7 @@ const DEPTH_HINT: Record<Depth, string> = {
   standard: "Containers, the code inside them and the AI steps",
   deep: "Every file, the packages each part uses and the data it keeps",
 };
-const MAPS = ["services", "memory"] as const;
+const MAPS = ["services", "flow", "memory"] as const;
 type MapKind = (typeof MAPS)[number];
 
 export function SystemView() {
@@ -681,7 +682,7 @@ export function SystemView() {
               className={map === k ? "on" : ""}
               onClick={() => setMap(k)}
             >
-              {k === "services" ? "System" : "Memory"}
+              {k === "services" ? "System" : k === "flow" ? "Flow" : "Memory"}
             </button>
           ))}
         </div>
@@ -737,7 +738,7 @@ export function SystemView() {
             ))}
           </select>
         )}
-        {map === "memory" ? null : run ? (
+        {map !== "services" ? null : run ? (
           <>
             <button
               type="button"
@@ -800,6 +801,8 @@ export function SystemView() {
       )}
       {map === "memory" ? (
         <MemoryMap feature={feature} depth={depth} />
+      ) : map === "flow" ? (
+        <FlowPane feature={feature} run={run} depth={depth} />
       ) : (
         <div className="ak-sys-vp" ref={vp}>
           <motion.div

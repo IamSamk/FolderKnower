@@ -618,6 +618,14 @@ pub fn analyze(infra: &[InfraFile], code: &[CodeFile]) -> Option<Deployment> {
                 .and_then(classify_image);
             let (kind, explain) = match rule.filter(|r| r.kind != ServiceKind::Other) {
                 Some(r) => (r.kind, named(r)),
+                // `FROM nginx` / `FROM postgres` / `FROM ghcr.io/ggml-org/llama.cpp` says what the
+                // container is, whatever files sit in its build context
+                None if context.is_some()
+                    && base_rule.is_some_and(|r| r.kind != ServiceKind::Other) =>
+                {
+                    let r = base_rule.expect("checked above");
+                    (r.kind, named(r))
+                }
                 None if context.is_some() => {
                     let k = kind_from_code(&files, command.as_deref(), &name);
                     (k, kind_explain(k, n_files))
