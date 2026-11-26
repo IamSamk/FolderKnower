@@ -1,0 +1,7 @@
+EMBED_MODEL = "BAAI/bge-m3"
+RERANK_MODEL = "Qwen/Qwen3-Reranker-0.6B"
+CHAT_MODEL = "Qwen3-27B-Instruct"
+CHUNK_CHARS = 600
+RRF_K = 60
+TOP_RERANK = 30
+MAX_ROUNDS = 3

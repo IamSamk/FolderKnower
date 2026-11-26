@@ -524,36 +524,136 @@ fn assemble(stages: Vec<AiStage>, frameworks: BTreeSet<String>) -> Option<AiArch
         }
     };
 
-    // Retrieval chain.
-    let mut prev: Option<(String, &str)> = None;
-    for (role, label) in CHAIN {
-        if let Some(id) = first(*role) {
-            if let Some((p, l)) = &prev {
-                add(Some(p.clone()), Some(id.clone()), l, false, &mut edges);
+    // Retrieval as two lanes that meet: dense (embed -> vector search) and lexical
+    // (keyword index -> graph expansion). Every stage of a role is wired, not only the
+    // first, so a pipeline with two retrievers or two checks shows both.
+    let ids = |keep: &dyn Fn(&AiStage) -> bool| -> Vec<String> {
+        stages
+            .iter()
+            .filter(|s| keep(s))
+            .map(|s| s.id.clone())
+            .take(4)
+            .collect()
+    };
+    fn lane_of(s: &AiStage) -> Option<&str> {
+        s.params.get("lane").map(String::as_str)
+    }
+    let is_check = |s: &AiStage| s.role == AiRole::Router && s.params.contains_key("check");
+    let role_is = |r: AiRole| move |s: &AiStage| s.role == r;
+    let label_of = |r: AiRole| {
+        CHAIN
+            .iter()
+            .find(|(cr, _)| *cr == r)
+            .map_or("", |(_, l)| *l)
+    };
+    let role_of = |id: &str| stages.iter().find(|s| s.id == id).map(|s| s.role);
+    let link_levels = |levels: &[Vec<String>], edges: &mut Vec<AiEdge>| -> Vec<String> {
+        let mut prev: Vec<String> = Vec::new();
+        for level in levels.iter().filter(|l| !l.is_empty()) {
+            for p in &prev {
+                for t in level {
+                    let label = match (role_of(p), role_of(t)) {
+                        (Some(AiRole::Splitter), Some(AiRole::KeywordIndex)) => "chunks",
+                        (Some(AiRole::Router), _) => "enough evidence",
+                        (Some(AiRole::KeywordIndex), Some(AiRole::Retriever)) => "seed hits",
+                        (Some(r), _) => label_of(r),
+                        _ => "",
+                    };
+                    add(Some(p.clone()), Some(t.clone()), label, false, edges);
+                }
             }
-            prev = Some((id, label));
+            prev.clone_from(level);
+        }
+        prev
+    };
+    // The model that reads the prompt: the one in the prompt's file, else the first one.
+    // A second model elsewhere (a served model, a judge) is wired by its own rules below.
+    let prompt_files: Vec<&str> = stages
+        .iter()
+        .filter(|s| s.role == AiRole::Prompt)
+        .map(|s| s.file_id.as_str())
+        .collect();
+    let mut model_ids: Vec<String> =
+        ids(&|s| s.role == AiRole::Llm && prompt_files.contains(&s.file_id.as_str()));
+    if model_ids.is_empty() {
+        model_ids.extend(first(AiRole::Llm));
+    }
+    let ingest = vec![
+        ids(&role_is(AiRole::Loader)),
+        ids(&role_is(AiRole::Splitter)),
+    ];
+    let ingest_end = link_levels(&ingest, &mut edges);
+    let dense = vec![
+        ingest_end.clone(),
+        ids(&role_is(AiRole::Embedder)),
+        ids(&role_is(AiRole::VectorStore)),
+        ids(&|s| s.role == AiRole::Retriever && lane_of(s) != Some("lexical")),
+    ];
+    let lexical = vec![
+        ingest_end.clone(),
+        ids(&role_is(AiRole::KeywordIndex)),
+        ids(&|s| s.role == AiRole::Retriever && lane_of(s) == Some("lexical")),
+    ];
+    let tail = [
+        ids(&role_is(AiRole::Fusion)),
+        ids(&role_is(AiRole::Reranker)),
+        ids(&is_check),
+        ids(&role_is(AiRole::Prompt)),
+        model_ids,
+    ];
+    let dense_end = link_levels(&dense, &mut edges);
+    let lexical_end = if lexical[1..].iter().any(|l| !l.is_empty()) {
+        link_levels(&lexical, &mut edges)
+    } else {
+        Vec::new()
+    };
+    let tail_start: Vec<String> = tail
+        .iter()
+        .find(|l| !l.is_empty())
+        .cloned()
+        .unwrap_or_default();
+    for end in [&dense_end, &lexical_end] {
+        if end == &ingest_end {
+            continue;
+        }
+        for p in end {
+            for t in &tail_start {
+                let label = match role_of(p) {
+                    Some(AiRole::KeywordIndex) => "keyword hits",
+                    Some(AiRole::Retriever)
+                        if lane_of(stages.iter().find(|s| &s.id == p).expect("stage"))
+                            == Some("lexical") =>
+                    {
+                        "expanded hits"
+                    }
+                    Some(r) => label_of(r),
+                    None => "",
+                };
+                add(Some(p.clone()), Some(t.clone()), label, false, &mut edges);
+            }
         }
     }
-    // Keyword branch joins at fusion, else at the reranker, else at the prompt / model.
-    if present(AiRole::KeywordIndex) {
-        let join = first(AiRole::Fusion)
-            .or_else(|| first(AiRole::Reranker))
-            .or_else(|| first(AiRole::Prompt))
-            .or_else(|| first(AiRole::Llm));
-        add(
-            first(AiRole::Splitter),
-            first(AiRole::KeywordIndex),
-            "chunks",
-            false,
-            &mut edges,
-        );
-        add(
-            first(AiRole::KeywordIndex),
-            join,
-            "keyword hits",
-            false,
-            &mut edges,
-        );
+    link_levels(&tail, &mut edges);
+    // An evidence check that says "not enough" sends the question back to retrieval.
+    let starts: Vec<String> = [&dense, &lexical]
+        .iter()
+        .filter_map(|lane| {
+            lane[1..]
+                .iter()
+                .find(|l| !l.is_empty())
+                .and_then(|l| l.first().cloned())
+        })
+        .collect();
+    for c in ids(&is_check) {
+        for st in &starts {
+            add(
+                Some(c.clone()),
+                Some(st.clone()),
+                "not enough: retrieve more",
+                true,
+                &mut edges,
+            );
+        }
     }
     let into_model = first(AiRole::Prompt).or_else(|| first(AiRole::Llm));
     add(
@@ -607,7 +707,11 @@ fn assemble(stages: Vec<AiStage>, frameworks: BTreeSet<String>) -> Option<AiArch
     );
 
     // Agent loop: model -> decision -> tool -> model.
-    let decider = first(AiRole::Router).or_else(|| first(AiRole::Agent));
+    let decider = stages
+        .iter()
+        .find(|s| s.role == AiRole::Router && !s.params.contains_key("check"))
+        .map(|s| s.id.clone())
+        .or_else(|| first(AiRole::Agent));
     if decider.is_some() {
         add(
             first(AiRole::Llm),
@@ -661,7 +765,17 @@ fn assemble(stages: Vec<AiStage>, frameworks: BTreeSet<String>) -> Option<AiArch
         }
     }
 
-    let has_agent = present(AiRole::Agent) || present(AiRole::Router) || present(AiRole::Tool);
+    let has_check = stages
+        .iter()
+        .any(|s| s.role == AiRole::Router && s.params.contains_key("check"));
+    let has_graph = stages.iter().any(|s| {
+        s.role == AiRole::Retriever && s.params.get("lane").is_some_and(|l| l == "lexical")
+    });
+    let has_agent = present(AiRole::Agent)
+        || stages
+            .iter()
+            .any(|s| s.role == AiRole::Router && !s.params.contains_key("check"))
+        || present(AiRole::Tool);
     let has_retr =
         present(AiRole::Retriever) || present(AiRole::VectorStore) || present(AiRole::KeywordIndex);
     let hybrid = present(AiRole::Fusion)
@@ -700,6 +814,13 @@ fn assemble(stages: Vec<AiStage>, frameworks: BTreeSet<String>) -> Option<AiArch
         AiSystemKind::Inference => "Model inference: the app sends prompts to a language model",
     }
     .to_owned();
+    let mut headline = headline;
+    if has_graph {
+        headline.push_str("; keyword hits are expanded through an entity graph");
+    }
+    if has_check {
+        headline.push_str("; an evidence check sends the question back for more retrieval when the passages are not enough");
+    }
     edges.sort_by(|a, b| (&a.from, &a.to).cmp(&(&b.from, &b.to)));
     Some(AiArchitecture {
         kind,
@@ -715,7 +836,7 @@ static EMBED_MODEL: LazyLock<Regex> = LazyLock::new(|| {
         .expect("embed model regex")
 });
 static RERANK_MODEL: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?i)\b((?:BAAI/)?bge-reranker-[a-z0-9\-]+|jina-reranker-[a-z0-9\-]+|ms-marco-[a-z0-9\-]+|rerank-[a-z0-9\-.]+)")
+    Regex::new(r"(?i)\b((?:BAAI/)?bge-reranker-[a-z0-9\-]+|(?:Qwen/)?Qwen[0-9.]*-Reranker-[a-z0-9.\-]+|mxbai-rerank-[a-z0-9\-]+|jina-reranker-[a-z0-9\-]+|ms-marco-[a-z0-9\-]+|rerank-[a-z0-9\-.]+)")
         .expect("rerank model regex")
 });
 static KEYWORD_SQL: LazyLock<Regex> = LazyLock::new(|| {
@@ -740,6 +861,116 @@ static FUSION_DEF: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"(?i)\b(?:def|fn|func|function)\s+(\w*(?:rrf|reciprocal_?rank)\w*)")
         .expect("fusion regex")
 });
+
+/// A chat / instruct model id written in code or config (`Qwen3-27B`, `llama-3.1-8b`).
+static LLM_MODEL: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)\b((?:Qwen/)?Qwen[0-9.]*-[0-9.]+B[a-z0-9.\-_]*|(?:meta-llama/)?Llama-?3[a-z0-9.\-]*-[0-9]+B[a-z0-9.\-]*|gemma-?[0-9][a-z0-9.\-]*-[0-9]+b[a-z0-9.\-]*|Mistral-[0-9]+B[a-z0-9.\-]*|Phi-?[34][a-z0-9.\-]*|gpt-4[a-z0-9.\-]*|gpt-5[a-z0-9.\-]*|claude-[a-z0-9.\-]+)")
+        .expect("llm model regex")
+});
+/// A chat or completion endpoint called over HTTP (llama.cpp, vLLM, Ollama, OpenAI-style).
+static CHAT_HTTP: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"/v1/chat/completions\b|/v1/completions\b|/api/chat\b|/api/generate\b|["'`/]completion["'`]"#)
+        .expect("chat endpoint regex")
+});
+/// Retrieval that walks an entity graph: a hand-written expansion function, or SQL over
+/// entity / relation / mention tables.
+static GRAPH_EXPAND: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)\b(?:def|fn|func|function)\s+(\w*(?:graph|entit|relation|neighbo)\w*(?:expand|walk|hop|travers|neighbo|search|lookup)\w*|\w*(?:expand|travers)\w*(?:graph|entit|relation|neighbo)\w*)|\b(?:FROM|JOIN)\s+(?:\w+\.)?(?:entity_)?(?:relations|mentions|entity_aliases|aliases)\b")
+        .expect("graph expand regex")
+});
+/// A check that decides whether the retrieved evidence is enough, or retrieval must run again.
+static EVIDENCE_CHECK: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)\b(?:def|fn|func|function)\s+(\w*(?:sufficien|enough|need_more|needs_more|retrieve_more|should_retry|answerable|is_complete)\w*)")
+        .expect("evidence check regex")
+});
+/// Document loading by hand: PDF readers and OCR.
+static DOC_LOADER: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^\s*(?:from|import)\s+(pypdf|PyPDF2|pdfplumber|fitz|pymupdf|pdfminer|pytesseract|unstructured|docx)\b")
+        .expect("loader regex")
+});
+/// A hand-written chunker and its size constant.
+static CHUNK_DEF: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)\b(?:def|fn|func|function)\s+((?:chunk|split_)\w*|\w*_(?:chunk|chunks|chunker|chunking)\b)")
+        .expect("chunk regex")
+});
+static CHUNK_SIZE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)\b(?:chunk_?(?:size|chars|len(?:gth)?)|max_chars)\s*[:=]\s*(?:int\s*=\s*)?(\d{2,5})\b")
+        .expect("chunk size regex")
+});
+
+/// Hand-written pipeline steps found in any source file.
+#[derive(Default)]
+struct Steps<'a> {
+    chat_http: Option<(u8, &'a str, u32)>,
+    graph: Option<(String, &'a str, u32)>,
+    check: Option<(String, &'a str, u32)>,
+    loader: Option<(String, &'a str, u32)>,
+    chunker: Option<(String, &'a str, u32)>,
+    chunk_size: Option<String>,
+}
+
+fn scan_steps<'a>(line: &str, path: &'a str, ln: u32, files: &[ParsedFile], st: &mut Steps<'a>) {
+    if CHAT_HTTP.is_match(line) {
+        keep_best(&mut st.chat_http, files, path, ln);
+    }
+    // The function that expands outranks the SQL it runs.
+    let named_graph = st
+        .graph
+        .as_ref()
+        .is_some_and(|g| g.0 != "entity graph lookup");
+    if !named_graph && let Some(c) = GRAPH_EXPAND.captures(line) {
+        match c.get(1) {
+            Some(m) => st.graph = Some((m.as_str().to_owned(), path, ln)),
+            None if st.graph.is_none() => {
+                st.graph = Some(("entity graph lookup".to_owned(), path, ln));
+            }
+            None => {}
+        }
+    }
+    if st.check.is_none()
+        && let Some(c) = EVIDENCE_CHECK.captures(line)
+    {
+        st.check = Some((c[1].to_owned(), path, ln));
+    }
+    if st.loader.is_none()
+        && let Some(c) = DOC_LOADER.captures(line)
+    {
+        st.loader = Some((c[1].to_owned(), path, ln));
+    }
+    if st.chunker.is_none()
+        && let Some(c) = CHUNK_DEF.captures(line)
+    {
+        st.chunker = Some((c[1].to_owned(), path, ln));
+    }
+    if st.chunk_size.is_none()
+        && let Some(c) = CHUNK_SIZE.captures(line)
+    {
+        st.chunk_size = Some(c[1].to_owned());
+    }
+}
+
+/// File names that usually hold model ids, connection settings and search SQL.
+fn holds_settings(path: &str) -> bool {
+    let l = path.to_ascii_lowercase();
+    let name = l.rsplit('/').next().unwrap_or(&l);
+    name.starts_with(".env")
+        || [
+            "config", "settings", "store", "search", "embed", "retriev", "vector", "fusion",
+            "rank", "rag", "llm", "model", "client",
+        ]
+        .iter()
+        .any(|k| name.contains(k))
+        || [".yml", ".yaml", ".toml", ".sql", ".env"]
+            .iter()
+            .any(|e| name.ends_with(e))
+}
+
+/// A line that defines a search pattern (a regex) rather than using what it names.
+fn is_pattern_source(line: &str) -> bool {
+    ["Regex::new(", "re.compile(", "new RegExp(", "match: ["]
+        .iter()
+        .any(|k| line.contains(k))
+}
 
 fn is_comment(line: &str) -> bool {
     let l = line.trim_start();
@@ -827,11 +1058,22 @@ fn add_mentions(
     let mut rerank: BTreeMap<String, (u32, &str, u32)> = BTreeMap::new();
     let mut keyword: Option<(bool, &str, u32)> = None;
     let mut keyword_sql: Option<(u8, &str, u32)> = None;
+    let mut llm: BTreeMap<String, (u32, &str, u32)> = BTreeMap::new();
+    let mut steps = Steps::default();
     for t in texts {
+        let web = is_web_source(t.path);
         for (i, line) in t.text.lines().enumerate() {
             let ln = (i + 1) as u32;
             // A model or method named only in a comment is not something the code does.
-            if is_comment(line) {
+            if is_comment(line) || is_pattern_source(line) {
+                continue;
+            }
+            // Model ids and SQL count in files whose name says they hold them; the
+            // hand-written pipeline steps below count in any source file.
+            if !holds_settings(t.path) {
+                if !web {
+                    scan_steps(line, t.path, ln, files, &mut steps);
+                }
                 continue;
             }
             if VECTOR_QUERY.is_match(line) {
@@ -847,6 +1089,17 @@ fn add_mentions(
                 && let Some(c) = FUSION_DEF.captures(line)
             {
                 fusion = Some((c[1].to_owned(), t.path, ln));
+            }
+            if !web {
+                scan_steps(line, t.path, ln, files, &mut steps);
+            }
+            for m in LLM_MODEL.find_iter(line) {
+                let l = m.as_str().to_ascii_lowercase();
+                if l.contains("rerank") || l.contains("embed") {
+                    continue;
+                }
+                let e = llm.entry(m.as_str().to_owned()).or_insert((0, t.path, ln));
+                e.0 += 1;
             }
             for m in RERANK_MODEL.find_iter(line) {
                 let e = rerank
@@ -964,6 +1217,86 @@ fn add_mentions(
             explain,
         );
     }
+    // The rest only count next to other AI stages: on their own they are ordinary code.
+    let Steps {
+        chat_http,
+        graph,
+        check,
+        loader,
+        chunker,
+        chunk_size,
+    } = steps;
+    if !stages.is_empty() {
+        if let Some((name, path, line)) = graph {
+            put_mention(
+                stages,
+                frameworks,
+                (AiRole::Retriever, name, "entity graph"),
+                (path, line),
+                "Graph-assisted retrieval. Starts from the keyword hits, follows linked entities and relations in the graph, and adds the passages they point to.",
+            );
+            if let Some(s) = stages
+                .values_mut()
+                .find(|s| s.role == AiRole::Retriever && s.library == "entity graph")
+            {
+                s.params.insert("lane".to_owned(), "lexical".to_owned());
+            }
+        }
+        if let Some((name, path, line)) = check {
+            put_mention(
+                stages,
+                frameworks,
+                (AiRole::Router, name, "evidence check"),
+                (path, line),
+                "Evidence check. Decides whether the retrieved passages are enough to answer. If not, retrieval runs again with a wider search; if yes, the passages go on to the answer.",
+            );
+            if let Some(s) = stages
+                .values_mut()
+                .find(|s| s.role == AiRole::Router && s.library == "evidence check")
+            {
+                s.params.insert("check".to_owned(), "evidence".to_owned());
+            }
+        }
+        if let Some((name, path, line)) = loader {
+            put_mention(
+                stages,
+                frameworks,
+                (AiRole::Loader, name, "document loader"),
+                (path, line),
+                role_explain(AiRole::Loader),
+            );
+        }
+        if let Some((name, path, line)) = chunker {
+            put_mention(
+                stages,
+                frameworks,
+                (AiRole::Splitter, name, "hand-written chunker"),
+                (path, line),
+                role_explain(AiRole::Splitter),
+            );
+        }
+        if let Some(size) = chunk_size
+            && let Some(s) = stages.values_mut().find(|s| s.role == AiRole::Splitter)
+        {
+            s.params.entry("chunk_size".to_owned()).or_insert(size);
+        }
+        let model = best(&llm);
+        let at = chat_http
+            .map(|(_, p, l)| (p.to_owned(), l))
+            .or_else(|| model.as_ref().map(|(_, p, l)| (p.clone(), *l)));
+        if let Some((path, line)) = at {
+            let name = model
+                .as_ref()
+                .map_or_else(|| "chat model server".to_owned(), |(m, _, _)| m.clone());
+            put_mention(
+                stages,
+                frameworks,
+                (AiRole::Llm, name, "language model"),
+                (path.as_str(), line),
+                role_explain(AiRole::Llm),
+            );
+        }
+    }
     for s in stages.values_mut().filter(|s| s.rule_id == "ai.mention") {
         let path = s.file_id.strip_prefix("file:").unwrap_or(&s.file_id);
         s.function_id = function_at(files, path, s.line);
@@ -979,15 +1312,27 @@ fn put_mention(
     (path, line): (&str, u32),
     explain: &str,
 ) {
-    if let Some(existing) = stages.values_mut().find(|s| s.role == role) {
-        if role == AiRole::Embedder || role == AiRole::Reranker {
-            existing.params.entry("model".to_owned()).or_insert(name);
+    // A second retriever or check is a separate step, not a duplicate.
+    let distinct = matches!(role, AiRole::Retriever | AiRole::Router)
+        && !stages
+            .values()
+            .any(|s| s.role == role && s.library == library);
+    if !distinct && let Some(existing) = stages.values_mut().find(|s| s.role == role) {
+        let named =
+            existing.params.contains_key("model") || existing.params.contains_key("model_name");
+        if !named
+            && (matches!(role, AiRole::Embedder | AiRole::Reranker)
+                || role == AiRole::Llm && name != "chat model server")
+        {
+            existing.params.insert("model".to_owned(), name);
         }
         return;
     }
     frameworks.insert(library.to_owned());
     let mut params = BTreeMap::new();
-    if role == AiRole::Embedder || role == AiRole::Reranker {
+    let names_model = matches!(role, AiRole::Embedder | AiRole::Reranker)
+        || role == AiRole::Llm && name != "chat model server";
+    if names_model {
         params.insert("model".to_owned(), name.clone());
     }
     stages.insert(

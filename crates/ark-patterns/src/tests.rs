@@ -545,3 +545,102 @@ fn finds_hand_written_hybrid_search() {
     assert_eq!(get(AiRole::KeywordIndex).name, "Postgres full-text");
     assert_eq!(get(AiRole::Fusion).name, "rrf_fuse");
 }
+
+/// Granthapura-style adaptive graph retrieval, written by hand with no AI framework:
+/// both search lanes, graph expansion, fusion, a reranker, an evidence check that loops
+/// back, and a llama.cpp chat call.
+#[test]
+fn adaptive_graph_retrieval_shows_both_lanes_and_the_loop() {
+    use crate::InfraFile;
+    let texts = [
+        InfraFile {
+            path: "app/src/config.py",
+            text: "embed_model = \"BAAI/bge-m3\"\nrerank_model = \"Qwen/Qwen3-Reranker-0.6B\"\nchat_model = \"Qwen3-27B-Instruct\"\nCHUNK_CHARS = 600\n",
+        },
+        InfraFile {
+            path: "app/src/ingest.py",
+            text: "import pytesseract\nfrom pypdf import PdfReader\n\ndef chunk_pages(pages):\n    return []\n",
+        },
+        InfraFile {
+            path: "app/src/pg_store.py",
+            text: "SQL = \"SELECT id FROM chunks ORDER BY embedding <=> %s::vector LIMIT 50\"\nKW = \"SELECT ts_rank(tsv, q) FROM pages, plainto_tsquery(%s) q\"\n",
+        },
+        InfraFile {
+            path: "app/src/graph.py",
+            text: "def expand_entities(seed_pages):\n    return db.run(\"SELECT r.dst FROM relations r JOIN mentions m ON m.entity = r.src\")\n",
+        },
+        InfraFile {
+            path: "app/src/retrieval.py",
+            text: "def rrf_fuse(lists, k=60):\n    pass\n\ndef evidence_is_sufficient(question, passages):\n    pass\n",
+        },
+        InfraFile {
+            path: "app/src/llm/client.py",
+            text: "def chat(msgs):\n    return httpx.post(f\"{BASE}/v1/chat/completions\", json={})\n",
+        },
+        InfraFile {
+            path: "app/src/embed_client.py",
+            text: "def embed(texts):\n    return httpx.post(f\"{BASE}/v1/embeddings\", json={})\n",
+        },
+    ];
+    let ai = crate::ai::analyze_texts(&[], &[], &texts).ai.expect("ai");
+    let by_role = |r: AiRole| -> Vec<&str> {
+        ai.stages
+            .iter()
+            .filter(|s| s.role == r)
+            .map(|s| s.name.as_str())
+            .collect()
+    };
+    assert_eq!(by_role(AiRole::Reranker), ["Qwen/Qwen3-Reranker-0.6B"]);
+    assert_eq!(by_role(AiRole::Retriever), ["expand_entities"]);
+    assert_eq!(by_role(AiRole::Router), ["evidence_is_sufficient"]);
+    assert_eq!(by_role(AiRole::Llm), ["Qwen3-27B-Instruct"]);
+    assert!(!by_role(AiRole::Loader).is_empty());
+    let splitter = ai
+        .stages
+        .iter()
+        .find(|s| s.role == AiRole::Splitter)
+        .expect("splitter");
+    assert_eq!(splitter.params["chunk_size"], "600");
+    let id = |r: AiRole| {
+        ai.stages
+            .iter()
+            .find(|s| s.role == r)
+            .expect("role")
+            .id
+            .clone()
+    };
+    let has = |f: &str, t: &str| ai.edges.iter().any(|e| e.from == f && e.to == t);
+    // both lanes reach fusion
+    assert!(
+        has(&id(AiRole::VectorStore), &id(AiRole::Fusion)),
+        "{:#?}",
+        ai.edges
+    );
+    assert!(
+        has(&id(AiRole::KeywordIndex), &id(AiRole::Retriever)),
+        "{:#?}",
+        ai.edges
+    );
+    assert!(
+        has(&id(AiRole::Retriever), &id(AiRole::Fusion)),
+        "{:#?}",
+        ai.edges
+    );
+    // fusion -> reranker -> check -> model, and the check loops back to both lanes
+    assert!(has(&id(AiRole::Fusion), &id(AiRole::Reranker)));
+    assert!(has(&id(AiRole::Reranker), &id(AiRole::Router)));
+    assert!(has(&id(AiRole::Router), &id(AiRole::Llm)));
+    let loops: Vec<&str> = ai
+        .edges
+        .iter()
+        .filter(|e| e.loop_back && e.from == id(AiRole::Router))
+        .map(|e| e.to.as_str())
+        .collect();
+    assert!(loops.contains(&id(AiRole::Embedder).as_str()), "{loops:?}");
+    assert!(
+        loops.contains(&id(AiRole::KeywordIndex).as_str()),
+        "{loops:?}"
+    );
+    assert_eq!(ai.kind, AiSystemKind::HybridRag);
+    assert!(ai.headline.contains("entity graph"), "{}", ai.headline);
+}

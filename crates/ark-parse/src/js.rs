@@ -551,6 +551,18 @@ impl X<'_, '_> {
             } else if callee == "axios" || callee == "useSWR" || callee == "useFetch" {
                 client = Some(callee.clone());
                 method = Some("GET".to_owned());
+            } else if is_api_path(url) && recv_last.is_none() {
+                // Project wrapper such as req("/api/ask", body): the verb lives in
+                // the wrapper, so take it from the name or options, else match any.
+                client = Some(callee.clone());
+                method = Some(if is_http_method(&callee) {
+                    callee.to_ascii_uppercase()
+                } else {
+                    arg_nodes
+                        .get(1)
+                        .and_then(|o| self.object_prop(*o, "method"))
+                        .unwrap_or_else(|| "ANY".to_owned())
+                });
             }
             if let (Some(method), Some(client)) = (method, client) {
                 self.facts.http_calls.push(HttpCallFact {
@@ -769,4 +781,11 @@ fn is_ipc_name(n: &str) -> bool {
         && n.chars().next().is_some_and(|c| c.is_ascii_alphabetic())
         && n.chars()
             .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | ':' | '.'))
+}
+
+/// A path that reads as a call into the project's own HTTP API.
+fn is_api_path(url: &str) -> bool {
+    ["/api/", "/v1/", "/v2/", "/graphql"]
+        .iter()
+        .any(|p| url.starts_with(p))
 }

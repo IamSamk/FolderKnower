@@ -2495,7 +2495,7 @@
             "api/app/routers/auth.py:11"
           ],
           "confidence": 1.0,
-          "explain": "The browser sends http.POST :param/api/auth/login; the backend route POST /auth/login receives it and runs login()."
+          "explain": "The browser sends POST :param/api/auth/login; the backend route POST /auth/login receives it and runs login()."
         },
         {
           "node": "file:api/app/core/security.py",
@@ -2572,7 +2572,7 @@
             "api/app/routers/todos.py:26"
           ],
           "confidence": 1.0,
-          "explain": "The browser sends http.PATCH :param/api/todos/:param/complete; the backend route PATCH /todos/:param/complete receives it and runs complete_todo()."
+          "explain": "The browser sends PATCH :param/api/todos/:param/complete; the backend route PATCH /todos/:param/complete receives it and runs complete_todo()."
         },
         {
           "node": "model:api/app/models.py#Todo",

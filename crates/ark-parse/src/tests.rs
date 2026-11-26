@@ -359,3 +359,27 @@ fn valid_code_the_grammar_misses_is_not_a_syntax_error() {
     );
     assert!(!f.syntax_errors.is_empty());
 }
+
+#[test]
+fn wrapper_call_into_own_api_is_an_http_call() {
+    let src = r#"
+export const req = (path, body) => fetch(path, { method: "POST", body: JSON.stringify(body) });
+export const ask = (question) => req("/api/ask", { question });
+export const del = (id) => remove(`/api/items/${id}`, { method: "DELETE" });
+const label = t("/api/not-a-call-but-a-key");
+"#;
+    let f = parse_file(Language::JavaScript, "web/api.js", src);
+    let calls: Vec<_> = f
+        .http_calls
+        .iter()
+        .map(|c| (c.method.as_str(), c.url.as_str(), c.in_fn.as_deref()))
+        .collect();
+    assert!(
+        calls.contains(&("ANY", "/api/ask", Some("ask"))),
+        "{calls:?}"
+    );
+    assert!(
+        calls.contains(&("DELETE", "/api/items/:param", Some("del"))),
+        "{calls:?}"
+    );
+}

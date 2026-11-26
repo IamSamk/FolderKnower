@@ -1,0 +1,19 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+  embed:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    command: ["-m", "/models/bge-m3-Q8_0.gguf", "--embeddings", "--port", "8081"]
+  llm:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    command: ["-m", "/models/Qwen3-27B-Q4_K_M.gguf", "--port", "8080"]
+  api:
+    build: ./app
+    environment:
+      DATABASE_URL: postgresql://db:5432/books
+      EMBED_URL: http://embed:8081
+      LLM_URL: http://llm:8080
+    depends_on: [db, embed, llm]
+  web:
+    build: ./frontend
+    depends_on: [api]

@@ -4,8 +4,22 @@ Notes for each version are shown in the in-app update pop-up and on the website'
 
 ## [Unreleased]
 
-### Detection
-- A web page calling its own backend (`/v1/chat/completions`, `/api/chat`) is no longer shown as the language model in the AI pipeline.
+## [0.14.0] - 2026-11-27
+
+### AI pipelines
+- Hybrid search shows both lanes side by side: keyword search (BM25) and dense vector search each lead into rank fusion, instead of one lane being picked.
+- Graph-assisted retrieval is found: keyword hits that expand through an entity graph (entities, aliases, mentions, relations) show as their own step.
+- Evidence checks ("is this enough to answer?") show as a decision with a loop back to retrieval, so adaptive retrieval reads as a loop, not a straight line.
+- Rerankers such as Qwen3-Reranker and mxbai-rerank, PDF/OCR loaders, chunk size, and local model files (GGUF) are named in the pipeline.
+- The whole project's source is read for pipeline steps, not only config files. Tests, docs and prose are skipped.
+- A web page calling its own backend (`/v1/chat/completions`, `/api/chat`) is no longer shown as the language model.
+
+### Example runs
+- Buttons that call a small helper such as `req("/api/ask")` now link to the backend route, so the run follows the click all the way through the pipeline.
+- Pipeline steps in a run follow the data: both search lanes, then fusion, reranking, the evidence check and the answer.
+
+### App
+- Update pop-up: long release notes scroll inside the card, and the app checks again when you come back to the window.
 
 ## [0.13.1] - 2026-11-26
 

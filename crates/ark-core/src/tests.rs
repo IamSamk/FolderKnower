@@ -155,6 +155,40 @@ fn golden_rag_agent() {
     golden("rag-agent");
 }
 
+#[test]
+fn golden_graph_rag() {
+    golden("graph-rag");
+}
+
+#[test]
+fn graph_rag_run_walks_both_lanes_before_fusion() {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/repos/graph-rag");
+    let (g, _) = analyze(
+        &dir,
+        &Options {
+            no_cache: true,
+            ..Options::default()
+        },
+        &|_| {},
+    )
+    .unwrap();
+    let runs = crate::story::example_runs(&g);
+    let run = runs.first().expect("the Ask button reaches the backend");
+    assert_eq!(run.title, "Ask → POST /api/ask");
+    let at = |name: &str| {
+        run.hops
+            .iter()
+            .position(|h| h.label == name)
+            .unwrap_or_else(|| panic!("{name} missing from the run"))
+    };
+    let fuse = at("rrf_fuse");
+    assert!(at("lexical_search") < fuse && at("expand_entities") < fuse);
+    assert!(at("pgvector") < fuse && at("bge-m3-Q8") < at("pgvector"));
+    assert!(fuse < at("CrossEncoder"));
+    assert!(at("CrossEncoder") < at("evidence_is_sufficient"));
+    assert!(at("evidence_is_sufficient") < at("Qwen3-27B-Q4_K_M.gguf"));
+}
+
 fn golden(name: &str) {
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../fixtures/repos")

@@ -17,7 +17,7 @@ use ark_scan::Language;
 use tree_sitter::Parser;
 
 /// Bump when extraction output changes, so cached facts are invalidated.
-pub const EXTRACTOR_VERSION: &str = "5";
+pub const EXTRACTOR_VERSION: &str = "6";
 
 fn ts_language(lang: Language) -> tree_sitter::Language {
     match lang {

@@ -3638,7 +3638,7 @@
             "app/api.py:17"
           ],
           "confidence": 1.0,
-          "explain": "The browser sends http.POST :param/ask; the backend route POST /ask receives it and runs ask()."
+          "explain": "The browser sends POST :param/ask; the backend route POST /ask receives it and runs ask()."
         },
         {
           "node": "file:app/memory.py",
@@ -3719,6 +3719,19 @@
           ],
           "confidence": 0.9,
           "explain": "call tool: Tool. A function the model may ask to run (search, calculator, database query). Its result is fed back to the model."
+        },
+        {
+          "node": "ai:embedder:HuggingFaceEmbeddings",
+          "kind": "stage",
+          "label": "HuggingFaceEmbeddings",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/ingest.py:18",
+            "ai.embed.sentence-transformers"
+          ],
+          "confidence": 0.9,
+          "explain": "vectors: Embedding model. Turns each chunk (and later the question) into a vector of numbers so that similar meaning means nearby vectors. Settings in the code: model_name=BAAI/bge-small-en-v1.5."
         },
         {
           "node": "ai:vectorStore:Chroma.from_documents",
@@ -3917,7 +3930,7 @@
             "app/api.py:41"
           ],
           "confidence": 1.0,
-          "explain": "The browser sends http.GET :param/history/demo; the backend route GET /history/:param receives it and runs get_history()."
+          "explain": "The browser sends GET :param/history/demo; the backend route GET /history/:param receives it and runs get_history()."
         },
         {
           "node": "file:app/memory.py",
@@ -3994,6 +4007,19 @@
           ],
           "confidence": 0.9,
           "explain": "call tool: Tool. A function the model may ask to run (search, calculator, database query). Its result is fed back to the model."
+        },
+        {
+          "node": "ai:embedder:HuggingFaceEmbeddings",
+          "kind": "stage",
+          "label": "HuggingFaceEmbeddings",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/ingest.py:18",
+            "ai.embed.sentence-transformers"
+          ],
+          "confidence": 0.9,
+          "explain": "vectors: Embedding model. Turns each chunk (and later the question) into a vector of numbers so that similar meaning means nearby vectors. Settings in the code: model_name=BAAI/bge-small-en-v1.5."
         },
         {
           "node": "ai:vectorStore:Chroma.from_documents",

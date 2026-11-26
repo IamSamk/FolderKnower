@@ -125,6 +125,20 @@ fn backing_kinds(role: AiRole) -> &'static [ServiceKind] {
     }
 }
 
+/// Embedders that run inside the calling process, never behind a model server.
+fn in_process(s: &ark_schema::AiStage) -> bool {
+    let n = format!("{} {}", s.name, s.library).to_ascii_lowercase();
+    s.role == AiRole::Embedder
+        && [
+            "huggingfaceembeddings",
+            "sentencetransformer",
+            "fastembed",
+            "sentence_transformers",
+        ]
+        .iter()
+        .any(|k| n.contains(k))
+}
+
 /// Query-time roles; loaders and splitters run when the index is built, not per request.
 fn online(role: AiRole) -> bool {
     !matches!(
@@ -308,8 +322,12 @@ impl Run<'_, '_> {
         let http = edge
             .evidence
             .iter()
-            .find(|e| e.starts_with("http."))
-            .cloned()
+            .find_map(|e| e.strip_prefix("http."))
+            .map(|e| match (e.strip_prefix("ANY "), route) {
+                // A wrapper call with no readable verb sends what the route takes.
+                (Some(url), Some(r)) => format!("{} {url}", r.method),
+                _ => e.to_owned(),
+            })
             .unwrap_or_else(|| "HTTP".into());
         // Through a proxy only when both legs are declared: frontend -> proxy -> backend.
         if let (Some(fs), Some(bs), Some(d)) = (svc, back, self.ix.dep) {
@@ -549,43 +567,113 @@ impl Run<'_, '_> {
             out.entry(&e.from).or_default().push((&e.to, &e.label));
             inn.entry(&e.to).or_default().push((&e.from, &e.label));
         }
-        let mut roots: Vec<&ark_schema::AiStage> = stages
+        // Every stage connected to the entry file's stages, in data-flow order
+        // (topological, ties by role then line), so parallel lanes such as dense
+        // and keyword search both show before the stage that merges them.
+        let mut part: BTreeSet<&str> = stages
             .values()
             .filter(|s| s.file_id == entry_file)
-            .filter(|s| {
-                inn.get(s.id.as_str())
-                    .is_none_or(|v| v.iter().all(|(f, _)| stages[f].file_id != entry_file))
-            })
-            .filter(|s| out.contains_key(s.id.as_str()))
-            .copied()
+            .filter(|s| out.contains_key(s.id.as_str()) || inn.contains_key(s.id.as_str()))
+            .map(|s| s.id.as_str())
             .collect();
-        roots.sort_by_key(|s| (role_rank(s.role), s.line));
-        let mut visited: BTreeSet<&str> = BTreeSet::new();
-        let mut order: Vec<(&str, Option<(&str, &str)>)> = Vec::new();
-        let mut stack: Vec<(&str, Option<(&str, &str)>)> =
-            roots.iter().rev().map(|s| (s.id.as_str(), None)).collect();
-        while let Some((id, from)) = stack.pop() {
-            if !visited.insert(id) {
-                continue;
-            }
-            // Data stores feeding this stage (vector store -> retriever, BM25 -> fusion).
-            for (f, label) in inn.get(id).into_iter().flatten() {
-                let r = stages[f].role;
-                if matches!(r, AiRole::VectorStore | AiRole::KeywordIndex) && visited.insert(f) {
-                    order.push((f, Some((id, label))));
-                }
-            }
-            order.push((id, from));
-            let mut next: Vec<(&str, &str)> = out.get(id).cloned().unwrap_or_default();
-            next.sort_by_key(|(t, _)| {
-                std::cmp::Reverse((role_rank(stages[t].role), stages[t].line))
-            });
-            for (t, label) in next {
-                if !visited.contains(t) {
-                    stack.push((t, Some((id, label))));
+        let mut frontier: Vec<&str> = part.iter().copied().collect();
+        while let Some(id) = frontier.pop() {
+            let near = out
+                .get(id)
+                .into_iter()
+                .flatten()
+                .chain(inn.get(id).into_iter().flatten())
+                .map(|(n, _)| *n);
+            for n in near {
+                if part.insert(n) {
+                    frontier.push(n);
                 }
             }
         }
+        // Stores and embedders are shown just before the first stage that reads
+        // them, not when the index was filled, so they never gate the order.
+        let lazy = |id: &str| {
+            matches!(
+                stages[id].role,
+                AiRole::VectorStore | AiRole::KeywordIndex | AiRole::Embedder
+            )
+        };
+        let mut indeg: BTreeMap<&str, usize> = part
+            .iter()
+            .filter(|id| !lazy(id))
+            .map(|id| {
+                let n = inn
+                    .get(id)
+                    .map_or(0, |v| v.iter().filter(|(f, _)| !lazy(f)).count());
+                (*id, n)
+            })
+            .collect();
+        let key = |id: &str| (role_rank(stages[id].role), stages[id].line, id.to_owned());
+        let mut ready: Vec<&str> = indeg
+            .iter()
+            .filter(|(_, d)| **d == 0)
+            .map(|(id, _)| *id)
+            .collect();
+        let mut order: Vec<(&str, Option<(&str, &str)>)> = Vec::new();
+        let mut emitted: BTreeSet<&str> = BTreeSet::new();
+        fn pull<'s>(
+            id: &'s str,
+            inn: &BTreeMap<&'s str, Vec<(&'s str, &'s str)>>,
+            lazy: &dyn Fn(&str) -> bool,
+            emitted: &mut BTreeSet<&'s str>,
+            order: &mut Vec<(&'s str, Option<(&'s str, &'s str)>)>,
+        ) {
+            for (f, label) in inn.get(id).into_iter().flatten() {
+                if lazy(f) && emitted.insert(f) {
+                    pull(f, inn, lazy, emitted, order);
+                    order.push((f, Some((id, label))));
+                }
+            }
+        }
+        loop {
+            if ready.is_empty() {
+                // A cycle (agent loop): break it at the earliest stage that an
+                // emitted stage feeds, else at the earliest stage left.
+                let left = indeg.keys().copied().filter(|id| !emitted.contains(id));
+                let fed = left
+                    .clone()
+                    .filter(|id| {
+                        inn.get(id)
+                            .is_some_and(|v| v.iter().any(|(f, _)| emitted.contains(f)))
+                    })
+                    .min_by_key(|id| key(id));
+                match fed.or_else(|| left.min_by_key(|id| key(id))) {
+                    Some(id) => ready.push(id),
+                    None => break,
+                }
+            }
+            ready.sort_by_key(|id| std::cmp::Reverse(key(id)));
+            let id = ready.pop().expect("non-empty");
+            if !emitted.insert(id) {
+                continue;
+            }
+            pull(id, &inn, &lazy, &mut emitted, &mut order);
+            let from = inn
+                .get(id)
+                .into_iter()
+                .flatten()
+                .filter(|(f, _)| emitted.contains(f) && !lazy(f))
+                .max_by_key(|(f, _)| order.iter().position(|(o, _)| o == f))
+                .map(|(f, l)| (*f, *l));
+            order.push((id, from));
+            for (t, _) in out.get(id).into_iter().flatten() {
+                if emitted.contains(t) {
+                    continue;
+                }
+                if let Some(d) = indeg.get_mut(t) {
+                    *d = d.saturating_sub(1);
+                    if *d == 0 && !ready.contains(t) {
+                        ready.push(t);
+                    }
+                }
+            }
+        }
+        // Stores no query stage reads (ingest only) are left out of the run.
         for (id, from) in order {
             let s = stages[id];
             let path = self.ix.file_path(&s.file_id);
@@ -611,7 +699,12 @@ impl Run<'_, '_> {
                     }
                 ),
             });
-            if let Some(code_svc) = self.ix.service_of_file(&s.file_id).or(svc) {
+            if let Some(code_svc) = self
+                .ix
+                .service_of_file(&s.file_id)
+                .or(svc)
+                .filter(|_| !in_process(s))
+            {
                 let targets = self.ix.linked_of_kind(&code_svc.id, backing_kinds(s.role));
                 // Only when exactly one linked container can be meant.
                 if let [one] = targets.as_slice() {

@@ -1,0 +1,6 @@
+fastapi
+httpx
+psycopg
+pypdf
+pytesseract
+sentence-transformers

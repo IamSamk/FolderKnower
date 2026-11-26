@@ -564,29 +564,54 @@ pub fn analyze(
 /// Config-like files (settings modules, env files, yaml/toml/json, compose) searched for
 /// model ids and full-text SQL. Capped so a huge repo stays quick.
 fn read_model_texts(root: &Path, files: &[ark_scan::ScannedFile]) -> Vec<(String, String)> {
-    let hit = |p: &str| {
+    // Names that usually hold model ids, SQL and pipeline code are read first; every other
+    // source file is read too, within a budget, because hand-written pipelines live in
+    // files with any name (`llm/client.py`, `graph.py`, `ingest.py`).
+    let named = |p: &str| {
         let l = p.to_ascii_lowercase();
         let name = l.rsplit('/').next().unwrap_or(&l);
         name.starts_with(".env")
-            || name.contains("config")
-            || name.contains("settings")
-            || name.contains("store")
-            || name.contains("search")
-            || name.contains("embed")
-            || name.contains("retriev")
-            || name.contains("vector")
-            || name.contains("fusion")
-            || name.contains("rank")
-            || name.contains("rag")
-            || name.ends_with(".yml")
-            || name.ends_with(".yaml")
-            || name.ends_with(".toml")
-            || name.ends_with(".sql")
+            || [
+                "config", "settings", "store", "search", "embed", "retriev", "vector", "fusion",
+                "rank", "rag", "llm", "model", "graph", "chunk", "ingest", "pipeline", "agent",
+                "evidence", "answer",
+            ]
+            .iter()
+            .any(|k| name.contains(k))
+            || [".yml", ".yaml", ".toml", ".sql"]
+                .iter()
+                .any(|e| name.ends_with(e))
     };
-    files
+    let source = |p: &str| {
+        let l = p.to_ascii_lowercase();
+        [
+            ".py", ".ts", ".js", ".rs", ".go", ".java", ".kt", ".rb", ".php", ".cs",
+        ]
         .iter()
-        .filter(|f| f.size < 400 * 1024 && hit(&f.path) && !is_side_path(&f.path))
-        .take(400)
+        .any(|e| l.ends_with(e))
+    };
+    // Prose (README, notes) names models it does not run.
+    let prose = |p: &str| {
+        let l = p.to_ascii_lowercase();
+        [".md", ".mdx", ".txt", ".rst", ".adoc", ".html"]
+            .iter()
+            .any(|e| l.ends_with(e))
+    };
+    let mut picked: Vec<&ark_scan::ScannedFile> = files
+        .iter()
+        .filter(|f| f.size < 400 * 1024 && !is_side_path(&f.path) && !prose(&f.path))
+        .filter(|f| named(&f.path) || source(&f.path))
+        .collect();
+    picked.sort_by_key(|f| (!named(&f.path), f.path.clone()));
+    let mut budget: u64 = 24 * 1024 * 1024;
+    picked
+        .into_iter()
+        .take(2000)
+        .take_while(|f| {
+            let fits = budget >= f.size;
+            budget = budget.saturating_sub(f.size);
+            fits
+        })
         .filter_map(|f| {
             fs::read_to_string(root.join(&f.path))
                 .ok()
@@ -597,13 +622,24 @@ fn read_model_texts(root: &Path, files: &[ark_scan::ScannedFile]) -> Vec<(String
 
 /// Tests, experiments and benchmarks name models the app itself never uses.
 fn is_side_path(path: &str) -> bool {
-    path.split('/').any(|part| {
-        let p = part.to_ascii_lowercase();
-        matches!(
-            p.as_str(),
-            "test" | "tests" | "experiments" | "benchmarks" | "fixtures"
-        ) || p.starts_with("test_")
-    })
+    let file = path.rsplit('/').next().unwrap_or(path).to_ascii_lowercase();
+    let stem = file.split('.').next().unwrap_or(&file);
+    let test_file = stem == "tests"
+        || stem == "test"
+        || stem == "conftest"
+        || stem.starts_with("test_")
+        || stem.ends_with("_test")
+        || stem.ends_with("_tests")
+        || file.contains(".test.")
+        || file.contains(".spec.");
+    test_file
+        || path.split('/').any(|part| {
+            let p = part.to_ascii_lowercase();
+            matches!(
+                p.as_str(),
+                "test" | "tests" | "experiments" | "benchmarks" | "fixtures"
+            ) || p.starts_with("test_")
+        })
 }
 
 /// Texts of compose files, Dockerfiles and nginx configs (each capped at 512 KiB).

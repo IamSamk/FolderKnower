@@ -571,6 +571,8 @@ pub fn link(files: &[ParsedFile], inputs: &LinkInputs) -> Linked {
             if best.is_empty()
                 && route_segs.iter().any(|(_, r)| r.method != "IPC")
                 && call.url.starts_with('/')
+                // A wrapper call whose verb we could not read is a guess, not proof.
+                && call.method != "ANY"
             {
                 out.dead_calls.push((
                     f.scan.path.clone(),
@@ -610,7 +612,7 @@ pub fn link(files: &[ParsedFile], inputs: &LinkInputs) -> Linked {
 }
 
 fn method_ok(call: &str, route: &str) -> bool {
-    route == "ANY" || route.split('|').any(|m| m.eq_ignore_ascii_case(call))
+    route == "ANY" || call == "ANY" || route.split('|').any(|m| m.eq_ignore_ascii_case(call))
 }
 
 /// 2 = same shape, 1 = one is a mounted suffix of the other, 0 = no match.
