@@ -14,6 +14,12 @@ Notes for each version are shown in the in-app update pop-up and on the website'
 - The whole project's source is read for pipeline steps, not only config files. Tests, docs and prose are skipped.
 - A web page calling its own backend (`/v1/chat/completions`, `/api/chat`) is no longer shown as the language model.
 
+### Export
+- New `fknow export <repo>` and a "Copy summary" button in the app: a Markdown digest with size, tiers, Mermaid diagrams of the tiers, containers and AI pipeline, routes, data models and health, ready to paste into a README, a PR or a chat.
+
+### Tiers
+- Python, Go and Rust code that calls other services over HTTP is no longer sorted into the frontend. A FastAPI service is shown as the API, not the web page.
+
 ### Example runs
 - Buttons that call a small helper such as `req("/api/ask")` now link to the backend route, so the run follows the click all the way through the pipeline.
 - Pipeline steps in a run follow the data: both search lanes, then fusion, reranking, the evidence check and the answer.

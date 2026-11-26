@@ -383,6 +383,25 @@ pub fn build(input: &StructureInput) -> Structure {
         }
     }
 
+    // Python, Go and Rust never run in the browser: an HTTP client or a neighbour
+    // there is a service calling another service, not a frontend.
+    for (i, f) in files.iter().enumerate() {
+        let server_lang = matches!(
+            f.scan.language,
+            Some(Language::Python | Language::Go | Language::Rust)
+        );
+        if server_lang && !fact_sets[i].contains("component") {
+            let fe = scores[i][ti(TierLabel::Frontend)];
+            if fe > 0.0 {
+                scores[i][ti(TierLabel::Frontend)] = 0.0;
+                if fact_sets[i].contains("http_client") {
+                    scores[i][ti(TierLabel::Backend)] += fe.min(1.0);
+                }
+                evidence[i].insert("tier.server-language".to_owned());
+            }
+        }
+    }
+
     let argmax = |s: &[f64; 6]| -> (usize, f64, f64) {
         let mut best = 5; // Shared when there is no evidence at all
         let mut top = 0.0;

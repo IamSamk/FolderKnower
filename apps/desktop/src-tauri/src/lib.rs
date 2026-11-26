@@ -111,6 +111,12 @@ fn export_json(path: String, graph: SystemArchitectureGraph) -> Result<(), Strin
     std::fs::write(path, json).map_err(|e| e.to_string())
 }
 
+/// Markdown digest of the graph for the clipboard.
+#[tauri::command]
+fn export_markdown(graph: SystemArchitectureGraph) -> String {
+    ark_core::export::markdown(&graph)
+}
+
 /// Update info returned to the frontend.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -200,6 +206,7 @@ pub fn run() {
             read_source,
             ontology_catalog,
             export_json,
+            export_markdown,
             check_update,
             install_update,
             slm::slm_status,

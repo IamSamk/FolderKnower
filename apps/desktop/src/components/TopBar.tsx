@@ -2,6 +2,8 @@ import {
   Activity,
   Boxes,
   Brain,
+  Check,
+  ClipboardCopy,
   Container,
   Database,
   Download,
@@ -18,7 +20,8 @@ import {
   Wrench,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { exportJson } from "../lib/backend";
+import { useState } from "react";
+import { copyDigest, exportJson, isTauri } from "../lib/backend";
 import { TIER_COLOR } from "../lib/theme";
 import { type ThemePref, useTheme } from "../lib/themeMode";
 import { type Focus, useStore, type View } from "../store";
@@ -78,6 +81,7 @@ export function ThemeSwitch() {
 
 export function TopBar() {
   const ix = useStore((s) => s.ix);
+  const [copied, setCopied] = useState(false);
   const view = useStore((s) => s.view);
   const stack = useStore((s) => s.stack);
   const inspect = useStore((s) => s.inspect);
@@ -236,6 +240,26 @@ export function TopBar() {
         >
           <Sparkles size={15} strokeWidth={2.4} />
         </button>
+        {isTauri && (
+          <button
+            type="button"
+            className="ak-tool"
+            title={copied ? "Copied" : "Copy a Markdown summary with diagrams"}
+            onClick={() =>
+              void copyDigest(ix.g).then((ok) => {
+                if (!ok) return;
+                setCopied(true);
+                window.setTimeout(() => setCopied(false), 1500);
+              })
+            }
+          >
+            {copied ? (
+              <Check size={15} strokeWidth={2.4} />
+            ) : (
+              <ClipboardCopy size={15} strokeWidth={2.4} />
+            )}
+          </button>
+        )}
         <button
           type="button"
           className="ak-tool"

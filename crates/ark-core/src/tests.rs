@@ -517,3 +517,25 @@ fn memory_map_places_each_store() {
         assert!(!m.proof.is_empty(), "{} has no proof", m.what);
     }
 }
+
+#[test]
+fn export_digest_has_diagrams_and_the_retrieval_loop() {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/repos/graph-rag");
+    let (g, _) = analyze(
+        &dir,
+        &Options {
+            no_cache: true,
+            ..Options::default()
+        },
+        &|_| {},
+    )
+    .unwrap();
+    let md = crate::export::markdown(&g);
+    assert!(md.contains("## AI pipeline"));
+    assert!(md.contains("```mermaid\nflowchart TD"));
+    assert!(md.contains("-.->|\"not enough: retrieve more\"|"));
+    assert!(md.contains("| POST | `/api/ask` | `app/src/main.py:8` |"));
+    assert!(md.contains("Frontend -->|\"HTTP/REST x1\"| Backend"));
+    // Python code is never the browser tier.
+    assert!(md.contains("\"api (api)\""));
+}

@@ -232,6 +232,14 @@ export async function exportJson(graph: SystemArchitectureGraph): Promise<string
   return path;
 }
 
+/** Copy a Markdown digest (size, tiers, Mermaid diagrams, routes, health) to the clipboard. */
+export async function copyDigest(graph: SystemArchitectureGraph): Promise<boolean> {
+  if (!checkIsTauri()) return false;
+  const md = await invoke<string>("export_markdown", { graph });
+  await navigator.clipboard.writeText(md);
+  return true;
+}
+
 // ---- in-app updater
 
 export interface UpdateInfo {

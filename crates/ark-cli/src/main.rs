@@ -65,6 +65,15 @@ enum Cmd {
         #[arg(long)]
         json: bool,
     },
+    /// Copy-ready Markdown digest: size, tiers, Mermaid diagrams of the tiers,
+    /// containers and AI pipeline, routes, data models and health.
+    Export {
+        /// Repository root, or an architecture.json written by `index`.
+        path: PathBuf,
+        /// Output file ("-" for stdout).
+        #[arg(short, long, default_value = "-")]
+        out: String,
+    },
     /// Print the JSON Schema of architecture.json.
     Schema,
     /// Print the Systems Ontology catalogue (concepts + teaching text) as JSON.
@@ -90,6 +99,20 @@ fn main() -> ExitCode {
             text,
         } => run_cmd(&path, from.as_deref(), list, text),
         Cmd::Check { path, json } => check_cmd(&path, json),
+        Cmd::Export { path, out } => {
+            let graph = match load_graph(&path) {
+                Ok(g) => g,
+                Err(code) => return code,
+            };
+            let md = ark_core::export::markdown(&graph);
+            if out == "-" {
+                print!("{md}");
+            } else if let Err(e) = std::fs::write(&out, md) {
+                eprintln!("cannot write {out}: {e}");
+                return ExitCode::FAILURE;
+            }
+            ExitCode::SUCCESS
+        }
         Cmd::Schema => {
             print!("{}", ark_schema::json_schema_string());
             ExitCode::SUCCESS
@@ -217,26 +240,9 @@ fn check_cmd(path: &std::path::Path, json: bool) -> ExitCode {
 }
 
 fn run_cmd(path: &std::path::Path, from: Option<&str>, list: bool, text: bool) -> ExitCode {
-    let graph: ark_schema::SystemArchitectureGraph = if path.is_dir() {
-        match analyze(path, &Options::default(), &|_| {}) {
-            Ok((g, _)) => g,
-            Err(e) => {
-                eprintln!("error: {e}");
-                return ExitCode::FAILURE;
-            }
-        }
-    } else {
-        match std::fs::read_to_string(path).map(|s| serde_json::from_str(&s)) {
-            Ok(Ok(g)) => g,
-            Ok(Err(e)) => {
-                eprintln!("{} is not an architecture.json: {e}", path.display());
-                return ExitCode::from(2);
-            }
-            Err(e) => {
-                eprintln!("cannot read {}: {e}", path.display());
-                return ExitCode::FAILURE;
-            }
-        }
+    let graph = match load_graph(path) {
+        Ok(g) => g,
+        Err(code) => return code,
     };
     let runs = &graph.example_runs;
     if list {
@@ -282,4 +288,27 @@ fn run_cmd(path: &std::path::Path, from: Option<&str>, list: bool, text: bool) -
         println!("{}", serde_json::to_string_pretty(run).expect("json"));
     }
     ExitCode::SUCCESS
+}
+
+/// A repository root is analyzed; any other path is read as an architecture.json.
+fn load_graph(path: &std::path::Path) -> Result<ark_schema::SystemArchitectureGraph, ExitCode> {
+    if path.is_dir() {
+        return analyze(path, &Options::default(), &|_| {})
+            .map(|(g, _)| g)
+            .map_err(|e| {
+                eprintln!("error: {e}");
+                ExitCode::FAILURE
+            });
+    }
+    match std::fs::read_to_string(path).map(|s| serde_json::from_str(&s)) {
+        Ok(Ok(g)) => Ok(g),
+        Ok(Err(e)) => {
+            eprintln!("{} is not an architecture.json: {e}", path.display());
+            Err(ExitCode::from(2))
+        }
+        Err(e) => {
+            eprintln!("cannot read {}: {e}", path.display());
+            Err(ExitCode::FAILURE)
+        }
+    }
 }

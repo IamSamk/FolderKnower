@@ -23,13 +23,12 @@
         "tier.fe.dir",
         "tier.fe.framework",
         "tier.fe.http-client",
-        "tier.propagated",
         "tier.sh.dir"
       ],
       "clusters": [
         {
-          "id": "cluster:frontend:retrieval",
-          "name": "retrieval",
+          "id": "cluster:frontend:app",
+          "name": "app",
           "method": {
             "algo": "louvain",
             "seed": 0,
@@ -38,12 +37,278 @@
           },
           "files": [
             {
+              "id": "file:frontend/src/App.jsx",
+              "path": "frontend/src/App.jsx",
+              "language": "javascript",
+              "contentHash": "2342b9853be00ec1cbb3d44db132eb5d56b16bb7f672dd69e519655b468f34f1",
+              "lines": 18,
+              "tierConfidence": 0.99,
+              "role": "component",
+              "imports": [
+                {
+                  "target": "file:frontend/src/lib/api.js",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:frontend/src/App.jsx#App",
+                  "name": "App",
+                  "visibility": "public",
+                  "lineRange": [
+                    4,
+                    18
+                  ],
+                  "byteRange": [
+                    83,
+                    467
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Client state",
+                      "layer": "data",
+                      "ruleId": "data.state.client"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 5,
+                      "label": "const [q, setQ] = useState(\"\");"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 6,
+                      "label": "const [a, setA] = useState(\"\");"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 11,
+                      "label": "return ("
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:frontend/src/App.jsx#onAsk",
+                  "name": "onAsk",
+                  "visibility": "internal",
+                  "lineRange": [
+                    7,
+                    10
+                  ],
+                  "byteRange": [
+                    170,
+                    261
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 8,
+                      "label": "const r = await ask(q);"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 9,
+                      "label": "setA((await r.json()).answer);"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:frontend/src/lib/api.js#ask",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                }
+              ],
+              "packages": [
+                "react"
+              ]
+            },
+            {
+              "id": "file:frontend/src/lib/api.js",
+              "path": "frontend/src/lib/api.js",
+              "language": "javascript",
+              "contentHash": "ae29df21e08ac14b9c704f7693e247618f8cbc1ea4323c3ddb767ab1a518f374",
+              "lines": 2,
+              "tierConfidence": 0.68,
+              "role": "api-client",
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:frontend/src/lib/api.js#req",
+                  "name": "req",
+                  "visibility": "public",
+                  "lineRange": [
+                    1,
+                    1
+                  ],
+                  "byteRange": [
+                    19,
+                    94
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "path"
+                      },
+                      {
+                        "name": "body"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "JSON serialization",
+                      "layer": "data",
+                      "ruleId": "data.serialize.json"
+                    },
+                    {
+                      "concept": "HTTP request",
+                      "layer": "network",
+                      "ruleId": "net.http.client"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 1,
+                      "label": "fetch(path, { method: \"POST\", body: JSON.stringify(body) })"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:frontend/src/lib/api.js#ask"
+                  ]
+                },
+                {
+                  "id": "fn:frontend/src/lib/api.js#ask",
+                  "name": "ask",
+                  "visibility": "public",
+                  "lineRange": [
+                    2,
+                    2
+                  ],
+                  "byteRange": [
+                    115,
+                    158
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "question"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 2,
+                      "label": "req(\"/api/ask\", { question })"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:frontend/src/lib/api.js#req",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.9
+                    }
+                  ],
+                  "calledBy": [
+                    "fn:frontend/src/App.jsx#onAsk"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tier:backend",
+      "label": "Backend",
+      "evidence": [
+        "tier.be.framework",
+        "tier.be.routes",
+        "tier.propagated",
+        "tier.server-language"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:backend:graph",
+          "name": "graph",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": [
+              "file:app/src/main.py"
+            ]
+          },
+          "files": [
+            {
               "id": "file:app/src/graph.py",
               "path": "app/src/graph.py",
               "language": "python",
               "contentHash": "91fc7b093f3f6842324c264ce416dc452e0bc506b7fbfe3b2ab133e789f7d913",
               "lines": 10,
-              "tierConfidence": 0.61,
+              "tierConfidence": 0.37,
               "imports": [],
               "functions": [
                 {
@@ -104,37 +369,38 @@
               ]
             },
             {
-              "id": "file:app/src/llm/client.py",
-              "path": "app/src/llm/client.py",
+              "id": "file:app/src/main.py",
+              "path": "app/src/main.py",
               "language": "python",
-              "contentHash": "bbb4c321f16635820d5af4d0efe4b500996ae0b96f80dba287c01d8f55b6615c",
-              "lines": 12,
-              "tierConfidence": 0.44,
-              "role": "api-client",
+              "contentHash": "864ac7db2225c4e810db64a359f482529fc2b068235d02e2d620ad43630e21a0",
+              "lines": 10,
+              "tierConfidence": 0.99,
+              "role": "route-handler",
               "imports": [
                 {
-                  "target": "file:app/src/config.py",
+                  "target": "file:app/src/retrieval.py",
                   "provenance": "ts_resolved",
                   "confidence": 0.95
                 }
               ],
               "functions": [
                 {
-                  "id": "fn:app/src/llm/client.py#chat",
-                  "name": "chat",
+                  "id": "fn:app/src/main.py#ask",
+                  "name": "ask",
                   "visibility": "public",
                   "lineRange": [
-                    10,
-                    12
+                    8,
+                    10
                   ],
                   "byteRange": [
-                    89,
-                    264
+                    100,
+                    168
                   ],
                   "signature": {
                     "parameters": [
                       {
-                        "name": "messages"
+                        "name": "q",
+                        "type": "dict"
                       }
                     ]
                   },
@@ -149,6 +415,342 @@
                     ],
                     "memoryFlags": []
                   },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 10,
+                      "label": "return {\"answer\": answer(None, q[\"question\"])}"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:app/src/retrieval.py#answer",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                }
+              ],
+              "packages": [
+                "fastapi"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tier:storage",
+      "label": "Storage",
+      "evidence": [
+        "tier.propagated",
+        "tier.server-language"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:storage:ingest",
+          "name": "ingest",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:app/src/ingest.py",
+              "path": "app/src/ingest.py",
+              "language": "python",
+              "contentHash": "49923a3df796982f35bd433ef8bc593cbc89c02de8d99b8d2ef79026c0c7ddb1",
+              "lines": 24,
+              "tierConfidence": 0.46,
+              "imports": [
+                {
+                  "target": "file:app/src/config.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:app/src/embed_client.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:app/src/pg_store.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:app/src/ingest.py#read_book",
+                  "name": "read_book",
+                  "visibility": "public",
+                  "lineRange": [
+                    9,
+                    11
+                  ],
+                  "byteRange": [
+                    150,
+                    285
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "path"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 3,
+                    "cognitive": 2,
+                    "maxNesting": 1,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.loop.depth-1",
+                      "space.alloc-in-loop"
+                    ],
+                    "memoryFlags": [
+                      "alloc-in-loop"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 10,
+                      "label": "reader = PdfReader(path)"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 11,
+                      "label": "return [p.extract_text() or pytesseract.image_to_string(p) f…"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:app/src/ingest.py#ingest"
+                  ]
+                },
+                {
+                  "id": "fn:app/src/ingest.py#chunk_pages",
+                  "name": "chunk_pages",
+                  "visibility": "public",
+                  "lineRange": [
+                    14,
+                    19
+                  ],
+                  "byteRange": [
+                    288,
+                    542
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "pages"
+                      },
+                      {
+                        "name": "book_id"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 3,
+                    "cognitive": 3,
+                    "maxNesting": 2,
+                    "timeBigO": "O(N^2)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.loop.depth-2",
+                      "space.alloc-in-loop"
+                    ],
+                    "memoryFlags": [
+                      "alloc-in-loop"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "loop",
+                      "line": 16,
+                      "label": "for page_no, text in enumerate(pages)",
+                      "children": [
+                        {
+                          "kind": "loop",
+                          "line": 17,
+                          "label": "for i in range(0, len(text), CHUNK_CHARS)",
+                          "children": [
+                            {
+                              "kind": "call",
+                              "line": 18,
+                              "label": "out.append({\"book_id\": book_id, \"page_no\": page_no, \"text\": …"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "return",
+                      "line": 19,
+                      "label": "return out"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:app/src/ingest.py#ingest"
+                  ]
+                },
+                {
+                  "id": "fn:app/src/ingest.py#ingest",
+                  "name": "ingest",
+                  "visibility": "public",
+                  "lineRange": [
+                    22,
+                    24
+                  ],
+                  "byteRange": [
+                    545,
+                    684
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "path"
+                      },
+                      {
+                        "name": "book_id"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.loop.depth-1",
+                      "space.alloc-in-loop"
+                    ],
+                    "memoryFlags": [
+                      "alloc-in-loop"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 23,
+                      "label": "chunks = chunk_pages(read_book(path), book_id)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 24,
+                      "label": "insert_chunks(chunks, embed([c[\"text\"] for c in chunks]))"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:app/src/embed_client.py#embed",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    },
+                    {
+                      "target": "fn:app/src/ingest.py#chunk_pages",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.9
+                    },
+                    {
+                      "target": "fn:app/src/ingest.py#read_book",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.9
+                    },
+                    {
+                      "target": "fn:app/src/pg_store.py#insert_chunks",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                }
+              ],
+              "packages": [
+                "pypdf",
+                "pytesseract"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tier:shared",
+      "label": "Shared",
+      "evidence": [
+        "tier.db.packages",
+        "tier.fe.http-client",
+        "tier.propagated",
+        "tier.server-language",
+        "tier.sh.cross-tier-import",
+        "tier.sh.dir"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:shared:retrieval",
+          "name": "retrieval",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:app/src/embed_client.py",
+              "path": "app/src/embed_client.py",
+              "language": "python",
+              "contentHash": "c6969dc9c90806361de04c06f676a29474888a6ff20b81637a44b06d777a8742",
+              "lines": 10,
+              "tierConfidence": 0.7,
+              "role": "api-client",
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:app/src/embed_client.py#embed",
+                  "name": "embed",
+                  "visibility": "public",
+                  "lineRange": [
+                    8,
+                    10
+                  ],
+                  "byteRange": [
+                    58,
+                    196
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "texts"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.loop.depth-1",
+                      "space.alloc-in-loop"
+                    ],
+                    "memoryFlags": [
+                      "alloc-in-loop"
+                    ]
+                  },
                   "ontologyTags": [
                     {
                       "concept": "HTTP request",
@@ -159,19 +761,19 @@
                   "flow": [
                     {
                       "kind": "call",
-                      "line": 11,
-                      "label": "r = httpx.post(f\"{BASE}/v1/chat/completions\", json={\"model\":…"
+                      "line": 9,
+                      "label": "r = httpx.post(f\"{BASE}/v1/embeddings\", json={\"input\": texts…"
                     },
                     {
                       "kind": "return",
-                      "line": 12,
-                      "label": "return r.json()[\"choices\"][0][\"message\"][\"content\"]"
+                      "line": 10,
+                      "label": "return [d[\"embedding\"] for d in r.json()[\"data\"]]"
                     }
                   ],
                   "calls": [],
                   "calledBy": [
-                    "fn:app/src/retrieval.py#answer",
-                    "fn:app/src/retrieval.py#evidence_is_sufficient"
+                    "fn:app/src/ingest.py#ingest",
+                    "fn:app/src/retrieval.py#answer"
                   ]
                 }
               ],
@@ -180,12 +782,251 @@
               ]
             },
             {
+              "id": "file:app/src/pg_store.py",
+              "path": "app/src/pg_store.py",
+              "language": "python",
+              "contentHash": "84a67be47a21db89f45efa2ef82639919c40c07aee8e9a760109ebb37e58f579",
+              "lines": 16,
+              "tierConfidence": 0.7,
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:app/src/pg_store.py#dense_search",
+                  "name": "dense_search",
+                  "visibility": "public",
+                  "lineRange": [
+                    7,
+                    8
+                  ],
+                  "byteRange": [
+                    232,
+                    317
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "conn"
+                      },
+                      {
+                        "name": "qvec"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.loop.depth-1",
+                      "space.alloc-in-loop"
+                    ],
+                    "memoryFlags": [
+                      "alloc-in-loop"
+                    ]
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "SQL query",
+                      "layer": "data",
+                      "ruleId": "data.sql.query"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 8,
+                      "label": "return [r[0] for r in conn.execute(DENSE, (qvec,))]"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:app/src/retrieval.py#answer"
+                  ]
+                },
+                {
+                  "id": "fn:app/src/pg_store.py#lexical_search",
+                  "name": "lexical_search",
+                  "visibility": "public",
+                  "lineRange": [
+                    11,
+                    12
+                  ],
+                  "byteRange": [
+                    320,
+                    417
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "conn"
+                      },
+                      {
+                        "name": "question"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.loop.depth-1",
+                      "space.alloc-in-loop"
+                    ],
+                    "memoryFlags": [
+                      "alloc-in-loop"
+                    ]
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "SQL query",
+                      "layer": "data",
+                      "ruleId": "data.sql.query"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 12,
+                      "label": "return [r[0] for r in conn.execute(LEXICAL, (question,))]"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:app/src/retrieval.py#answer"
+                  ]
+                },
+                {
+                  "id": "fn:app/src/pg_store.py#insert_chunks",
+                  "name": "insert_chunks",
+                  "visibility": "public",
+                  "lineRange": [
+                    15,
+                    16
+                  ],
+                  "byteRange": [
+                    420,
+                    464
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "chunks"
+                      },
+                      {
+                        "name": "vectors"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:app/src/ingest.py#ingest"
+                  ]
+                }
+              ],
+              "packages": [
+                "psycopg"
+              ]
+            },
+            {
+              "id": "file:app/src/rerank.py",
+              "path": "app/src/rerank.py",
+              "language": "python",
+              "contentHash": "770b792c84a0354d500f66bb52814ad7c408962b18af29da24adda50bf6fe9cc",
+              "lines": 10,
+              "tierConfidence": 0.83,
+              "imports": [
+                {
+                  "target": "file:app/src/config.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:app/src/rerank.py#rerank",
+                  "name": "rerank",
+                  "visibility": "public",
+                  "lineRange": [
+                    8,
+                    10
+                  ],
+                  "byteRange": [
+                    119,
+                    283
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "question"
+                      },
+                      {
+                        "name": "passages"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 3,
+                    "cognitive": 2,
+                    "maxNesting": 1,
+                    "timeBigO": "O(N^2)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.loop.depth-1",
+                      "bigo.lib.sort",
+                      "space.alloc-in-loop",
+                      "space.lib.sort"
+                    ],
+                    "memoryFlags": [
+                      "alloc-in-loop"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 9,
+                      "label": "scores = model.predict([(question, p) for p in passages])"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 10,
+                      "label": "return [p for _, p in sorted(zip(scores, passages), reverse=…"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:app/src/retrieval.py#answer"
+                  ]
+                }
+              ],
+              "packages": [
+                "sentence_transformers"
+              ]
+            },
+            {
               "id": "file:app/src/retrieval.py",
               "path": "app/src/retrieval.py",
               "language": "python",
               "contentHash": "bdf07875d2f0be431eebc36ee5bd803f95769569a15e2f208fb01e1729870e52",
               "lines": 30,
-              "tierConfidence": 0.47,
+              "tierConfidence": 0.55,
               "imports": [
                 {
                   "target": "file:app/src/config.py",
@@ -463,856 +1304,8 @@
           ]
         },
         {
-          "id": "cluster:frontend:app",
-          "name": "app",
-          "method": {
-            "algo": "louvain",
-            "seed": 0,
-            "resolution": 1.0,
-            "anchors": []
-          },
-          "files": [
-            {
-              "id": "file:frontend/src/App.jsx",
-              "path": "frontend/src/App.jsx",
-              "language": "javascript",
-              "contentHash": "2342b9853be00ec1cbb3d44db132eb5d56b16bb7f672dd69e519655b468f34f1",
-              "lines": 18,
-              "tierConfidence": 0.99,
-              "role": "component",
-              "imports": [
-                {
-                  "target": "file:frontend/src/lib/api.js",
-                  "provenance": "ts_resolved",
-                  "confidence": 0.95
-                }
-              ],
-              "functions": [
-                {
-                  "id": "fn:frontend/src/App.jsx#App",
-                  "name": "App",
-                  "visibility": "public",
-                  "lineRange": [
-                    4,
-                    18
-                  ],
-                  "byteRange": [
-                    83,
-                    467
-                  ],
-                  "signature": {
-                    "parameters": []
-                  },
-                  "complexity": {
-                    "cyclomatic": 1,
-                    "cognitive": 0,
-                    "maxNesting": 0,
-                    "timeBigO": "O(1)",
-                    "spaceBigO": "O(1)",
-                    "basis": [
-                      "bigo.no-loops"
-                    ],
-                    "memoryFlags": []
-                  },
-                  "ontologyTags": [
-                    {
-                      "concept": "Client state",
-                      "layer": "data",
-                      "ruleId": "data.state.client"
-                    }
-                  ],
-                  "flow": [
-                    {
-                      "kind": "call",
-                      "line": 5,
-                      "label": "const [q, setQ] = useState(\"\");"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 6,
-                      "label": "const [a, setA] = useState(\"\");"
-                    },
-                    {
-                      "kind": "return",
-                      "line": 11,
-                      "label": "return ("
-                    }
-                  ],
-                  "calls": [],
-                  "calledBy": []
-                },
-                {
-                  "id": "fn:frontend/src/App.jsx#onAsk",
-                  "name": "onAsk",
-                  "visibility": "internal",
-                  "lineRange": [
-                    7,
-                    10
-                  ],
-                  "byteRange": [
-                    170,
-                    261
-                  ],
-                  "signature": {
-                    "parameters": []
-                  },
-                  "complexity": {
-                    "cyclomatic": 1,
-                    "cognitive": 0,
-                    "maxNesting": 0,
-                    "timeBigO": "O(1)",
-                    "spaceBigO": "O(1)",
-                    "basis": [
-                      "bigo.no-loops"
-                    ],
-                    "memoryFlags": []
-                  },
-                  "ontologyTags": [],
-                  "flow": [
-                    {
-                      "kind": "call",
-                      "line": 8,
-                      "label": "const r = await ask(q);"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 9,
-                      "label": "setA((await r.json()).answer);"
-                    }
-                  ],
-                  "calls": [
-                    {
-                      "target": "fn:frontend/src/lib/api.js#ask",
-                      "provenance": "ts_resolved",
-                      "confidence": 0.85
-                    }
-                  ],
-                  "calledBy": []
-                }
-              ],
-              "packages": [
-                "react"
-              ]
-            },
-            {
-              "id": "file:frontend/src/lib/api.js",
-              "path": "frontend/src/lib/api.js",
-              "language": "javascript",
-              "contentHash": "ae29df21e08ac14b9c704f7693e247618f8cbc1ea4323c3ddb767ab1a518f374",
-              "lines": 2,
-              "tierConfidence": 0.68,
-              "role": "api-client",
-              "imports": [],
-              "functions": [
-                {
-                  "id": "fn:frontend/src/lib/api.js#req",
-                  "name": "req",
-                  "visibility": "public",
-                  "lineRange": [
-                    1,
-                    1
-                  ],
-                  "byteRange": [
-                    19,
-                    94
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "path"
-                      },
-                      {
-                        "name": "body"
-                      }
-                    ]
-                  },
-                  "complexity": {
-                    "cyclomatic": 1,
-                    "cognitive": 0,
-                    "maxNesting": 0,
-                    "timeBigO": "O(1)",
-                    "spaceBigO": "O(1)",
-                    "basis": [
-                      "bigo.no-loops"
-                    ],
-                    "memoryFlags": []
-                  },
-                  "ontologyTags": [
-                    {
-                      "concept": "JSON serialization",
-                      "layer": "data",
-                      "ruleId": "data.serialize.json"
-                    },
-                    {
-                      "concept": "HTTP request",
-                      "layer": "network",
-                      "ruleId": "net.http.client"
-                    }
-                  ],
-                  "flow": [
-                    {
-                      "kind": "call",
-                      "line": 1,
-                      "label": "fetch(path, { method: \"POST\", body: JSON.stringify(body) })"
-                    }
-                  ],
-                  "calls": [],
-                  "calledBy": [
-                    "fn:frontend/src/lib/api.js#ask"
-                  ]
-                },
-                {
-                  "id": "fn:frontend/src/lib/api.js#ask",
-                  "name": "ask",
-                  "visibility": "public",
-                  "lineRange": [
-                    2,
-                    2
-                  ],
-                  "byteRange": [
-                    115,
-                    158
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "question"
-                      }
-                    ]
-                  },
-                  "complexity": {
-                    "cyclomatic": 1,
-                    "cognitive": 0,
-                    "maxNesting": 0,
-                    "timeBigO": "O(1)",
-                    "spaceBigO": "O(1)",
-                    "basis": [
-                      "bigo.no-loops"
-                    ],
-                    "memoryFlags": []
-                  },
-                  "ontologyTags": [],
-                  "flow": [
-                    {
-                      "kind": "call",
-                      "line": 2,
-                      "label": "req(\"/api/ask\", { question })"
-                    }
-                  ],
-                  "calls": [
-                    {
-                      "target": "fn:frontend/src/lib/api.js#req",
-                      "provenance": "ts_resolved",
-                      "confidence": 0.9
-                    }
-                  ],
-                  "calledBy": [
-                    "fn:frontend/src/App.jsx#onAsk"
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "cluster:frontend:ingest",
-          "name": "ingest",
-          "method": {
-            "algo": "louvain",
-            "seed": 0,
-            "resolution": 1.0,
-            "anchors": []
-          },
-          "files": [
-            {
-              "id": "file:app/src/embed_client.py",
-              "path": "app/src/embed_client.py",
-              "language": "python",
-              "contentHash": "c6969dc9c90806361de04c06f676a29474888a6ff20b81637a44b06d777a8742",
-              "lines": 10,
-              "tierConfidence": 0.76,
-              "role": "api-client",
-              "imports": [],
-              "functions": [
-                {
-                  "id": "fn:app/src/embed_client.py#embed",
-                  "name": "embed",
-                  "visibility": "public",
-                  "lineRange": [
-                    8,
-                    10
-                  ],
-                  "byteRange": [
-                    58,
-                    196
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "texts"
-                      }
-                    ]
-                  },
-                  "complexity": {
-                    "cyclomatic": 2,
-                    "cognitive": 1,
-                    "maxNesting": 1,
-                    "timeBigO": "O(N)",
-                    "spaceBigO": "O(N)",
-                    "basis": [
-                      "bigo.loop.depth-1",
-                      "space.alloc-in-loop"
-                    ],
-                    "memoryFlags": [
-                      "alloc-in-loop"
-                    ]
-                  },
-                  "ontologyTags": [
-                    {
-                      "concept": "HTTP request",
-                      "layer": "network",
-                      "ruleId": "net.http.client"
-                    }
-                  ],
-                  "flow": [
-                    {
-                      "kind": "call",
-                      "line": 9,
-                      "label": "r = httpx.post(f\"{BASE}/v1/embeddings\", json={\"input\": texts…"
-                    },
-                    {
-                      "kind": "return",
-                      "line": 10,
-                      "label": "return [d[\"embedding\"] for d in r.json()[\"data\"]]"
-                    }
-                  ],
-                  "calls": [],
-                  "calledBy": [
-                    "fn:app/src/ingest.py#ingest",
-                    "fn:app/src/retrieval.py#answer"
-                  ]
-                }
-              ],
-              "packages": [
-                "httpx"
-              ]
-            },
-            {
-              "id": "file:app/src/ingest.py",
-              "path": "app/src/ingest.py",
-              "language": "python",
-              "contentHash": "49923a3df796982f35bd433ef8bc593cbc89c02de8d99b8d2ef79026c0c7ddb1",
-              "lines": 24,
-              "tierConfidence": 0.46,
-              "imports": [
-                {
-                  "target": "file:app/src/config.py",
-                  "provenance": "ts_resolved",
-                  "confidence": 0.95
-                },
-                {
-                  "target": "file:app/src/embed_client.py",
-                  "provenance": "ts_resolved",
-                  "confidence": 0.95
-                },
-                {
-                  "target": "file:app/src/pg_store.py",
-                  "provenance": "ts_resolved",
-                  "confidence": 0.95
-                }
-              ],
-              "functions": [
-                {
-                  "id": "fn:app/src/ingest.py#read_book",
-                  "name": "read_book",
-                  "visibility": "public",
-                  "lineRange": [
-                    9,
-                    11
-                  ],
-                  "byteRange": [
-                    150,
-                    285
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "path"
-                      }
-                    ]
-                  },
-                  "complexity": {
-                    "cyclomatic": 3,
-                    "cognitive": 2,
-                    "maxNesting": 1,
-                    "timeBigO": "O(N)",
-                    "spaceBigO": "O(N)",
-                    "basis": [
-                      "bigo.loop.depth-1",
-                      "space.alloc-in-loop"
-                    ],
-                    "memoryFlags": [
-                      "alloc-in-loop"
-                    ]
-                  },
-                  "ontologyTags": [],
-                  "flow": [
-                    {
-                      "kind": "call",
-                      "line": 10,
-                      "label": "reader = PdfReader(path)"
-                    },
-                    {
-                      "kind": "return",
-                      "line": 11,
-                      "label": "return [p.extract_text() or pytesseract.image_to_string(p) f…"
-                    }
-                  ],
-                  "calls": [],
-                  "calledBy": [
-                    "fn:app/src/ingest.py#ingest"
-                  ]
-                },
-                {
-                  "id": "fn:app/src/ingest.py#chunk_pages",
-                  "name": "chunk_pages",
-                  "visibility": "public",
-                  "lineRange": [
-                    14,
-                    19
-                  ],
-                  "byteRange": [
-                    288,
-                    542
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "pages"
-                      },
-                      {
-                        "name": "book_id"
-                      }
-                    ]
-                  },
-                  "complexity": {
-                    "cyclomatic": 3,
-                    "cognitive": 3,
-                    "maxNesting": 2,
-                    "timeBigO": "O(N^2)",
-                    "spaceBigO": "O(N)",
-                    "basis": [
-                      "bigo.loop.depth-2",
-                      "space.alloc-in-loop"
-                    ],
-                    "memoryFlags": [
-                      "alloc-in-loop"
-                    ]
-                  },
-                  "ontologyTags": [],
-                  "flow": [
-                    {
-                      "kind": "loop",
-                      "line": 16,
-                      "label": "for page_no, text in enumerate(pages)",
-                      "children": [
-                        {
-                          "kind": "loop",
-                          "line": 17,
-                          "label": "for i in range(0, len(text), CHUNK_CHARS)",
-                          "children": [
-                            {
-                              "kind": "call",
-                              "line": 18,
-                              "label": "out.append({\"book_id\": book_id, \"page_no\": page_no, \"text\": …"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "kind": "return",
-                      "line": 19,
-                      "label": "return out"
-                    }
-                  ],
-                  "calls": [],
-                  "calledBy": [
-                    "fn:app/src/ingest.py#ingest"
-                  ]
-                },
-                {
-                  "id": "fn:app/src/ingest.py#ingest",
-                  "name": "ingest",
-                  "visibility": "public",
-                  "lineRange": [
-                    22,
-                    24
-                  ],
-                  "byteRange": [
-                    545,
-                    684
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "path"
-                      },
-                      {
-                        "name": "book_id"
-                      }
-                    ]
-                  },
-                  "complexity": {
-                    "cyclomatic": 2,
-                    "cognitive": 1,
-                    "maxNesting": 1,
-                    "timeBigO": "O(N)",
-                    "spaceBigO": "O(N)",
-                    "basis": [
-                      "bigo.loop.depth-1",
-                      "space.alloc-in-loop"
-                    ],
-                    "memoryFlags": [
-                      "alloc-in-loop"
-                    ]
-                  },
-                  "ontologyTags": [],
-                  "flow": [
-                    {
-                      "kind": "call",
-                      "line": 23,
-                      "label": "chunks = chunk_pages(read_book(path), book_id)"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 24,
-                      "label": "insert_chunks(chunks, embed([c[\"text\"] for c in chunks]))"
-                    }
-                  ],
-                  "calls": [
-                    {
-                      "target": "fn:app/src/embed_client.py#embed",
-                      "provenance": "ts_resolved",
-                      "confidence": 0.85
-                    },
-                    {
-                      "target": "fn:app/src/ingest.py#chunk_pages",
-                      "provenance": "ts_resolved",
-                      "confidence": 0.9
-                    },
-                    {
-                      "target": "fn:app/src/ingest.py#read_book",
-                      "provenance": "ts_resolved",
-                      "confidence": 0.9
-                    },
-                    {
-                      "target": "fn:app/src/pg_store.py#insert_chunks",
-                      "provenance": "ts_resolved",
-                      "confidence": 0.85
-                    }
-                  ],
-                  "calledBy": []
-                }
-              ],
-              "packages": [
-                "pypdf",
-                "pytesseract"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "tier:backend",
-      "label": "Backend",
-      "evidence": [
-        "tier.be.framework",
-        "tier.be.routes"
-      ],
-      "clusters": [
-        {
-          "id": "cluster:backend:main",
-          "name": "main",
-          "method": {
-            "algo": "louvain",
-            "seed": 0,
-            "resolution": 1.0,
-            "anchors": [
-              "file:app/src/main.py"
-            ]
-          },
-          "files": [
-            {
-              "id": "file:app/src/main.py",
-              "path": "app/src/main.py",
-              "language": "python",
-              "contentHash": "864ac7db2225c4e810db64a359f482529fc2b068235d02e2d620ad43630e21a0",
-              "lines": 10,
-              "tierConfidence": 0.99,
-              "role": "route-handler",
-              "imports": [
-                {
-                  "target": "file:app/src/retrieval.py",
-                  "provenance": "ts_resolved",
-                  "confidence": 0.95
-                }
-              ],
-              "functions": [
-                {
-                  "id": "fn:app/src/main.py#ask",
-                  "name": "ask",
-                  "visibility": "public",
-                  "lineRange": [
-                    8,
-                    10
-                  ],
-                  "byteRange": [
-                    100,
-                    168
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "q",
-                        "type": "dict"
-                      }
-                    ]
-                  },
-                  "complexity": {
-                    "cyclomatic": 1,
-                    "cognitive": 0,
-                    "maxNesting": 0,
-                    "timeBigO": "O(1)",
-                    "spaceBigO": "O(1)",
-                    "basis": [
-                      "bigo.no-loops"
-                    ],
-                    "memoryFlags": []
-                  },
-                  "ontologyTags": [],
-                  "flow": [
-                    {
-                      "kind": "return",
-                      "line": 10,
-                      "label": "return {\"answer\": answer(None, q[\"question\"])}"
-                    }
-                  ],
-                  "calls": [
-                    {
-                      "target": "fn:app/src/retrieval.py#answer",
-                      "provenance": "ts_resolved",
-                      "confidence": 0.85
-                    }
-                  ],
-                  "calledBy": []
-                }
-              ],
-              "packages": [
-                "fastapi"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "tier:storage",
-      "label": "Storage",
-      "evidence": [
-        "tier.db.packages"
-      ],
-      "clusters": [
-        {
-          "id": "cluster:storage:pg-store",
-          "name": "pg-store",
-          "method": {
-            "algo": "louvain",
-            "seed": 0,
-            "resolution": 1.0,
-            "anchors": []
-          },
-          "files": [
-            {
-              "id": "file:app/src/pg_store.py",
-              "path": "app/src/pg_store.py",
-              "language": "python",
-              "contentHash": "84a67be47a21db89f45efa2ef82639919c40c07aee8e9a760109ebb37e58f579",
-              "lines": 16,
-              "tierConfidence": 0.9,
-              "imports": [],
-              "functions": [
-                {
-                  "id": "fn:app/src/pg_store.py#dense_search",
-                  "name": "dense_search",
-                  "visibility": "public",
-                  "lineRange": [
-                    7,
-                    8
-                  ],
-                  "byteRange": [
-                    232,
-                    317
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "conn"
-                      },
-                      {
-                        "name": "qvec"
-                      }
-                    ]
-                  },
-                  "complexity": {
-                    "cyclomatic": 2,
-                    "cognitive": 1,
-                    "maxNesting": 1,
-                    "timeBigO": "O(N)",
-                    "spaceBigO": "O(N)",
-                    "basis": [
-                      "bigo.loop.depth-1",
-                      "space.alloc-in-loop"
-                    ],
-                    "memoryFlags": [
-                      "alloc-in-loop"
-                    ]
-                  },
-                  "ontologyTags": [
-                    {
-                      "concept": "SQL query",
-                      "layer": "data",
-                      "ruleId": "data.sql.query"
-                    }
-                  ],
-                  "flow": [
-                    {
-                      "kind": "return",
-                      "line": 8,
-                      "label": "return [r[0] for r in conn.execute(DENSE, (qvec,))]"
-                    }
-                  ],
-                  "calls": [],
-                  "calledBy": [
-                    "fn:app/src/retrieval.py#answer"
-                  ]
-                },
-                {
-                  "id": "fn:app/src/pg_store.py#lexical_search",
-                  "name": "lexical_search",
-                  "visibility": "public",
-                  "lineRange": [
-                    11,
-                    12
-                  ],
-                  "byteRange": [
-                    320,
-                    417
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "conn"
-                      },
-                      {
-                        "name": "question"
-                      }
-                    ]
-                  },
-                  "complexity": {
-                    "cyclomatic": 2,
-                    "cognitive": 1,
-                    "maxNesting": 1,
-                    "timeBigO": "O(N)",
-                    "spaceBigO": "O(N)",
-                    "basis": [
-                      "bigo.loop.depth-1",
-                      "space.alloc-in-loop"
-                    ],
-                    "memoryFlags": [
-                      "alloc-in-loop"
-                    ]
-                  },
-                  "ontologyTags": [
-                    {
-                      "concept": "SQL query",
-                      "layer": "data",
-                      "ruleId": "data.sql.query"
-                    }
-                  ],
-                  "flow": [
-                    {
-                      "kind": "return",
-                      "line": 12,
-                      "label": "return [r[0] for r in conn.execute(LEXICAL, (question,))]"
-                    }
-                  ],
-                  "calls": [],
-                  "calledBy": [
-                    "fn:app/src/retrieval.py#answer"
-                  ]
-                },
-                {
-                  "id": "fn:app/src/pg_store.py#insert_chunks",
-                  "name": "insert_chunks",
-                  "visibility": "public",
-                  "lineRange": [
-                    15,
-                    16
-                  ],
-                  "byteRange": [
-                    420,
-                    464
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "chunks"
-                      },
-                      {
-                        "name": "vectors"
-                      }
-                    ]
-                  },
-                  "complexity": {
-                    "cyclomatic": 1,
-                    "cognitive": 0,
-                    "maxNesting": 0,
-                    "timeBigO": "O(1)",
-                    "spaceBigO": "O(1)",
-                    "basis": [
-                      "bigo.no-loops"
-                    ],
-                    "memoryFlags": []
-                  },
-                  "ontologyTags": [],
-                  "calls": [],
-                  "calledBy": [
-                    "fn:app/src/ingest.py#ingest"
-                  ]
-                }
-              ],
-              "packages": [
-                "psycopg"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "tier:shared",
-      "label": "Shared",
-      "evidence": [
-        "tier.propagated",
-        "tier.sh.cross-tier-import",
-        "tier.sh.dir"
-      ],
-      "clusters": [
-        {
-          "id": "cluster:shared:rerank",
-          "name": "rerank",
+          "id": "cluster:shared:client",
+          "name": "client",
           "method": {
             "algo": "louvain",
             "seed": 0,
@@ -1332,12 +1325,13 @@
               "functions": []
             },
             {
-              "id": "file:app/src/rerank.py",
-              "path": "app/src/rerank.py",
+              "id": "file:app/src/llm/client.py",
+              "path": "app/src/llm/client.py",
               "language": "python",
-              "contentHash": "770b792c84a0354d500f66bb52814ad7c408962b18af29da24adda50bf6fe9cc",
-              "lines": 10,
-              "tierConfidence": 0.72,
+              "contentHash": "bbb4c321f16635820d5af4d0efe4b500996ae0b96f80dba287c01d8f55b6615c",
+              "lines": 12,
+              "tierConfidence": 0.51,
+              "role": "api-client",
               "imports": [
                 {
                   "target": "file:app/src/config.py",
@@ -1347,64 +1341,63 @@
               ],
               "functions": [
                 {
-                  "id": "fn:app/src/rerank.py#rerank",
-                  "name": "rerank",
+                  "id": "fn:app/src/llm/client.py#chat",
+                  "name": "chat",
                   "visibility": "public",
                   "lineRange": [
-                    8,
-                    10
+                    10,
+                    12
                   ],
                   "byteRange": [
-                    119,
-                    283
+                    89,
+                    264
                   ],
                   "signature": {
                     "parameters": [
                       {
-                        "name": "question"
-                      },
-                      {
-                        "name": "passages"
+                        "name": "messages"
                       }
                     ]
                   },
                   "complexity": {
-                    "cyclomatic": 3,
-                    "cognitive": 2,
-                    "maxNesting": 1,
-                    "timeBigO": "O(N^2)",
-                    "spaceBigO": "O(N)",
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
                     "basis": [
-                      "bigo.loop.depth-1",
-                      "bigo.lib.sort",
-                      "space.alloc-in-loop",
-                      "space.lib.sort"
+                      "bigo.no-loops"
                     ],
-                    "memoryFlags": [
-                      "alloc-in-loop"
-                    ]
+                    "memoryFlags": []
                   },
-                  "ontologyTags": [],
+                  "ontologyTags": [
+                    {
+                      "concept": "HTTP request",
+                      "layer": "network",
+                      "ruleId": "net.http.client"
+                    }
+                  ],
                   "flow": [
                     {
                       "kind": "call",
-                      "line": 9,
-                      "label": "scores = model.predict([(question, p) for p in passages])"
+                      "line": 11,
+                      "label": "r = httpx.post(f\"{BASE}/v1/chat/completions\", json={\"model\":…"
                     },
                     {
                       "kind": "return",
-                      "line": 10,
-                      "label": "return [p for _, p in sorted(zip(scores, passages), reverse=…"
+                      "line": 12,
+                      "label": "return r.json()[\"choices\"][0][\"message\"][\"content\"]"
                     }
                   ],
                   "calls": [],
                   "calledBy": [
-                    "fn:app/src/retrieval.py#answer"
+                    "fn:app/src/retrieval.py#answer",
+                    "fn:app/src/retrieval.py#evidence_is_sufficient"
                   ]
                 }
               ],
               "packages": [
-                "sentence_transformers"
+                "httpx"
               ]
             }
           ]
@@ -1447,13 +1440,13 @@
   ],
   "summary": {
     "kind": "full-stack",
-    "headline": "AI system in 5 containers: frontend (api, web), backed by model server (embed, llm), vector store (db).",
+    "headline": "AI system in 5 containers: frontend (web) → API (api), backed by model server (embed, llm), vector store (db).",
     "findings": [
       {
         "text": "5 services from docker-compose.yml; 4 links proven by env URLs, depends_on or proxy rules.",
         "evidence": [
-          "svc:api",
           "svc:web",
+          "svc:api",
           "svc:embed",
           "svc:llm",
           "svc:db"
@@ -1466,7 +1459,7 @@
         ]
       },
       {
-        "text": "Sorted 11 files by what they do, not where they live: 7 frontend, 0 gateway/middleware, 1 backend, 1 data, 0 worker, 2 shared.",
+        "text": "Sorted 11 files by what they do, not where they live: 2 frontend, 0 gateway/middleware, 2 backend, 1 data, 0 worker, 6 shared.",
         "evidence": [
           "tier.*"
         ]
@@ -1781,22 +1774,6 @@
       ],
       "services": [
         {
-          "id": "svc:api",
-          "name": "api",
-          "kind": "frontend",
-          "buildContext": "app",
-          "ports": [],
-          "volumes": [],
-          "envKeys": [
-            "DATABASE_URL",
-            "EMBED_URL",
-            "LLM_URL"
-          ],
-          "codeFiles": 9,
-          "declaredIn": "docker-compose.yml:10",
-          "explain": "Frontend built from this repository (9 source files): the screens the user sees in the browser."
-        },
-        {
           "id": "svc:web",
           "name": "web",
           "kind": "frontend",
@@ -1807,6 +1784,22 @@
           "codeFiles": 2,
           "declaredIn": "docker-compose.yml:17",
           "explain": "Frontend built from this repository (2 source files): the screens the user sees in the browser."
+        },
+        {
+          "id": "svc:api",
+          "name": "api",
+          "kind": "api",
+          "buildContext": "app",
+          "ports": [],
+          "volumes": [],
+          "envKeys": [
+            "DATABASE_URL",
+            "EMBED_URL",
+            "LLM_URL"
+          ],
+          "codeFiles": 9,
+          "declaredIn": "docker-compose.yml:10",
+          "explain": "Backend API built from this repository (9 source files): receives HTTP requests and runs the app logic."
         },
         {
           "id": "svc:embed",
