@@ -338,7 +338,15 @@ pub fn check(
 
     // Relative imports to nowhere.
     for (path, list) in &linked.unresolved_imports {
+        let dir = Path::new(path).parent().unwrap_or(Path::new(""));
         for (line, spec) in list {
+            // Assets and data files (`./styles.css`, `../data.json`) are not parsed, so the
+            // linker cannot see them; they are fine when they exist on disk.
+            if (spec.starts_with("./") || spec.starts_with("../"))
+                && root.join(dir).join(spec).exists()
+            {
+                continue;
+            }
             push(
                 HealthKind::UnresolvedImport,
                 Severity::Error,
@@ -450,8 +458,16 @@ pub fn check(
             Severity::Warning,
             path,
             *line,
-            format!("{method} {url} matches no route declared in this repository"),
-            "Check the URL and method against the backend routes; a typo or a removed route returns 404.".into(),
+            if method == "IPC" {
+                format!("`invoke(\"{url}\")` names a command the native side does not register")
+            } else {
+                format!("{method} {url} matches no route declared in this repository")
+            },
+            if method == "IPC" {
+                "Check the spelling against the `#[tauri::command]` functions (or `ipcMain.handle` channels), and that the command is listed in the invoke handler.".into()
+            } else {
+                "Check the URL and method against the backend routes; a typo or a removed route returns 404.".into()
+            },
         );
     }
 

@@ -563,6 +563,42 @@ impl X<'_, '_> {
             }
         }
 
+        // Desktop IPC. Tauri: invoke("cmd") reaches a Rust #[tauri::command] fn cmd.
+        // Electron: ipcRenderer.invoke("ch") reaches ipcMain.handle("ch", fn).
+        if let Some(name) = first_string.as_deref().filter(|n| is_ipc_name(n)) {
+            let r = recv_last.as_deref().unwrap_or("");
+            let client = match (callee.as_str(), r) {
+                ("invoke", "" | "core" | "tauri" | "window.__tauri__") => Some("tauri"),
+                ("invoke" | "send" | "sendsync", "ipcrenderer") => Some("electron"),
+                _ => None,
+            };
+            if let Some(client) = client {
+                self.facts.http_calls.push(HttpCallFact {
+                    method: "IPC".to_owned(),
+                    url: name.to_owned(),
+                    client: client.to_owned(),
+                    line: line(node),
+                    in_fn: self.cur_fn(),
+                });
+            }
+            if r == "ipcmain" && matches!(callee.as_str(), "handle" | "handleOnce" | "on") {
+                let handler = ident_args.last().cloned().or_else(|| {
+                    arg_nodes
+                        .iter()
+                        .rev()
+                        .find(|a| matches!(a.kind(), "arrow_function" | "function_expression"))
+                        .map(|a| format!("{callee}@L{}", line(*a)))
+                });
+                self.facts.routes.push(RouteFact {
+                    method: "IPC".to_owned(),
+                    path: name.to_owned(),
+                    framework: "electron".to_owned(),
+                    line: line(node),
+                    handler,
+                });
+            }
+        }
+
         match self.fn_stack.last() {
             Some(&i) => self.facts.functions[i].calls.push(fact),
             None => self.facts.top_calls.push(fact),
@@ -724,4 +760,13 @@ impl X<'_, '_> {
             _ => None,
         }
     }
+}
+
+/// A command or channel name: `ai_status`, `get-user`, `app:quit`. Not a URL or a sentence.
+fn is_ipc_name(n: &str) -> bool {
+    !n.is_empty()
+        && n.len() <= 64
+        && n.chars().next().is_some_and(|c| c.is_ascii_alphabetic())
+        && n.chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | ':' | '.'))
 }

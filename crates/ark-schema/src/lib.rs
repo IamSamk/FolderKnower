@@ -288,6 +288,8 @@ pub struct ProjectSummary {
 #[ts(rename_all = "kebab-case")]
 pub enum ProjectKind {
     FullStack,
+    /// A desktop app: a web UI in a native window (Tauri, Electron) calling native code.
+    Desktop,
     Frontend,
     Backend,
     Library,

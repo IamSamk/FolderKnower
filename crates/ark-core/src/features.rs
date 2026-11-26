@@ -51,6 +51,60 @@ fn family(path: &str) -> String {
     "home".into()
 }
 
+/// Desktop commands have names, not URLs: `ai_install`, `ai_status`, `check_update`.
+/// Commands sharing a first word form one feature ("AI"), then ones sharing a last
+/// word ("Update"); the rest stand alone ("Read Source").
+fn ipc_families(routes: &[ark_schema::RouteNode]) -> BTreeMap<&str, String> {
+    let words = |r: &ark_schema::RouteNode| -> Vec<String> {
+        r.path
+            .split(['_', '-', ':', '.'])
+            .filter(|w| !w.is_empty())
+            .map(str::to_ascii_lowercase)
+            .collect()
+    };
+    let ipc: Vec<&ark_schema::RouteNode> = routes.iter().filter(|r| r.method == "IPC").collect();
+    let count = |pick: &dyn Fn(&[String]) -> Option<String>| {
+        let mut m: BTreeMap<String, usize> = BTreeMap::new();
+        for r in &ipc {
+            if let Some(w) = pick(&words(r)) {
+                *m.entry(w).or_insert(0) += 1;
+            }
+        }
+        m
+    };
+    // `note` and `notes` are the same thing: compare without a plural `s`.
+    let stem = |w: &String| -> String {
+        if w.len() > 3 && w.ends_with('s') && !w.ends_with("ss") {
+            w[..w.len() - 1].to_owned()
+        } else {
+            w.clone()
+        }
+    };
+    let first = |w: &[String]| (w.len() > 1).then(|| stem(&w[0]));
+    let last = |w: &[String]| (w.len() > 1).then(|| stem(&w[w.len() - 1]));
+    let firsts = count(&first);
+    let lasts = count(&last);
+    ipc.iter()
+        .map(|r| {
+            let w = words(r);
+            let key = match (first(&w), last(&w)) {
+                (Some(f), _) if firsts[&f] >= 2 => f,
+                (_, Some(l)) if lasts[&l] >= 2 => l,
+                _ => w.join("-"),
+            };
+            (r.id.as_str(), key)
+        })
+        .collect::<Vec<_>>()
+        .into_iter()
+        .map(|(id, key)| {
+            // Name the group with the plural when any command uses it ("Notes").
+            let plural = format!("{key}s");
+            let has_plural = ipc.iter().any(|r| words(r).contains(&plural));
+            (id, if has_plural { plural } else { key })
+        })
+        .collect()
+}
+
 fn title(key: &str) -> String {
     match key {
         "auth" => "Sign in".into(),
@@ -61,6 +115,24 @@ fn title(key: &str) -> String {
                 .split(['-', '_'])
                 .filter(|w| !w.is_empty())
                 .map(|w| {
+                    if w.len() <= 3
+                        && !matches!(
+                            w,
+                            "app"
+                                | "ask"
+                                | "log"
+                                | "map"
+                                | "run"
+                                | "set"
+                                | "get"
+                                | "add"
+                                | "new"
+                                | "top"
+                        )
+                        || matches!(w, "json" | "html" | "http" | "grpc")
+                    {
+                        return w.to_ascii_uppercase();
+                    }
                     let mut c = w.chars();
                     c.next()
                         .map(|f| f.to_uppercase().collect::<String>() + c.as_str())
@@ -198,9 +270,14 @@ pub fn build(
         seen
     };
 
+    let ipc = ipc_families(&g.routes);
     let mut fams: BTreeMap<String, Vec<&ark_schema::RouteNode>> = BTreeMap::new();
     for r in &g.routes {
-        fams.entry(family(&r.path)).or_default().push(r);
+        let key = ipc
+            .get(r.id.as_str())
+            .cloned()
+            .unwrap_or_else(|| family(&r.path));
+        fams.entry(key).or_default().push(r);
     }
     if fams.len() < 2 {
         return Vec::new();
@@ -236,7 +313,10 @@ pub fn build(
         let clients: BTreeSet<&str> = g
             .cross_tier_edges
             .iter()
-            .filter(|e| e.protocol == Protocol::HttpRest && targets.contains(e.target.as_str()))
+            .filter(|e| {
+                matches!(e.protocol, Protocol::HttpRest | Protocol::Ipc)
+                    && targets.contains(e.target.as_str())
+            })
             .map(|e| e.source.as_str())
             .collect();
         let mut ui = Vec::new();
@@ -488,7 +568,12 @@ pub fn build(
             .iter()
             .map(|t| t.rsplit('#').next().unwrap_or(t).to_owned())
             .collect();
-        let mut parts = vec![plural(d.routes.len(), "route", "routes")];
+        let ipc_only = d.routes.iter().all(|r| r.starts_with("route:IPC "));
+        let mut parts = vec![if ipc_only {
+            plural(d.routes.len(), "native command", "native commands")
+        } else {
+            plural(d.routes.len(), "route", "routes")
+        }];
         if !screens.is_empty() {
             parts.push(plural(screens.len(), "screen", "screens"));
         }
@@ -502,7 +587,20 @@ pub fn build(
         if !stages.is_empty() {
             parts.push(plural(stages.len(), "AI step", "AI steps"));
         }
-        let prefix = if d.key == "home" {
+        let prefix = if ipc_only {
+            let names: Vec<&str> = d
+                .routes
+                .iter()
+                .filter_map(|r| r.strip_prefix("route:IPC ")?.split('#').next())
+                .collect();
+            let shown = names.iter().take(3).copied().collect::<Vec<_>>().join(", ");
+            let more = names.len().saturating_sub(3);
+            if more > 0 {
+                format!("; the window calls {shown} and {more} more")
+            } else {
+                format!("; the window calls {shown}")
+            }
+        } else if d.key == "home" {
             "at the root URL".to_owned()
         } else if d.key == "health" {
             "for health and docs".to_owned()
@@ -512,7 +610,11 @@ pub fn build(
         out.push(Feature {
             id: format!("feature:{}", d.key),
             name: title(&d.key),
-            explain: format!("{} {prefix}.", parts.join(", ")),
+            explain: if ipc_only {
+                format!("{}{prefix}.", parts.join(", "))
+            } else {
+                format!("{} {prefix}.", parts.join(", "))
+            },
             basis: "routes".into(),
             routes: d.routes,
             ui: d.ui,

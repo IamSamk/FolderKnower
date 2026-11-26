@@ -226,6 +226,104 @@ fn golden_broken_shop() {
     golden("broken-shop");
 }
 
+#[test]
+fn golden_tauri_notes() {
+    golden("tauri-notes");
+}
+
+#[test]
+fn desktop_app_commands_features_and_storage() {
+    use ark_schema::{HealthKind as K, MemoryPlace as P, Protocol, TierLabel};
+    let g = analyze_fixture("tauri-notes");
+    assert_eq!(g.summary.kind, ark_schema::ProjectKind::Desktop);
+    assert!(
+        g.summary.headline.starts_with("Desktop app (Tauri)"),
+        "{}",
+        g.summary.headline
+    );
+    let tier_of = |path: &str| {
+        g.tiers
+            .iter()
+            .find(|t| {
+                t.clusters
+                    .iter()
+                    .any(|c| c.files.iter().any(|f| f.path == path))
+            })
+            .map(|t| t.label)
+    };
+    assert_eq!(tier_of("src-tauri/src/lib.rs"), Some(TierLabel::Backend));
+    assert_eq!(tier_of("src/App.tsx"), Some(TierLabel::Frontend));
+    // The window's invoke() calls reach the Rust commands.
+    let ipc: Vec<(&str, &str)> = g
+        .cross_tier_edges
+        .iter()
+        .filter(|e| e.protocol == Protocol::Ipc)
+        .map(|e| (e.source.as_str(), e.target.as_str()))
+        .collect();
+    assert!(ipc.contains(&(
+        "fn:src/api.ts#saveNote",
+        "fn:src-tauri/src/lib.rs#save_note"
+    )));
+    assert!(ipc.contains(&(
+        "fn:src/api.ts#listNotes",
+        "fn:src-tauri/src/lib.rs#list_notes"
+    )));
+    // `use notes_core::...` resolves to the workspace crate.
+    let lib = g
+        .tiers
+        .iter()
+        .flat_map(|t| &t.clusters)
+        .flat_map(|c| &c.files)
+        .find(|f| f.path == "src-tauri/src/lib.rs")
+        .unwrap();
+    assert!(
+        lib.imports
+            .iter()
+            .any(|e| e.target == "file:crates/notes-core/src/lib.rs")
+    );
+    // Commands group into features by shared words: notes vs app version.
+    let names: Vec<&str> = g.features.iter().map(|f| f.name.as_str()).collect();
+    assert_eq!(names, ["Notes", "App Version"]);
+    // Where the data lives.
+    let has = |what: &str, place: P| {
+        g.memory_map
+            .iter()
+            .any(|m| m.what == what && m.place == place)
+    };
+    assert!(has("SQLite database file", P::Disk), "{:#?}", g.memory_map);
+    assert!(has("App data folder", P::Disk));
+    assert!(has("Shared app state", P::Ram));
+    // One real problem (the typo), and no false alarm for `export type *` or `Notes & Ideas`.
+    let h = g.health.expect("the typo");
+    assert_eq!(h.issues.len(), 1, "{:#?}", h.issues);
+    assert_eq!(h.issues[0].kind, K::DeadRoute);
+    assert_eq!(
+        (h.issues[0].file_id.as_str(), h.issues[0].line),
+        ("file:src/api.ts", 13)
+    );
+}
+
+#[test]
+fn test_fixtures_inside_a_repo_are_not_mapped() {
+    let tmp = tempfile::tempdir().unwrap();
+    copy_dir(&fixture(), tmp.path());
+    copy_dir(&fixture(), &tmp.path().join("tests/fixtures/sample"));
+    let opts = Options {
+        no_cache: true,
+        ..Options::default()
+    };
+    let (g, _) = analyze(tmp.path(), &opts, &|_| {}).unwrap();
+    let all: Vec<&str> = g
+        .tiers
+        .iter()
+        .flat_map(|t| &t.clusters)
+        .flat_map(|c| &c.files)
+        .map(|f| f.path.as_str())
+        .collect();
+    assert!(!all.iter().any(|p| p.contains("fixtures/")), "{all:?}");
+    assert!(!all.is_empty());
+}
+
 fn analyze_fixture(name: &str) -> SystemArchitectureGraph {
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../fixtures/repos")

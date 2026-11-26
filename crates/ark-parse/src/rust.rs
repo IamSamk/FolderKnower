@@ -161,6 +161,20 @@ impl X<'_, '_> {
                 });
             }
         }
+        // Tauri: #[tauri::command] fn name(..) is what the frontend's invoke("name") calls.
+        if decorators.iter().any(|d| {
+            let inner = d.trim_start_matches("#[").trim_end_matches(']');
+            let head = inner.split('(').next().unwrap_or("").trim();
+            head == "tauri::command" || head == "command"
+        }) {
+            self.facts.routes.push(RouteFact {
+                method: "IPC".to_owned(),
+                path: name.clone(),
+                framework: "tauri".to_owned(),
+                line: line(node),
+                handler: Some(qualname.clone()),
+            });
+        }
         let is_async = named_children(node)
             .iter()
             .any(|c| c.kind() == "function_modifiers" && self.t(*c).contains("async"));

@@ -11,6 +11,7 @@ pub mod models;
 use std::collections::{BTreeMap, BTreeSet};
 
 use ark_link::{Linked, ParsedFile, file_id};
+use ark_scan::Language;
 use ark_schema::{
     ClusterAlgo, ClusterMethod, CrossTierEdge, DataModel, DataModelKind, Finding, ProjectKind,
     ProjectSummary, Question, Stats, TierLabel,
@@ -437,6 +438,27 @@ pub fn build(input: &StructureInput) -> Structure {
             ft.evidence.sort();
         }
     }
+    // Native code: Rust and Go cannot run in the browser, so once the project has a native
+    // backend (a Tauri app's `src-tauri` commands, an axum server), its unclassified
+    // Rust/Go crates belong with it instead of in Shared.
+    let native = |i: usize| matches!(files[i].scan.language, Some(Language::Rust | Language::Go));
+    let backend_idx = ti(TierLabel::Backend);
+    if (0..n).any(|i| native(i) && assigned[i] == backend_idx) {
+        for i in (0..n).filter(|&i| native(i)) {
+            let ft = file_tiers.get_mut(&files[i].scan.path).expect("present");
+            let own_top = scores[i].iter().cloned().fold(0.0, f64::max);
+            if ft.tier == TierLabel::Shared
+                && own_top < 3.0
+                && !files[i].scan.path.ends_with("build.rs")
+            {
+                ft.tier = TierLabel::Backend;
+                ft.confidence = 0.6;
+                ft.evidence.push("tier.be.native-code".to_owned());
+                ft.evidence.sort();
+                assigned[i] = backend_idx;
+            }
+        }
+    }
     // User overrides: longest matching prefix wins.
     for (path, ft) in file_tiers.iter_mut() {
         if let Some((_, t)) = input
@@ -549,7 +571,19 @@ fn slug(s: &str) -> String {
 }
 
 fn cluster_name(paths: &[&str], sizes: &BTreeMap<&str, usize>) -> String {
+    // One file: its deepest meaningful folder (`crates/ark-store/src/lib.rs` -> ark-store).
+    if let [only] = paths {
+        let segs: Vec<&str> = only.split('/').collect();
+        if let Some(d) = segs[..segs.len() - 1].iter().rev().find(|s| {
+            !GENERIC.contains(&s.to_ascii_lowercase().as_str())
+                && !s.starts_with('(')
+                && !s.starts_with('[')
+        }) {
+            return slug(d);
+        }
+    }
     let mut counts: BTreeMap<String, usize> = BTreeMap::new();
+    let mut depth: BTreeMap<String, usize> = BTreeMap::new();
     for p in paths {
         let segs: Vec<&str> = p.split('/').collect();
         let mut seen = BTreeSet::new();
@@ -567,15 +601,31 @@ fn cluster_name(paths: &[&str], sizes: &BTreeMap<&str, usize>) -> String {
             }
             if seen.insert(s.to_owned()) {
                 *counts.entry(s.to_owned()).or_insert(0) += 1;
+                let d = depth.entry(s.to_owned()).or_insert(k);
+                *d = (*d).max(k);
             }
         }
     }
-    // Most shared non-generic segment; prefer directory names (earlier segments) on ties.
-    let best = counts.iter().max_by(|a, b| {
-        a.1.cmp(b.1)
-            .then_with(|| b.0.len().cmp(&a.0.len()))
-            .then_with(|| b.0.cmp(a.0))
-    });
+    // The most specific segment that at least half the files share: `crates/ark-core/src`
+    // is "ark-core", not "crates". Without one, the most shared segment.
+    let half = paths.len().div_ceil(2).max(2);
+    let best = counts
+        .iter()
+        .filter(|(_, c)| **c >= half)
+        .max_by(|a, b| {
+            depth[a.0]
+                .cmp(&depth[b.0])
+                .then_with(|| a.1.cmp(b.1))
+                .then_with(|| b.0.len().cmp(&a.0.len()))
+                .then_with(|| b.0.cmp(a.0))
+        })
+        .or_else(|| {
+            counts.iter().max_by(|a, b| {
+                a.1.cmp(b.1)
+                    .then_with(|| b.0.len().cmp(&a.0.len()))
+                    .then_with(|| b.0.cmp(a.0))
+            })
+        });
     match best {
         Some((name, &c)) if c >= 2 || paths.len() == 1 => slug(name),
         // No shared token: name the cluster after its largest file.
@@ -664,6 +714,30 @@ fn cluster_tier(
     for (k, l) in labels.iter().enumerate() {
         groups.entry(*l).or_default().push(members[k]);
     }
+    // Louvain can cut one flat folder (generated types, a components folder) into several
+    // groups that only differ by a number. A group living in a single folder joins the
+    // other groups from that folder.
+    let dir = |i: usize| {
+        let p = files[i].scan.path.as_str();
+        p.rsplit_once('/').map(|(d, _)| d).unwrap_or("")
+    };
+    let single_folder = |g: &Vec<usize>| g.iter().all(|&i| dir(i) == dir(g[0]));
+    let mut folder_size: BTreeMap<&str, usize> = BTreeMap::new();
+    for g in groups.values().filter(|g| single_folder(g)) {
+        *folder_size.entry(dir(g[0])).or_insert(0) += g.len();
+    }
+    let mut by_folder: BTreeMap<&str, usize> = BTreeMap::new();
+    let mut merged: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
+    for (l, g) in groups {
+        let d = dir(g[0]);
+        if single_folder(&g) && folder_size[d] >= 10 {
+            let key = *by_folder.entry(d).or_insert(l);
+            merged.entry(key).or_default().extend(g);
+        } else {
+            merged.insert(l, g);
+        }
+    }
+    let groups = merged;
     let tier_slug = slug(&format!("{tier:?}"));
     let mut used: BTreeMap<String, usize> = BTreeMap::new();
     let mut out: Vec<Cluster> = groups
@@ -786,7 +860,11 @@ fn summarize(
                 | "flag"
         )
     });
-    let kind = if fe > 0 && (be > 0 || !linked.routes.is_empty()) {
+    let ipc: Vec<&ark_schema::RouteNode> =
+        linked.routes.iter().filter(|r| r.method == "IPC").collect();
+    let kind = if fe > 0 && !ipc.is_empty() {
+        ProjectKind::Desktop
+    } else if fe > 0 && (be > 0 || !linked.routes.is_empty()) {
         ProjectKind::FullStack
     } else if fe > 0 {
         ProjectKind::Frontend
@@ -814,6 +892,33 @@ fn summarize(
         .collect();
     let schemas = models.len() - tables.len();
     let headline = match kind {
+        ProjectKind::Desktop => {
+            let shell = if ipc.iter().any(|r| r.framework == "tauri") {
+                "Tauri"
+            } else {
+                "Electron"
+            };
+            let native = if shell == "Tauri" {
+                "in Rust"
+            } else {
+                "in the main process"
+            };
+            let ui = top_fw(TierLabel::Frontend, 1);
+            format!(
+                "Desktop app ({shell}): a {} window calls {} {native}{}.",
+                ui.first().map(String::as_str).unwrap_or("web"),
+                if ipc.len() == 1 {
+                    "1 native command".to_owned()
+                } else {
+                    format!("{} native commands", ipc.len())
+                },
+                if be > ipc.len() {
+                    format!(", backed by {be} native source files")
+                } else {
+                    String::new()
+                }
+            )
+        }
         ProjectKind::FullStack => format!(
             "Full-stack app: frontend{} talks to a backend{}{}.",
             join(top_fw(TierLabel::Frontend, 2)),

@@ -289,3 +289,73 @@ func get(id string) (*T, error) {
     assert_eq!(kinds, [Call, Branch, Return], "{:#?}", g.functions[0].flow);
     assert!(g.functions[0].flow[1].children[0].error);
 }
+
+#[test]
+fn desktop_ipc_commands_and_calls() {
+    let ts = r#"
+import { invoke } from "@tauri-apps/api/core";
+export const status = () => invoke<string>("ai_status");
+export const save = (t: string) => invoke("save_note", { t });
+export const notIpc = () => invoke("Hello there, world");
+"#;
+    let f = parse_file(Language::TypeScript, "src/api.ts", ts);
+    let calls: Vec<(&str, &str)> = f
+        .http_calls
+        .iter()
+        .map(|c| (c.method.as_str(), c.url.as_str()))
+        .collect();
+    assert_eq!(calls, [("IPC", "ai_status"), ("IPC", "save_note")]);
+    assert_eq!(f.http_calls[0].client, "tauri");
+
+    let rs = r#"
+#[tauri::command]
+fn ai_status() -> String { String::new() }
+#[tauri::command(rename_all = "snake_case")]
+async fn save_note(text: String) {}
+fn helper() {}
+"#;
+    let f = parse_file(Language::Rust, "src-tauri/src/lib.rs", rs);
+    let routes: Vec<(&str, &str, &str)> = f
+        .routes
+        .iter()
+        .map(|r| (r.method.as_str(), r.path.as_str(), r.framework.as_str()))
+        .collect();
+    assert_eq!(
+        routes,
+        [("IPC", "ai_status", "tauri"), ("IPC", "save_note", "tauri")]
+    );
+
+    let electron = r#"
+const { ipcMain, ipcRenderer } = require("electron");
+ipcMain.handle("notes:list", listNotes);
+async function load() { return ipcRenderer.invoke("notes:list"); }
+"#;
+    let f = parse_file(Language::JavaScript, "main.js", electron);
+    assert_eq!(f.routes.len(), 1);
+    assert_eq!(f.routes[0].path, "notes:list");
+    assert_eq!(f.routes[0].handler.as_deref(), Some("listNotes"));
+    assert_eq!(f.http_calls[0].client, "electron");
+}
+
+#[test]
+fn valid_code_the_grammar_misses_is_not_a_syntax_error() {
+    let f = parse_file(
+        Language::TypeScript,
+        "src/gen/index.ts",
+        "export type * from \"./a\";\nexport type * from \"./b\";\n",
+    );
+    assert!(f.syntax_errors.is_empty(), "{:?}", f.syntax_errors);
+    let f = parse_file(
+        Language::Tsx,
+        "src/Hero.tsx",
+        "export const H = () => <h2>Releases & Installers</h2>;\n",
+    );
+    assert!(f.syntax_errors.is_empty(), "{:?}", f.syntax_errors);
+    // Real breakage is still reported.
+    let f = parse_file(
+        Language::Tsx,
+        "src/Bad.tsx",
+        "export const B = () => <h2>a & b</h2>;\nconst x = ;\n",
+    );
+    assert!(!f.syntax_errors.is_empty());
+}

@@ -1586,15 +1586,24 @@
       ]
     },
     "ProjectKind": {
-      "type": "string",
-      "enum": [
-        "full-stack",
-        "frontend",
-        "backend",
-        "library",
-        "cli",
-        "worker",
-        "unknown"
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "full-stack",
+            "frontend",
+            "backend",
+            "library",
+            "cli",
+            "worker",
+            "unknown"
+          ]
+        },
+        {
+          "description": "A desktop app: a web UI in a native window (Tauri, Electron) calling native code.",
+          "type": "string",
+          "const": "desktop"
+        }
       ]
     },
     "ProjectSummary": {

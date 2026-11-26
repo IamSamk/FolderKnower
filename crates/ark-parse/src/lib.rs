@@ -17,7 +17,7 @@ use ark_scan::Language;
 use tree_sitter::Parser;
 
 /// Bump when extraction output changes, so cached facts are invalidated.
-pub const EXTRACTOR_VERSION: &str = "4";
+pub const EXTRACTOR_VERSION: &str = "5";
 
 fn ts_language(lang: Language) -> tree_sitter::Language {
     match lang {
@@ -64,6 +64,9 @@ pub fn parse_file(lang: Language, path: &str, src: &str) -> FileFacts {
             .diagnostics
             .push("syntax errors present; facts may be partial".to_owned());
         collect_syntax_errors(root, src.as_bytes(), &mut facts.syntax_errors);
+        facts
+            .syntax_errors
+            .retain(|e| !grammar_gap(lang, src, e.line, &e.text));
     }
     let bytes = src.as_bytes();
     match lang {
@@ -77,6 +80,28 @@ pub fn parse_file(lang: Language, path: &str, src: &str) -> FileFacts {
     enrich::enrich(lang, root, bytes, &mut facts);
     facts.finish();
     facts
+}
+
+/// Valid code the pinned grammars do not parse yet. Reporting these would tell users
+/// their working code is broken.
+fn grammar_gap(lang: Language, src: &str, line: u32, text: &str) -> bool {
+    if !matches!(
+        lang,
+        Language::TypeScript | Language::Tsx | Language::JavaScript
+    ) {
+        return false;
+    }
+    let l = src
+        .lines()
+        .nth(line as usize - 1)
+        .unwrap_or("")
+        .trim_start();
+    // TS 5.0 `export type * from "./x"`.
+    if l.starts_with("export type *") {
+        return true;
+    }
+    // A bare `&` in JSX text, e.g. `<h2>Releases & Installers</h2>`: React renders it as-is.
+    lang != Language::TypeScript && text.starts_with("cannot parse `&") && !l.contains("&&")
 }
 
 /// First few ERROR / MISSING nodes, outermost first, one per line.

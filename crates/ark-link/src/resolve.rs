@@ -15,6 +15,7 @@ pub struct Resolver<'a> {
     /// Go package dir -> file indices.
     go_dirs: BTreeMap<String, Vec<usize>>,
     go_modules: &'a [(String, String)],
+    rust_crates: &'a [(String, String)],
 }
 
 fn dir_of(path: &str) -> &str {
@@ -67,6 +68,7 @@ impl<'a> Resolver<'a> {
             py_modules,
             go_dirs,
             go_modules: &inputs.go_modules,
+            rust_crates: &inputs.rust_crates,
         }
     }
 
@@ -210,7 +212,28 @@ impl<'a> Resolver<'a> {
             Some(&"crate") => (src_root.trim_end_matches('/').to_owned(), &segs[1..]),
             Some(&"super") => (dir_of(dir_of(from)).to_owned(), &segs[1..]),
             Some(&"self") => (dir_of(from).to_owned(), &segs[1..]),
-            _ => return None,
+            Some(first) => {
+                // Another crate in this workspace: `use ark_core::graph` -> crates/ark-core/src.
+                let (_, dir) = self.rust_crates.iter().find(|(n, _)| n == first)?;
+                let src = if dir.is_empty() {
+                    "src".to_owned()
+                } else {
+                    format!("{dir}/src")
+                };
+                let rest = &segs[1..];
+                for take in (1..=rest.len()).rev() {
+                    let rel = rest[..take].join("/");
+                    let rel = rel.trim_matches(['{', '}', '*']);
+                    if let Some(i) = self
+                        .file(&format!("{src}/{rel}.rs"))
+                        .or_else(|| self.file(&format!("{src}/{rel}/mod.rs")))
+                    {
+                        return Some(i);
+                    }
+                }
+                return self.file(&format!("{src}/lib.rs"));
+            }
+            None => return None,
         };
         for take in (1..=rest.len()).rev() {
             let rel = rest[..take].join("/");

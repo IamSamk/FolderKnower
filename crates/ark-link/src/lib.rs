@@ -31,6 +31,8 @@ pub fn fn_id(path: &str, qualname: &str) -> String {
 #[derive(Debug, Clone, Default)]
 pub struct LinkInputs {
     pub go_modules: Vec<(String, String)>,
+    /// Workspace crates: (name as written in `use`, directory holding Cargo.toml).
+    pub rust_crates: Vec<(String, String)>,
 }
 
 #[derive(Debug, Default)]
@@ -511,13 +513,49 @@ pub fn link(files: &[ParsedFile], inputs: &LinkInputs) -> Linked {
     let mut http: BTreeMap<String, CrossTierEdge> = BTreeMap::new();
     for f in files {
         for call in &f.facts.http_calls {
+            if call.method == "IPC" {
+                let source = call
+                    .in_fn
+                    .as_ref()
+                    .map(|q| fn_id(&f.scan.path, q))
+                    .unwrap_or_else(|| file_id(&f.scan.path));
+                let hits: Vec<&RouteNode> = out
+                    .routes
+                    .iter()
+                    .filter(|r| r.method == "IPC" && r.path == call.url)
+                    .collect();
+                if hits.is_empty() && out.routes.iter().any(|r| r.method == "IPC") {
+                    out.dead_calls.push((
+                        f.scan.path.clone(),
+                        call.line,
+                        call.method.clone(),
+                        call.url.clone(),
+                    ));
+                }
+                for r in hits {
+                    let target = r.handler.clone().unwrap_or_else(|| r.id.clone());
+                    let id = format!("xedge:{source}->{target}");
+                    http.entry(id.clone()).or_insert(CrossTierEdge {
+                        id,
+                        source: source.clone(),
+                        target,
+                        protocol: Protocol::Ipc,
+                        evidence: vec![
+                            format!("ipc.{} {}", call.client, call.url),
+                            format!("route.{}", r.framework),
+                            "match.exact".into(),
+                        ],
+                    });
+                }
+                continue;
+            }
             let segs = normalize_url_segments(&call.url);
             if segs.is_empty() {
                 continue;
             }
             let mut best: Vec<(&RouteNode, u8)> = Vec::new();
             for (rs, r) in &route_segs {
-                if !method_ok(&call.method, &r.method) {
+                if r.method == "IPC" || !method_ok(&call.method, &r.method) {
                     continue;
                 }
                 let score = match_score(&segs, rs);
@@ -530,7 +568,10 @@ pub fn link(files: &[ParsedFile], inputs: &LinkInputs) -> Linked {
                     _ => best = vec![(r, score)],
                 }
             }
-            if best.is_empty() && !route_segs.is_empty() && call.url.starts_with('/') {
+            if best.is_empty()
+                && route_segs.iter().any(|(_, r)| r.method != "IPC")
+                && call.url.starts_with('/')
+            {
                 out.dead_calls.push((
                     f.scan.path.clone(),
                     call.line,

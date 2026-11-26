@@ -39,6 +39,11 @@ pub const DENY_DIRS: &[&str] = &[
     ".architekton",
     "Pods",
     ".gradle",
+    // Test inputs: sample projects and recorded data used by tests, not part of the app.
+    "fixtures",
+    "__fixtures__",
+    "testdata",
+    "__snapshots__",
 ];
 
 /// Source languages the parser understands.
@@ -233,7 +238,9 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanResult, ScanError> {
         .require_git(false)
         .filter_entry(|e| {
             let name = e.file_name().to_string_lossy();
-            !(e.file_type().is_some_and(|t| t.is_dir()) && DENY_DIRS.contains(&name.as_ref()))
+            e.depth() == 0
+                || !(e.file_type().is_some_and(|t| t.is_dir())
+                    && DENY_DIRS.contains(&name.as_ref()))
         })
         .build();
 

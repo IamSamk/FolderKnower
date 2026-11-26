@@ -1778,8 +1778,8 @@
       ],
       "clusters": [
         {
-          "id": "cluster:workers:tasks",
-          "name": "tasks",
+          "id": "cluster:workers:worker",
+          "name": "worker",
           "method": {
             "algo": "louvain",
             "seed": 0,

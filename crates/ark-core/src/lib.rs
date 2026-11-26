@@ -233,6 +233,7 @@ pub fn analyze(
         0,
     );
     let mut go_modules = Vec::new();
+    let mut rust_crates = Vec::new();
     let mut schema_sources = Vec::new();
     for f in &scanned.files {
         let name = f.path.rsplit('/').next().unwrap_or(&f.path);
@@ -247,6 +248,17 @@ pub fn analyze(
                 .unwrap_or_default();
             go_modules.push((dir, m.trim().to_owned()));
         }
+        if name == "Cargo.toml"
+            && let Ok(s) = fs::read_to_string(root.join(&f.path))
+            && let Some(krate) = cargo_lib_name(&s)
+        {
+            let dir = f
+                .path
+                .rsplit_once('/')
+                .map(|(d, _)| d.to_owned())
+                .unwrap_or_default();
+            rust_crates.push((krate, dir));
+        }
         if matches!(
             f.other,
             Some(OtherKind::Schema) | Some(OtherKind::Migration)
@@ -257,7 +269,11 @@ pub fn analyze(
         }
     }
     go_modules.sort_by(|a, b| b.1.len().cmp(&a.1.len()).then_with(|| a.cmp(b)));
-    let inputs = LinkInputs { go_modules };
+    rust_crates.sort();
+    let inputs = LinkInputs {
+        go_modules,
+        rust_crates,
+    };
     let linked = link(&app, &inputs);
     let test_linked = link(
         &tests
@@ -593,3 +609,29 @@ fn detect_okf(root: &Path, files: &[ark_scan::ScannedFile]) -> Vec<String> {
 
 #[cfg(test)]
 mod tests;
+
+/// The name other crates `use`: `[lib] name`, else `[package] name` with `-` as `_`.
+fn cargo_lib_name(toml: &str) -> Option<String> {
+    let mut section = "";
+    let (mut pkg, mut lib) = (None, None);
+    for l in toml.lines() {
+        let l = l.trim();
+        if l.starts_with('[') {
+            section = l;
+            continue;
+        }
+        let Some(v) = l.strip_prefix("name") else {
+            continue;
+        };
+        let Some(v) = v.trim_start().strip_prefix('=') else {
+            continue;
+        };
+        let v = v.trim().trim_matches('"').to_owned();
+        match section {
+            "[package]" => pkg = Some(v),
+            "[lib]" => lib = Some(v),
+            _ => {}
+        }
+    }
+    lib.or(pkg).map(|n| n.replace('-', "_"))
+}

@@ -848,6 +848,159 @@ fn browser(c: &mut Ctx, files: &[ParsedFile]) {
     }
 }
 
+/// What desktop and native code keeps outside a database server: model files it runs
+/// with a local runtime, its app data and cache folders, embedded SQLite files and state
+/// shared across commands.
+fn native(c: &mut Ctx, files: &[ParsedFile]) {
+    for f in files {
+        let path = f.scan.path.as_str();
+        let fid = file_id(path);
+        let calls: Vec<&ark_parse::CallFact> = f
+            .facts
+            .functions
+            .iter()
+            .flat_map(|x| x.calls.iter())
+            .chain(f.facts.top_calls.iter())
+            .collect();
+        let first = |pred: &dyn Fn(&ark_parse::CallFact) -> bool| {
+            calls.iter().filter(|c| pred(c)).map(|c| c.line).min()
+        };
+        let recv = |c: &ark_parse::CallFact| c.receiver.as_deref().unwrap_or("").to_owned();
+        // In a desktop app all native code runs in the one app process.
+        let h = if c.g.summary.kind == ark_schema::ProjectKind::Desktop
+            && matches!(
+                f.scan.language,
+                Some(ark_scan::Language::Rust | ark_scan::Language::Go)
+            ) {
+            Holder {
+                id: "proc:app".into(),
+                name: "the app's native process".into(),
+                gpu: false,
+            }
+        } else {
+            c.holder_of(&fid)
+        };
+        let rust = f.scan.language == Some(ark_scan::Language::Rust);
+        let mut models: Vec<(String, u32)> = calls
+            .iter()
+            .filter_map(|c| {
+                let s = c.first_string.as_deref()?;
+                let name = s.rsplit('/').next().unwrap_or(s);
+                (name.len() > 5 && name.to_ascii_lowercase().ends_with(".gguf"))
+                    .then(|| (s.rsplit('/').next().unwrap_or(s).to_owned(), c.line))
+            })
+            .collect();
+        models.sort();
+        models.dedup_by(|a, b| a.0 == b.0);
+        if !models.is_empty() {
+            let names: Vec<&str> = models.iter().map(|m| m.0.as_str()).collect();
+            let proof: Vec<String> = models.iter().map(|m| at(&fid, m.1)).collect();
+            c.add(
+                &fid,
+                format!("Model files ({})", names.join(", ")),
+                P::Disk,
+                &h,
+                L::Persistent,
+                None,
+                proof.clone(),
+                "GGUF model files kept on disk, so they are downloaded once and reused on every start.",
+            );
+            // Started as a child process with `-m model.gguf` (llama.cpp's llama-server).
+            let spawn = first(&|c| c.callee == "new" && recv(c) == "Command");
+            let dash_m = first(&|c| c.callee == "arg" && c.first_string.as_deref() == Some("-m"));
+            if let (Some(sp), Some(m)) = (spawn, dash_m) {
+                let gpu = calls.iter().any(|c| {
+                    matches!(
+                        c.first_string.as_deref(),
+                        Some("-ngl" | "--n-gpu-layers" | "--gpu-layers")
+                    )
+                });
+                let runtime = Holder {
+                    id: "proc:model-runtime".into(),
+                    name: "local model runtime (child process)".into(),
+                    gpu,
+                };
+                c.add(
+                    &fid,
+                    "Model weights (loaded from the GGUF files)",
+                    if gpu { P::Vram } else { P::Ram },
+                    &runtime,
+                    L::Process,
+                    None,
+                    vec![at(&fid, sp), at(&fid, m)],
+                    if gpu {
+                        "The runtime loads each model into graphics memory when it starts and frees it when the process exits."
+                    } else {
+                        "The runtime reads each model into RAM when it starts and runs it on the CPU; the memory is freed when the process exits."
+                    },
+                );
+            }
+        }
+        let rules: [(&str, P, L, &str, &dyn Fn(&ark_parse::CallFact) -> bool); 5] = [
+            (
+                "App data folder",
+                P::Disk,
+                L::Persistent,
+                "Files the app keeps for this user between runs, in the system's per-app data folder.",
+                &|c| {
+                    matches!(
+                        c.callee.as_str(),
+                        "app_data_dir" | "app_local_data_dir" | "data_dir" | "data_local_dir"
+                    ) || (c.callee == "getPath" && c.first_string.as_deref() == Some("userData"))
+                },
+            ),
+            (
+                "Cache folder",
+                P::Disk,
+                L::Persistent,
+                "Results kept to make the next run faster, in the system cache folder; deleting it only costs speed.",
+                &|c| {
+                    matches!(c.callee.as_str(), "cache_dir" | "app_cache_dir")
+                        || (c.callee == "getPath" && c.first_string.as_deref() == Some("cache"))
+                },
+            ),
+            (
+                "SQLite database file",
+                P::Disk,
+                L::Persistent,
+                "An embedded database in a single file, opened by this process; no database server is involved.",
+                &|c| {
+                    (c.callee == "open" && recv(c) == "Connection")
+                        || (c.callee == "connect" && recv(c) == "sqlite3")
+                },
+            ),
+            (
+                "In-memory SQLite database",
+                P::Ram,
+                L::Process,
+                "An embedded database that lives only in this process's memory.",
+                &|c| c.callee == "open_in_memory" && recv(c) == "Connection",
+            ),
+            (
+                "Shared app state",
+                P::Ram,
+                L::Process,
+                "State the native side keeps for the whole run and hands to every command, such as running servers or caches.",
+                &|c| rust && c.callee == "manage" && c.n_args == 1,
+            ),
+        ];
+        for (what, place, life, explain, pred) in rules {
+            if let Some(line) = first(pred) {
+                c.add(
+                    &fid,
+                    what,
+                    place,
+                    &h,
+                    life,
+                    None,
+                    vec![at(&fid, line)],
+                    explain,
+                );
+            }
+        }
+    }
+}
+
 /// ` ("token")` when the setItem call at that line has a literal key.
 fn call_key(f: &ParsedFile, line: u32) -> String {
     f.facts
@@ -897,6 +1050,7 @@ pub fn build(g: &SystemArchitectureGraph, files: &[ParsedFile]) -> Vec<MemoryPla
         service(&mut c, s);
     }
     browser(&mut c, files);
+    native(&mut c, files);
     let mut out = c.out;
     for p in &mut out {
         p.proof.sort();

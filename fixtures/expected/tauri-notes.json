@@ -1,0 +1,1538 @@
+{
+  "schemaVersion": "2.0",
+  "repoName": "tauri-notes",
+  "rootPath": ".",
+  "generator": {
+    "version": "golden",
+    "rulesetVersion": "ontology 0.1.0 / tiers 0.1.0",
+    "grammars": {
+      "tree-sitter-go": "0.25.0",
+      "tree-sitter-javascript": "0.25.0",
+      "tree-sitter-python": "0.25.0",
+      "tree-sitter-rust": "0.24.2",
+      "tree-sitter-typescript": "0.23.2"
+    }
+  },
+  "contentRoot": "195e94ba9a693770b027e9ffa8aacd36cb37b0b097883a9951c4a0e281f26ff9",
+  "tiers": [
+    {
+      "id": "tier:frontend",
+      "label": "Frontend",
+      "evidence": [
+        "tier.fe.component",
+        "tier.fe.framework",
+        "tier.fe.http-client",
+        "tier.propagated",
+        "tier.sh.dir"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:frontend:api",
+          "name": "api",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:src/App.tsx",
+              "path": "src/App.tsx",
+              "language": "typescript",
+              "contentHash": "fe7fffa147d629683d8a68a055febfe1803e79f182f213435e790fc2f0fda39c",
+              "lines": 35,
+              "tierConfidence": 0.99,
+              "role": "component",
+              "imports": [
+                {
+                  "target": "file:src/api.ts",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:src/types.ts",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:src/App.tsx#App",
+                  "name": "App",
+                  "visibility": "public",
+                  "lineRange": [
+                    5,
+                    35
+                  ],
+                  "byteRange": [
+                    148,
+                    1049
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Client state",
+                      "layer": "data",
+                      "ruleId": "data.state.client"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 6,
+                      "label": "const [notes, setNotes] = useState<Note[]>([]);"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 7,
+                      "label": "const [text, setText] = useState(\"\");"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 8,
+                      "label": "const [version, setVersion] = useState(\"\");"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 15,
+                      "label": "return ("
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:src/api.ts#appVersion",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    },
+                    {
+                      "target": "fn:src/api.ts#deleteNote",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:src/App.tsx#refresh",
+                  "name": "refresh",
+                  "visibility": "internal",
+                  "lineRange": [
+                    9,
+                    9
+                  ],
+                  "byteRange": [
+                    319,
+                    358
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 9,
+                      "label": "setNotes(await listNotes())"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:src/api.ts#listNotes",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": [
+                    "fn:src/App.tsx#save"
+                  ]
+                },
+                {
+                  "id": "fn:src/App.tsx#save",
+                  "name": "save",
+                  "visibility": "internal",
+                  "lineRange": [
+                    10,
+                    14
+                  ],
+                  "byteRange": [
+                    375,
+                    478
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Browser storage",
+                      "layer": "data",
+                      "ruleId": "data.storage.browser"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 11,
+                      "label": "localStorage.setItem(\"draft\", \"\");"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 12,
+                      "label": "await saveNote(text);"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 13,
+                      "label": "await refresh();"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:src/App.tsx#refresh",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.9
+                    },
+                    {
+                      "target": "fn:src/api.ts#saveNote",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                }
+              ],
+              "packages": [
+                "react"
+              ]
+            },
+            {
+              "id": "file:src/api.ts",
+              "path": "src/api.ts",
+              "language": "typescript",
+              "contentHash": "15ab8ab69305aaae296ed471136e0f51507a0e6aefa5f18b567d5d0527ee035e",
+              "lines": 18,
+              "tierConfidence": 0.79,
+              "role": "api-client",
+              "imports": [
+                {
+                  "target": "file:src/types.ts",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:src/api.ts#saveNote",
+                  "name": "saveNote",
+                  "visibility": "public",
+                  "lineRange": [
+                    4,
+                    6
+                  ],
+                  "byteRange": [
+                    92,
+                    188
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "text",
+                        "type": "string"
+                      }
+                    ],
+                    "returnType": "Promise<Note>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 5,
+                      "label": "return invoke<Note>(\"save_note\", { text });"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:src/App.tsx#save"
+                  ]
+                },
+                {
+                  "id": "fn:src/api.ts#listNotes",
+                  "name": "listNotes",
+                  "visibility": "public",
+                  "lineRange": [
+                    8,
+                    10
+                  ],
+                  "byteRange": [
+                    197,
+                    277
+                  ],
+                  "signature": {
+                    "parameters": [],
+                    "returnType": "Promise<Note[]>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 9,
+                      "label": "return invoke<Note[]>(\"list_notes\");"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:src/App.tsx#refresh"
+                  ]
+                },
+                {
+                  "id": "fn:src/api.ts#deleteNote",
+                  "name": "deleteNote",
+                  "visibility": "public",
+                  "lineRange": [
+                    12,
+                    14
+                  ],
+                  "byteRange": [
+                    286,
+                    375
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "id",
+                        "type": "number"
+                      }
+                    ],
+                    "returnType": "Promise<void>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 13,
+                      "label": "return invoke(\"delete_nte\", { id });"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:src/App.tsx#App"
+                  ]
+                },
+                {
+                  "id": "fn:src/api.ts#appVersion",
+                  "name": "appVersion",
+                  "visibility": "public",
+                  "lineRange": [
+                    16,
+                    18
+                  ],
+                  "byteRange": [
+                    384,
+                    466
+                  ],
+                  "signature": {
+                    "parameters": [],
+                    "returnType": "Promise<string>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 17,
+                      "label": "return invoke<string>(\"app_version\");"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:src/App.tsx#App"
+                  ]
+                }
+              ],
+              "packages": [
+                "@tauri-apps/api"
+              ]
+            },
+            {
+              "id": "file:src/types.ts",
+              "path": "src/types.ts",
+              "language": "typescript",
+              "contentHash": "9f58faf19804fc5c13bbad113cca4677d7202c178badb5f18285e89acedba25a",
+              "lines": 1,
+              "tierConfidence": 0.74,
+              "role": "types",
+              "imports": [],
+              "functions": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tier:backend",
+      "label": "Backend",
+      "evidence": [
+        "tier.be.routes",
+        "tier.sh.dir"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:backend:src-tauri",
+          "name": "src-tauri",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": [
+              "file:src-tauri/src/lib.rs"
+            ]
+          },
+          "files": [
+            {
+              "id": "file:src-tauri/src/lib.rs",
+              "path": "src-tauri/src/lib.rs",
+              "language": "rust",
+              "contentHash": "780546eb81cb8b296fb80534faa938b0ca7345f1558cb762a96370b494f88004",
+              "lines": 45,
+              "tierConfidence": 0.89,
+              "role": "route-handler",
+              "imports": [
+                {
+                  "target": "file:crates/notes-core/src/lib.rs",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:src-tauri/src/lib.rs#save_note",
+                  "name": "save_note",
+                  "visibility": "private",
+                  "lineRange": [
+                    10,
+                    14
+                  ],
+                  "byteRange": [
+                    163,
+                    388
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "db",
+                        "type": "State<'_, Db>"
+                      },
+                      {
+                        "name": "text",
+                        "type": "String"
+                      }
+                    ],
+                    "returnType": "Result<Note, String>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Lock / mutex",
+                      "layer": "os",
+                      "ruleId": "os.lock"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 11,
+                      "label": "let mut g = db.0.lock().map_err(|e| e.to_string())?;  (may return early with ?)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 12,
+                      "label": "let store = g.as_mut().ok_or(\"not open\")?;  (may return early with ?)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 13,
+                      "label": "store.add(&text).map_err(|e| e.to_string())"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:src-tauri/src/lib.rs#list_notes",
+                  "name": "list_notes",
+                  "visibility": "private",
+                  "lineRange": [
+                    17,
+                    20
+                  ],
+                  "byteRange": [
+                    408,
+                    593
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "db",
+                        "type": "State<'_, Db>"
+                      }
+                    ],
+                    "returnType": "Result<Vec<Note>, String>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Lock / mutex",
+                      "layer": "os",
+                      "ruleId": "os.lock"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 18,
+                      "label": "let g = db.0.lock().map_err(|e| e.to_string())?;  (may return early with ?)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 19,
+                      "label": "g.as_ref().ok_or(\"not open\")?.all().map_err(|e| e.to_string(…  (may return early with ?)"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:crates/notes-core/src/lib.rs#NoteStore::all",
+                      "provenance": "ts_name_match",
+                      "confidence": 0.4
+                    }
+                  ],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:src-tauri/src/lib.rs#delete_note",
+                  "name": "delete_note",
+                  "visibility": "private",
+                  "lineRange": [
+                    23,
+                    26
+                  ],
+                  "byteRange": [
+                    613,
+                    806
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "db",
+                        "type": "State<'_, Db>"
+                      },
+                      {
+                        "name": "id",
+                        "type": "i64"
+                      }
+                    ],
+                    "returnType": "Result<(), String>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Lock / mutex",
+                      "layer": "os",
+                      "ruleId": "os.lock"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 24,
+                      "label": "let g = db.0.lock().map_err(|e| e.to_string())?;  (may return early with ?)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 25,
+                      "label": "g.as_ref().ok_or(\"not open\")?.remove(id).map_err(|e| e.to_st…  (may return early with ?)"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:src-tauri/src/lib.rs#app_version",
+                  "name": "app_version",
+                  "visibility": "private",
+                  "lineRange": [
+                    29,
+                    31
+                  ],
+                  "byteRange": [
+                    826,
+                    897
+                  ],
+                  "signature": {
+                    "parameters": [],
+                    "returnType": "String"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 30,
+                      "label": "env!(\"CARGO_PKG_VERSION\").to_owned()"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:src-tauri/src/lib.rs#run",
+                  "name": "run",
+                  "visibility": "public",
+                  "lineRange": [
+                    33,
+                    45
+                  ],
+                  "byteRange": [
+                    899,
+                    1410
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.recursion.linear",
+                      "space.recursion-stack"
+                    ],
+                    "memoryFlags": [
+                      "recursion-stack"
+                    ]
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Lock / mutex",
+                      "layer": "os",
+                      "ruleId": "os.lock"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 34,
+                      "label": "tauri::Builder::default()"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:crates/notes-core/src/lib.rs#NoteStore::open",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                }
+              ],
+              "packages": [
+                "std",
+                "tauri"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tier:storage",
+      "label": "Storage",
+      "evidence": [
+        "tier.db.dir",
+        "tier.db.packages",
+        "tier.sh.dir"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:storage:model",
+          "name": "model",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:src/model.ts",
+              "path": "src/model.ts",
+              "language": "typescript",
+              "contentHash": "d0024b1a266dec9fca32e2b65d4e724e16610eb450bd6e41fd0908c2262e31a4",
+              "lines": 4,
+              "tierConfidence": 0.85,
+              "imports": [],
+              "functions": []
+            }
+          ]
+        },
+        {
+          "id": "cluster:storage:notes-core",
+          "name": "notes-core",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:crates/notes-core/src/lib.rs",
+              "path": "crates/notes-core/src/lib.rs",
+              "language": "rust",
+              "contentHash": "49ceec26ac836ce3f667cf08aeb99d0de9d481e7ba9a421f0b132b4924485a2d",
+              "lines": 38,
+              "tierConfidence": 0.68,
+              "role": "entrypoint",
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:crates/notes-core/src/lib.rs#NoteStore::open",
+                  "name": "open",
+                  "visibility": "public",
+                  "lineRange": [
+                    17,
+                    21
+                  ],
+                  "byteRange": [
+                    221,
+                    460
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "path",
+                        "type": "&Path"
+                      }
+                    ],
+                    "returnType": "rusqlite::Result<Self>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.recursion.linear",
+                      "space.recursion-stack"
+                    ],
+                    "memoryFlags": [
+                      "recursion-stack"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 18,
+                      "label": "let conn = Connection::open(path)?;  (may return early with ?)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 19,
+                      "label": "conn.execute_batch(\"CREATE TABLE IF NOT EXISTS notes (id INT…  (may return early with ?)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 20,
+                      "label": "Ok(Self { conn })"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:src-tauri/src/lib.rs#run"
+                  ]
+                },
+                {
+                  "id": "fn:crates/notes-core/src/lib.rs#NoteStore::add",
+                  "name": "add",
+                  "visibility": "public",
+                  "lineRange": [
+                    23,
+                    26
+                  ],
+                  "byteRange": [
+                    466,
+                    687
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "text",
+                        "type": "&str"
+                      }
+                    ],
+                    "returnType": "rusqlite::Result<Note>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "SQL query",
+                      "layer": "data",
+                      "ruleId": "data.sql.query"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 24,
+                      "label": "self.conn.execute(\"INSERT INTO notes (text) VALUES (?1)\", [t…  (may return early with ?)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 25,
+                      "label": "Ok(Note { id: self.conn.last_insert_rowid(), text: text.to_o…"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:crates/notes-core/src/lib.rs#NoteStore::all",
+                  "name": "all",
+                  "visibility": "public",
+                  "lineRange": [
+                    28,
+                    32
+                  ],
+                  "byteRange": [
+                    693,
+                    942
+                  ],
+                  "signature": {
+                    "parameters": [],
+                    "returnType": "rusqlite::Result<Vec<Note>>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Redis cache",
+                      "layer": "data",
+                      "ruleId": "data.cache.redis"
+                    },
+                    {
+                      "concept": "Route registration",
+                      "layer": "network",
+                      "ruleId": "net.http.route"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 29,
+                      "label": "let mut st = self.conn.prepare(\"SELECT id, text FROM notes O…  (may return early with ?)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 30,
+                      "label": "let rows = st.query_map([], |r| Ok(Note { id: r.get(0)?, tex…  (may return early with ?)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 31,
+                      "label": "rows.collect()"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:src-tauri/src/lib.rs#list_notes"
+                  ]
+                },
+                {
+                  "id": "fn:crates/notes-core/src/lib.rs#NoteStore::remove",
+                  "name": "remove",
+                  "visibility": "public",
+                  "lineRange": [
+                    34,
+                    37
+                  ],
+                  "byteRange": [
+                    948,
+                    1093
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "id",
+                        "type": "i64"
+                      }
+                    ],
+                    "returnType": "rusqlite::Result<()>"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "SQL query",
+                      "layer": "data",
+                      "ruleId": "data.sql.query"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 35,
+                      "label": "self.conn.execute(\"DELETE FROM notes WHERE id = ?1\", [id])?;  (may return early with ?)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 36,
+                      "label": "Ok(())"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                }
+              ],
+              "packages": [
+                "rusqlite",
+                "serde",
+                "std"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "crossTierEdges": [
+    {
+      "id": "xedge:fn:src/api.ts#appVersion->fn:src-tauri/src/lib.rs#app_version",
+      "source": "fn:src/api.ts#appVersion",
+      "target": "fn:src-tauri/src/lib.rs#app_version",
+      "protocol": "IPC",
+      "evidence": [
+        "ipc.tauri app_version",
+        "route.tauri",
+        "match.exact"
+      ]
+    },
+    {
+      "id": "xedge:fn:src/api.ts#listNotes->fn:src-tauri/src/lib.rs#list_notes",
+      "source": "fn:src/api.ts#listNotes",
+      "target": "fn:src-tauri/src/lib.rs#list_notes",
+      "protocol": "IPC",
+      "evidence": [
+        "ipc.tauri list_notes",
+        "route.tauri",
+        "match.exact"
+      ]
+    },
+    {
+      "id": "xedge:fn:src/api.ts#saveNote->fn:src-tauri/src/lib.rs#save_note",
+      "source": "fn:src/api.ts#saveNote",
+      "target": "fn:src-tauri/src/lib.rs#save_note",
+      "protocol": "IPC",
+      "evidence": [
+        "ipc.tauri save_note",
+        "route.tauri",
+        "match.exact"
+      ]
+    }
+  ],
+  "nonCodeNodes": [
+    {
+      "id": "noncode:Cargo.toml",
+      "path": "Cargo.toml",
+      "kind": "manifest",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:README.md",
+      "path": "README.md",
+      "kind": "doc",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:crates/notes-core/Cargo.toml",
+      "path": "crates/notes-core/Cargo.toml",
+      "kind": "manifest",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:package.json",
+      "path": "package.json",
+      "kind": "manifest",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:src-tauri/Cargo.toml",
+      "path": "src-tauri/Cargo.toml",
+      "kind": "manifest",
+      "relatesTo": []
+    }
+  ],
+  "summary": {
+    "kind": "desktop",
+    "headline": "Desktop app (Tauri): a React window calls 4 native commands in Rust.",
+    "findings": [
+      {
+        "text": "Sorted 6 files by what they do, not where they live: 3 frontend, 0 gateway/middleware, 1 backend, 2 data, 0 worker, 0 shared.",
+        "evidence": [
+          "tier.*"
+        ]
+      },
+      {
+        "text": "Found 4 HTTP routes (tauri).",
+        "evidence": [
+          "route:IPC app_version#src-tauri/src/lib.rs",
+          "route:IPC delete_note#src-tauri/src/lib.rs",
+          "route:IPC list_notes#src-tauri/src/lib.rs",
+          "route:IPC save_note#src-tauri/src/lib.rs"
+        ]
+      },
+      {
+        "text": "3 client calls reach 3 backend handlers over HTTP.",
+        "evidence": [
+          "xedge:fn:src/api.ts#appVersion->fn:src-tauri/src/lib.rs#app_version",
+          "xedge:fn:src/api.ts#listNotes->fn:src-tauri/src/lib.rs#list_notes",
+          "xedge:fn:src/api.ts#saveNote->fn:src-tauri/src/lib.rs#save_note"
+        ]
+      },
+      {
+        "text": "3 UI elements are wired to handlers you can follow into the code.",
+        "evidence": [
+          "ui:src/App.tsx:19:6",
+          "ui:src/App.tsx:22:6",
+          "ui:src/App.tsx:29:8"
+        ]
+      }
+    ],
+    "stats": {
+      "files": 6,
+      "functions": 16,
+      "lines": 141,
+      "languages": {
+        "rust": 2,
+        "typescript": 4
+      }
+    }
+  },
+  "dataModels": [],
+  "routes": [
+    {
+      "id": "route:IPC app_version#src-tauri/src/lib.rs",
+      "method": "IPC",
+      "path": "app_version",
+      "framework": "tauri",
+      "fileId": "file:src-tauri/src/lib.rs",
+      "line": 29,
+      "handler": "fn:src-tauri/src/lib.rs#app_version"
+    },
+    {
+      "id": "route:IPC delete_note#src-tauri/src/lib.rs",
+      "method": "IPC",
+      "path": "delete_note",
+      "framework": "tauri",
+      "fileId": "file:src-tauri/src/lib.rs",
+      "line": 23,
+      "handler": "fn:src-tauri/src/lib.rs#delete_note"
+    },
+    {
+      "id": "route:IPC list_notes#src-tauri/src/lib.rs",
+      "method": "IPC",
+      "path": "list_notes",
+      "framework": "tauri",
+      "fileId": "file:src-tauri/src/lib.rs",
+      "line": 17,
+      "handler": "fn:src-tauri/src/lib.rs#list_notes"
+    },
+    {
+      "id": "route:IPC save_note#src-tauri/src/lib.rs",
+      "method": "IPC",
+      "path": "save_note",
+      "framework": "tauri",
+      "fileId": "file:src-tauri/src/lib.rs",
+      "line": 10,
+      "handler": "fn:src-tauri/src/lib.rs#save_note"
+    }
+  ],
+  "uiElements": [
+    {
+      "id": "ui:src/App.tsx:18:6",
+      "tag": "input",
+      "fileId": "file:src/App.tsx",
+      "line": 18,
+      "component": "fn:src/App.tsx#App",
+      "event": "onChange"
+    },
+    {
+      "id": "ui:src/App.tsx:19:6",
+      "tag": "button",
+      "label": "Save",
+      "fileId": "file:src/App.tsx",
+      "line": 19,
+      "component": "fn:src/App.tsx#App",
+      "event": "onClick",
+      "handler": "fn:src/App.tsx#save"
+    },
+    {
+      "id": "ui:src/App.tsx:22:6",
+      "tag": "button",
+      "label": "Refresh",
+      "fileId": "file:src/App.tsx",
+      "line": 22,
+      "component": "fn:src/App.tsx#App",
+      "event": "onClick",
+      "handler": "fn:src/App.tsx#refresh"
+    },
+    {
+      "id": "ui:src/App.tsx:25:6",
+      "tag": "button",
+      "label": "About",
+      "fileId": "file:src/App.tsx",
+      "line": 25,
+      "component": "fn:src/App.tsx#App",
+      "event": "onClick"
+    },
+    {
+      "id": "ui:src/App.tsx:29:8",
+      "tag": "button",
+      "label": "Delete",
+      "fileId": "file:src/App.tsx",
+      "line": 29,
+      "component": "fn:src/App.tsx#App",
+      "event": "onClick",
+      "handler": "fn:src/api.ts#deleteNote"
+    }
+  ],
+  "questions": [],
+  "insights": {
+    "rulesetVersion": "patterns 0.1.0 / catalog 0.1.0 / services 0.1.0",
+    "dataStructures": [],
+    "libraries": [
+      {
+        "name": "React",
+        "category": "UI library",
+        "explain": "Builds UIs from components; re-renders when state changes.",
+        "evidence": [
+          "react"
+        ]
+      },
+      {
+        "name": "Tauri",
+        "category": "desktop shell",
+        "explain": "Desktop apps with a Rust backend and the OS web view as UI.",
+        "evidence": [
+          "@tauri-apps/api/core"
+        ]
+      }
+    ],
+    "memoryTechniques": []
+  },
+  "exampleRuns": [
+    {
+      "id": "run:ui:src/App.tsx:19:6",
+      "title": "Save → IPC save_note",
+      "start": "ui:src/App.tsx:19:6",
+      "hops": [
+        {
+          "node": "ui:src/App.tsx:19:6",
+          "kind": "ui",
+          "label": "<button> “Save”",
+          "via": "start",
+          "proof": [
+            "src/App.tsx:19"
+          ],
+          "confidence": 1.0,
+          "explain": "The user clicks this button."
+        },
+        {
+          "node": "fn:src/App.tsx#save",
+          "kind": "function",
+          "label": "save()",
+          "via": "handler",
+          "proof": [
+            "src/App.tsx:10"
+          ],
+          "confidence": 1.0,
+          "explain": "Its onClick handler runs in the browser."
+        },
+        {
+          "node": "fn:src/api.ts#saveNote",
+          "kind": "function",
+          "label": "saveNote()",
+          "via": "call",
+          "proof": [
+            "src/api.ts:4"
+          ],
+          "confidence": 0.85,
+          "explain": "A resolved call on the way to the network request."
+        },
+        {
+          "node": "route:IPC save_note#src-tauri/src/lib.rs",
+          "kind": "route",
+          "label": "IPC save_note",
+          "via": "http",
+          "proof": [
+            "xedge:fn:src/api.ts#saveNote->fn:src-tauri/src/lib.rs#save_note",
+            "src-tauri/src/lib.rs:10"
+          ],
+          "confidence": 1.0,
+          "explain": "The browser sends HTTP; the backend route IPC save_note receives it and runs save_note()."
+        },
+        {
+          "node": "ui:src/App.tsx:19:6",
+          "kind": "response",
+          "label": "answer shown on screen",
+          "via": "return",
+          "proof": [
+            "xedge:fn:src/api.ts#saveNote->fn:src-tauri/src/lib.rs#save_note"
+          ],
+          "confidence": 1.0,
+          "explain": "The response travels back the same way and the screen updates."
+        }
+      ]
+    },
+    {
+      "id": "run:ui:src/App.tsx:22:6",
+      "title": "Refresh → IPC list_notes",
+      "start": "ui:src/App.tsx:22:6",
+      "hops": [
+        {
+          "node": "ui:src/App.tsx:22:6",
+          "kind": "ui",
+          "label": "<button> “Refresh”",
+          "via": "start",
+          "proof": [
+            "src/App.tsx:22"
+          ],
+          "confidence": 1.0,
+          "explain": "The user clicks this button."
+        },
+        {
+          "node": "fn:src/App.tsx#refresh",
+          "kind": "function",
+          "label": "refresh()",
+          "via": "handler",
+          "proof": [
+            "src/App.tsx:9"
+          ],
+          "confidence": 1.0,
+          "explain": "Its onClick handler runs in the browser."
+        },
+        {
+          "node": "fn:src/api.ts#listNotes",
+          "kind": "function",
+          "label": "listNotes()",
+          "via": "call",
+          "proof": [
+            "src/api.ts:8"
+          ],
+          "confidence": 0.85,
+          "explain": "A resolved call on the way to the network request."
+        },
+        {
+          "node": "route:IPC list_notes#src-tauri/src/lib.rs",
+          "kind": "route",
+          "label": "IPC list_notes",
+          "via": "http",
+          "proof": [
+            "xedge:fn:src/api.ts#listNotes->fn:src-tauri/src/lib.rs#list_notes",
+            "src-tauri/src/lib.rs:17"
+          ],
+          "confidence": 1.0,
+          "explain": "The browser sends HTTP; the backend route IPC list_notes receives it and runs list_notes()."
+        },
+        {
+          "node": "ui:src/App.tsx:22:6",
+          "kind": "response",
+          "label": "answer shown on screen",
+          "via": "return",
+          "proof": [
+            "xedge:fn:src/api.ts#listNotes->fn:src-tauri/src/lib.rs#list_notes"
+          ],
+          "confidence": 1.0,
+          "explain": "The response travels back the same way and the screen updates."
+        }
+      ]
+    }
+  ],
+  "features": [
+    {
+      "id": "feature:notes",
+      "name": "Notes",
+      "explain": "3 native commands, 1 screen; the window calls delete_note, list_notes, save_note.",
+      "basis": "routes",
+      "routes": [
+        "route:IPC delete_note#src-tauri/src/lib.rs",
+        "route:IPC list_notes#src-tauri/src/lib.rs",
+        "route:IPC save_note#src-tauri/src/lib.rs"
+      ],
+      "ui": [
+        "ui:src/App.tsx:18:6",
+        "ui:src/App.tsx:19:6",
+        "ui:src/App.tsx:22:6"
+      ],
+      "files": [
+        "file:crates/notes-core/src/lib.rs",
+        "file:src/App.tsx"
+      ],
+      "sharedFiles": [
+        "file:src-tauri/src/lib.rs",
+        "file:src/api.ts"
+      ],
+      "tables": [],
+      "services": [],
+      "aiStages": [],
+      "stack": [
+        "tauri",
+        "std",
+        "@tauri-apps/api",
+        "React",
+        "rusqlite",
+        "serde"
+      ]
+    },
+    {
+      "id": "feature:app-version",
+      "name": "App Version",
+      "explain": "1 native command; the window calls app_version.",
+      "basis": "routes",
+      "routes": [
+        "route:IPC app_version#src-tauri/src/lib.rs"
+      ],
+      "ui": [],
+      "files": [],
+      "sharedFiles": [
+        "file:src-tauri/src/lib.rs",
+        "file:src/api.ts"
+      ],
+      "tables": [],
+      "services": [],
+      "aiStages": [],
+      "stack": [
+        "tauri",
+        "@tauri-apps/api",
+        "std"
+      ]
+    }
+  ],
+  "memoryMap": [
+    {
+      "id": "memmap:0",
+      "what": "Shared app state",
+      "place": "ram",
+      "holder": "proc:app",
+      "holderName": "the app's native process",
+      "lifetime": "process",
+      "proof": [
+        "src-tauri/src/lib.rs:34"
+      ],
+      "explain": "State the native side keeps for the whole run and hands to every command, such as running servers or caches.",
+      "source": "file:src-tauri/src/lib.rs"
+    },
+    {
+      "id": "memmap:1",
+      "what": "App data folder",
+      "place": "disk",
+      "holder": "proc:app",
+      "holderName": "the app's native process",
+      "lifetime": "persistent",
+      "proof": [
+        "src-tauri/src/lib.rs:37"
+      ],
+      "explain": "Files the app keeps for this user between runs, in the system's per-app data folder.",
+      "source": "file:src-tauri/src/lib.rs"
+    },
+    {
+      "id": "memmap:2",
+      "what": "SQLite database file",
+      "place": "disk",
+      "holder": "proc:app",
+      "holderName": "the app's native process",
+      "lifetime": "persistent",
+      "proof": [
+        "crates/notes-core/src/lib.rs:18"
+      ],
+      "explain": "An embedded database in a single file, opened by this process; no database server is involved.",
+      "source": "file:crates/notes-core/src/lib.rs"
+    },
+    {
+      "id": "memmap:3",
+      "what": "localStorage (\"draft\")",
+      "place": "browser",
+      "holder": "browser",
+      "holderName": "the user's browser",
+      "lifetime": "persistent",
+      "proof": [
+        "src/App.tsx:11"
+      ],
+      "explain": "Saved in the browser per site, up to about 5 MB; it stays after the tab closes until the user clears site data.",
+      "source": "file:src/App.tsx"
+    }
+  ],
+  "health": {
+    "filesChecked": 6,
+    "filesWithErrors": 0,
+    "issues": [
+      {
+        "id": "health:0",
+        "kind": "deadRoute",
+        "severity": "warning",
+        "fileId": "file:src/api.ts",
+        "line": 13,
+        "message": "`invoke(\"delete_nte\")` names a command the native side does not register",
+        "fix": "Check the spelling against the `#[tauri::command]` functions (or `ipcMain.handle` channels), and that the command is listed in the invoke handler."
+      }
+    ]
+  }
+}
