@@ -16,7 +16,8 @@
       "!**/src-tauri/gen",
       "!**/src-tauri/target",
       "!**/src/lib/ontology.json",
-      "!**/demo-architecture.json"
+      "!**/demo-architecture.json",
+      "!**/src/examples"
     ]
   },
   "formatter": {

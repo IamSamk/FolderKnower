@@ -13,7 +13,7 @@ import {
   LIFE_NAME,
   PLACE_COLOR,
   PLACE_NAME,
-  PLAIN_NAME,
+  plainName,
   proofTarget,
   SVC_COLOR,
 } from "../../lib/system";
@@ -122,7 +122,7 @@ export function MemoryMap({ feature, depth }: { feature?: Feature; depth: Depth 
                 const list = items.filter((p) => p.holder === h);
                 const name = svc
                   ? simple
-                    ? `${PLAIN_NAME[svc.kind]} (${svc.name})`
+                    ? `${plainName(ix, svc)} (${svc.name})`
                     : svc.name
                   : list[0].holderName;
                 return (

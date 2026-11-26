@@ -106,6 +106,7 @@ function QuestionCard({ q }: { q: Question }) {
 
 const KIND_LABEL: Record<string, string> = {
   "full-stack": "Full-stack app",
+  desktop: "Desktop app",
   frontend: "Frontend app",
   backend: "Backend service",
   library: "Library",

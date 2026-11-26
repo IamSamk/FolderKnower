@@ -755,7 +755,6 @@
                 }
               ],
               "packages": [
-                "std",
                 "tauri"
               ]
             }
@@ -1044,8 +1043,7 @@
               ],
               "packages": [
                 "rusqlite",
-                "serde",
-                "std"
+                "serde"
               ]
             }
           ]
@@ -1435,7 +1433,6 @@
       "aiStages": [],
       "stack": [
         "tauri",
-        "std",
         "@tauri-apps/api",
         "React",
         "rusqlite",
@@ -1461,8 +1458,7 @@
       "aiStages": [],
       "stack": [
         "tauri",
-        "@tauri-apps/api",
-        "std"
+        "@tauri-apps/api"
       ]
     }
   ],

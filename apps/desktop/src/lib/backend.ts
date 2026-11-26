@@ -45,18 +45,42 @@ export interface Concept {
   explain: string;
 }
 
+/** Architekton reading its own code: the main example. */
+export const DEMO_SELF_ROOT = "demo:architekton";
 export const DEMO_ROOT = "demo:fullstack-todo";
 /** A small RAG + agent project: shows the AI pipeline, DSA and memory views. */
 export const DEMO_AI_ROOT = "demo:rag-agent";
 /** A deliberately broken shop: shows the Problems drawer. */
 export const DEMO_BROKEN_ROOT = "demo:broken-shop";
 export const isDemo = (root: string | null) =>
-  root === DEMO_ROOT || root === DEMO_AI_ROOT || root === DEMO_BROKEN_ROOT;
-const DEMO_GRAPHS: Record<string, unknown> = {
-  [DEMO_ROOT]: demoGraph,
-  [DEMO_AI_ROOT]: aiDemoGraph,
-  [DEMO_BROKEN_ROOT]: brokenDemoGraph,
+  root === DEMO_SELF_ROOT ||
+  root === DEMO_ROOT ||
+  root === DEMO_AI_ROOT ||
+  root === DEMO_BROKEN_ROOT;
+const DEMO_GRAPHS: Record<string, () => Promise<unknown>> = {
+  // About 3 MB, so it loads only when opened. Regenerate with `pnpm example:self`.
+  [DEMO_SELF_ROOT]: () => import("../examples/architekton.json").then((m) => m.default),
+  [DEMO_ROOT]: async () => demoGraph,
+  [DEMO_AI_ROOT]: async () => aiDemoGraph,
+  [DEMO_BROKEN_ROOT]: async () => brokenDemoGraph,
 };
+
+/** This repository's own sources for the self example, each loaded when it is opened. */
+const selfSources = {
+  ...import.meta.glob("../../../../crates/*/src/**/*.rs", { query: "?raw", import: "default" }),
+  ...import.meta.glob("../../../../apps/desktop/src-tauri/src/**/*.rs", {
+    query: "?raw",
+    import: "default",
+  }),
+  ...import.meta.glob("../../../../apps/desktop/src/**/*.{ts,tsx}", {
+    query: "?raw",
+    import: "default",
+  }),
+  ...import.meta.glob("../../../../apps/web/src/**/*.{ts,tsx}", {
+    query: "?raw",
+    import: "default",
+  }),
+} as Record<string, () => Promise<string>>;
 
 const demoSources = {
   ...import.meta.glob("../../../../fixtures/repos/fullstack-todo/**/*", {
@@ -89,8 +113,8 @@ export async function analyze(
   onProgress: (p: Progress) => void,
 ): Promise<AnalyzeResult> {
   if (isDemo(path) || !checkIsTauri()) {
-    const root = isDemo(path) ? path : DEMO_ROOT;
-    const g = structuredClone(DEMO_GRAPHS[root]) as unknown as SystemArchitectureGraph;
+    const root = isDemo(path) ? path : DEMO_SELF_ROOT;
+    const g = structuredClone(await DEMO_GRAPHS[root]()) as unknown as SystemArchitectureGraph;
     const steps: Progress[] = [
       { stage: "scan", message: "Walking the repository", done: 0, total: 0 },
       {
@@ -146,7 +170,11 @@ export async function analyze(
 
 export async function readSource(root: string, path: string): Promise<string> {
   if (isDemo(root) || !checkIsTauri()) {
-    const repo = isDemo(root) ? root.replace("demo:", "") : "fullstack-todo";
+    if (root === DEMO_SELF_ROOT || !isDemo(root)) {
+      const load = selfSources[`../../../../${path}`];
+      return load ? load() : `// source not bundled in the example: ${path}`;
+    }
+    const repo = root.replace("demo:", "");
     const key = Object.keys(demoSources).find((k) => k.endsWith(`/${repo}/${path}`));
     return key ? demoSources[key] : `// source not bundled in demo: ${path}`;
   }
@@ -160,7 +188,7 @@ export const CONCEPTS: Concept[] = ontology as Concept[];
 export const CONCEPT_BY_ID: Map<string, Concept> = new Map(CONCEPTS.map((c) => [c.id, c]));
 
 export async function pickFolder(): Promise<string | null> {
-  if (!checkIsTauri()) return DEMO_ROOT;
+  if (!checkIsTauri()) return DEMO_SELF_ROOT;
   const { open } = await import("@tauri-apps/plugin-dialog");
   const res = await open({ directory: true, multiple: false, title: "Choose a repository" });
   return typeof res === "string" ? res : null;

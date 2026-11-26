@@ -147,7 +147,10 @@ const IMPLIED: &[(&str, &[&str])] = &[
 /// Standard library module or Node built-in.
 pub fn is_stdlib(p: &str) -> bool {
     let bare = p.trim_start_matches("node:");
-    PY_STDLIB.split(' ').any(|s| s == p) || NODE_BUILTINS.contains(&bare) || p.starts_with("node:")
+    PY_STDLIB.split(' ').any(|s| s == p)
+        || NODE_BUILTINS.contains(&bare)
+        || p.starts_with("node:")
+        || matches!(p, "std" | "core" | "alloc" | "proc-macro")
 }
 
 fn norm_py(s: &str) -> String {

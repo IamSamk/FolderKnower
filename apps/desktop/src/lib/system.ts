@@ -68,6 +68,21 @@ const LANE: Record<ServiceKind, number> = {
   other: 3,
 };
 export const LANE_NAME = ["In the browser", "At the edge", "Your code", "What it leans on"];
+/** A desktop app has no browser or edge: its UI is the app window. */
+export const DESKTOP_LANE_NAME = [
+  "In the app window",
+  "At the edge",
+  "On the computer",
+  "What it keeps",
+];
+
+/** Kind label for a box, in a desktop app's own words where they differ. */
+export function svcLabel(ix: Indexed | null, s: Service): string {
+  if (ix?.g.summary.kind === "desktop" && s.id === "tier:backend") return "Native code";
+  if (ix?.g.summary.kind === "desktop" && s.id === "tier:frontend") return "Web view";
+  if (ix?.g.summary.kind === "desktop" && s.id === "tier:storage") return "Files and SQLite";
+  return SVC_LABEL[s.kind];
+}
 
 /** How much the diagram says: plain words, the usual boxes, or every file and package. */
 export type Depth = "simple" | "standard" | "deep";
@@ -89,6 +104,27 @@ export const PLAIN_NAME: Record<ServiceKind, string> = {
   observability: "Monitoring",
   other: "Helper service",
 };
+
+/** Desktop apps have a window and a native side, not a website and a server. */
+const DESKTOP_PLAIN: Record<string, [string, string]> = {
+  "tier:frontend": [
+    "App window",
+    "The screens people see and click, drawn by a web view inside the app.",
+  ],
+  "tier:backend": [
+    "Native side",
+    "Code that runs on the computer itself: reads files, runs tools and models, and answers the window's commands.",
+  ],
+  "tier:storage": ["Saved data", "Files and small databases the app keeps on this computer."],
+};
+
+export function plainName(ix: Indexed, s: Service): string {
+  return (ix.g.summary.kind === "desktop" && DESKTOP_PLAIN[s.id]?.[0]) || PLAIN_NAME[s.kind];
+}
+
+export function plainWhat(ix: Indexed, s: Service): string {
+  return (ix.g.summary.kind === "desktop" && DESKTOP_PLAIN[s.id]?.[1]) || PLAIN_WHAT[s.kind];
+}
 
 export const PLAIN_WHAT: Record<ServiceKind, string> = {
   frontend: "The pages people see and click in their browser.",
@@ -288,12 +324,13 @@ export function serviceOfFile(services: Service[], path: string): Service | unde
 
 /** Without compose: one box per code tier, so the story still has places to go. */
 function syntheticServices(ix: Indexed): { services: Service[]; links: ServiceLink[] } {
+  const desktop = ix.g.summary.kind === "desktop";
   const map: [string, ServiceKind, string][] = [
-    ["Frontend", "frontend", "web"],
+    ["Frontend", "frontend", desktop ? "window" : "web"],
     ["Gateway", "proxy", "gateway"],
-    ["Backend", "api", "server"],
+    ["Backend", "api", desktop ? "native" : "server"],
     ["Workers", "worker", "workers"],
-    ["Storage", "database", "database"],
+    ["Storage", "database", desktop ? "local data" : "database"],
   ];
   const services: Service[] = [];
   for (const [tier, kind, name] of map) {
@@ -320,6 +357,16 @@ function syntheticServices(ix: Indexed): { services: Service[]; links: ServiceLi
     const from = `tier:${a.toLowerCase()}`;
     const to = `tier:${b.toLowerCase()}`;
     if (!services.some((s) => s.id === from) || !services.some((s) => s.id === to)) continue;
+    if (e.protocol === "IPC") {
+      const n = ix.g.crossTierEdges.filter(
+        (x) => x.protocol === "IPC" && ix.tierOf(x.source) === a && ix.tierOf(x.target) === b,
+      ).length;
+      const detail = `invoke() -> ${n} native command${n === 1 ? "" : "s"}`;
+      const have = links.find((l) => l.from === from && l.to === to);
+      if (have) have.detail = detail;
+      else links.push({ from, to, via: "env", detail });
+      continue;
+    }
     if (!links.some((l) => l.from === from && l.to === to))
       links.push({ from, to, via: "env", detail: e.evidence[0] ?? e.protocol });
   }
@@ -396,7 +443,15 @@ export function buildSystem(
     for (const m of mem)
       if (files.has(m.fileId)) add(m.fileId, pathOf(ix, m.fileId), "memory", "#ff6b6b");
     for (const [f, n] of routesByFile)
-      if (files.has(f)) add(f, pathOf(ix, f), `${n} route${n > 1 ? "s" : ""}`, "#c9b6ff");
+      if (files.has(f))
+        add(
+          f,
+          pathOf(ix, f),
+          ix.g.routes.some((r) => r.fileId === f && r.method === "IPC")
+            ? `${n} command${n > 1 ? "s" : ""}`
+            : `${n} route${n > 1 ? "s" : ""}`,
+          "#c9b6ff",
+        );
     const aiFiles = new Map<string, number>();
     for (const st of ai?.stages ?? [])
       if (files.has(st.fileId)) aiFiles.set(st.fileId, (aiFiles.get(st.fileId) ?? 0) + 1);
@@ -629,19 +684,21 @@ export function plainHeadline(ix: Indexed, parts: number): string {
   const kind = ix.g.summary.kind;
   const what = ix.g.insights?.ai
     ? "An AI app"
-    : kind === "full-stack"
-      ? "A website with its own server"
-      : kind === "frontend"
-        ? "A website"
-        : kind === "backend"
-          ? "A server program"
-          : kind === "cli"
-            ? "A command-line tool"
-            : kind === "worker"
-              ? "A background program"
-              : kind === "library"
-                ? "A code library"
-                : "A program";
+    : kind === "desktop"
+      ? "A desktop app"
+      : kind === "full-stack"
+        ? "A website with its own server"
+        : kind === "frontend"
+          ? "A website"
+          : kind === "backend"
+            ? "A server program"
+            : kind === "cli"
+              ? "A command-line tool"
+              : kind === "worker"
+                ? "A background program"
+                : kind === "library"
+                  ? "A code library"
+                  : "A program";
   const names = (ix.g.features ?? []).map((f) => f.name);
   const list =
     names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0];

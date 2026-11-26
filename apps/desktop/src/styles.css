@@ -3680,3 +3680,25 @@ button.ak-sys-row:hover {
   background: var(--code-bg);
   border: 1px solid color-mix(in srgb, var(--line) 25%, transparent);
 }
+
+/* M9: quieter row of secondary examples under the main one. */
+.ak-more-examples {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 4px 12px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.ak-more-examples button {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--ink) 35%, transparent);
+}
+.ak-more-examples button:hover {
+  text-decoration-color: currentColor;
+}

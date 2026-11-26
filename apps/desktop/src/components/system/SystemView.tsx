@@ -23,6 +23,7 @@ import {
   type Box,
   buildSystem,
   CARD_W,
+  DESKTOP_LANE_NAME,
   type Depth,
   HEAD_H,
   hopAnchor,
@@ -39,11 +40,14 @@ import {
   PLAIN_WHAT,
   PREVIEW_H,
   plainHeadline,
+  plainName,
+  plainWhat,
   proofTarget,
   ROW_H,
   SECTION_H,
   SVC_LABEL,
   type SystemModel,
+  svcLabel,
 } from "../../lib/system";
 import { useStore } from "../../store";
 import { MemoryMap } from "./MemoryMap";
@@ -184,6 +188,7 @@ function BoxCard({
   onFeature: (id: string) => void;
 }) {
   const reveal = useStore((s) => s.reveal);
+  const ix = useStore((s) => s.ix);
   const s = b.svc;
   return (
     <motion.div
@@ -194,14 +199,14 @@ function BoxCard({
     >
       {depth === "simple" ? (
         <button type="button" className="ak-sys-head" onClick={onOpen} style={{ height: HEAD_H }}>
-          <b className="text-[16px]">{PLAIN_NAME[s.kind]}</b>
-          <div className="ak-sys-plain">{PLAIN_WHAT[s.kind]}</div>
+          <b className="text-[16px]">{ix ? plainName(ix, s) : PLAIN_NAME[s.kind]}</b>
+          <div className="ak-sys-plain">{ix ? plainWhat(ix, s) : PLAIN_WHAT[s.kind]}</div>
         </button>
       ) : (
         <button type="button" className="ak-sys-head" onClick={onOpen} style={{ height: HEAD_H }}>
           <div className="flex items-baseline gap-2">
             <b className="text-[15.5px]">{s.name}</b>
-            <span className="ak-sys-kind">{SVC_LABEL[s.kind]}</span>
+            <span className="ak-sys-kind">{svcLabel(ix, s)}</span>
           </div>
           <div className="ak-mono ak-muted mt-0.5 truncate text-[11.5px]">
             {s.image ?? (b.synthetic ? "code tier" : "built here")}
@@ -368,6 +373,7 @@ function MemorySplit({ m }: { m: SystemModel }) {
 }
 
 function ServicePanel({ b, onClose }: { b: Box; onClose: () => void }) {
+  const ix = useStore((st) => st.ix);
   const reveal = useStore((s) => s.reveal);
   const s = b.svc;
   return (
@@ -380,7 +386,7 @@ function ServicePanel({ b, onClose }: { b: Box; onClose: () => void }) {
       <div className="flex items-start gap-2">
         <div>
           <div className="text-[17px] font-bold">{s.name}</div>
-          <div className="ak-muted text-[12px]">{SVC_LABEL[s.kind]}</div>
+          <div className="ak-muted text-[12px]">{svcLabel(ix, s)}</div>
         </div>
         <button type="button" className="ak-iconbtn ml-auto" onClick={onClose} aria-label="Close">
           <X size={15} />
@@ -578,8 +584,9 @@ export function SystemView() {
           </div>
           {m.synthetic && (
             <div className="ak-muted text-[12px]">
-              No docker-compose file found: boxes are code tiers. Add a compose file to see real
-              containers, limits and links.
+              {ix.g.summary.kind === "desktop"
+                ? "Boxes are the app's code tiers: the window, the native code it calls, and what it keeps on this computer."
+                : "No docker-compose file found: boxes are code tiers. Add a compose file to see real containers, limits and links."}
             </div>
           )}
         </div>
@@ -731,7 +738,7 @@ export function SystemView() {
                   className="ak-sys-lane"
                   style={{ left: first?.x ?? 0, top: PAD - 6, width: CARD_W[l] }}
                 >
-                  {LANE_NAME[l]}
+                  {(ix?.g.summary.kind === "desktop" ? DESKTOP_LANE_NAME : LANE_NAME)[l]}
                 </div>
               );
             })}

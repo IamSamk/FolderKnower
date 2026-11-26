@@ -6,6 +6,7 @@ import {
   DEMO_AI_ROOT,
   DEMO_BROKEN_ROOT,
   DEMO_ROOT,
+  DEMO_SELF_ROOT,
   isTauri,
   onFolderDrop,
   pickFolder,
@@ -141,7 +142,7 @@ export function Welcome() {
               ? "Let go to open it"
               : inTauri
                 ? "Drop a folder here, or click to choose one"
-                : "Open the demo project"}
+                : "Open the example: Architekton itself"}
           </div>
           <div className="ak-muted mt-1 text-[13.5px]">
             Read on this computer. Nothing is uploaded.
@@ -154,18 +155,24 @@ export function Welcome() {
             ))}
           </div>
         </motion.button>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+        <div className="mt-6 flex flex-col items-center gap-2.5">
           {inTauri && (
-            <button type="button" className="ak-btn" onClick={() => void start(DEMO_ROOT)}>
-              Try the demo full-stack app
+            <button type="button" className="ak-btn" onClick={() => void start(DEMO_SELF_ROOT)}>
+              <Sparkles size={15} /> See how Architekton itself is built
             </button>
           )}
-          <button type="button" className="ak-btn" onClick={() => void start(DEMO_AI_ROOT)}>
-            Try the AI demo: RAG + agent + tiny GPT
-          </button>
-          <button type="button" className="ak-btn" onClick={() => void start(DEMO_BROKEN_ROOT)}>
-            Try a broken project
-          </button>
+          <div className="ak-more-examples">
+            <span>More examples:</span>
+            <button type="button" onClick={() => void start(DEMO_ROOT)}>
+              web app
+            </button>
+            <button type="button" onClick={() => void start(DEMO_AI_ROOT)}>
+              AI app
+            </button>
+            <button type="button" onClick={() => void start(DEMO_BROKEN_ROOT)}>
+              broken project
+            </button>
+          </div>
         </div>
       </div>
     </div>
