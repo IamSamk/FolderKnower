@@ -644,3 +644,34 @@ fn adaptive_graph_retrieval_shows_both_lanes_and_the_loop() {
     assert_eq!(ai.kind, AiSystemKind::HybridRag);
     assert!(ai.headline.contains("entity graph"), "{}", ai.headline);
 }
+
+#[test]
+fn every_search_leg_is_kept() {
+    let store = "def search_words(cur, q):\n    cur.execute(\"SELECT ts_rank(tsv, plainto_tsquery(%s)) FROM d\", (q,))\n\n\ndef search_soundkeys(cur, q):\n    cur.execute(\"SELECT ts_rank(sk, plainto_tsquery(%s)) FROM d\", (q,))\n\n\ndef search_chunks(cur, v):\n    cur.execute(\"SELECT id FROM c ORDER BY embedding <=> %s::vector\", (v,))\n";
+    let graph = "def search_entities(g, q):\n    return g.run(\"MATCH (e:Entity) RETURN e\")\n";
+    let fuse = "def rrf_fuse(lists):\n    return lists\n";
+    let files = [
+        pf("store.py", Language::Python, store),
+        pf("graph_queries.py", Language::Python, graph),
+        pf("retrieval.py", Language::Python, fuse),
+    ];
+    let texts = [
+        ("store.py", store),
+        ("graph_queries.py", graph),
+        ("retrieval.py", fuse),
+    ]
+    .map(|(path, text)| crate::deployment::InfraFile { path, text });
+    let ai = crate::ai::analyze_texts(&files, &[], &texts)
+        .ai
+        .expect("ai");
+    let count = |r: AiRole| ai.stages.iter().filter(|s| s.role == r).count();
+    assert_eq!(count(AiRole::KeywordIndex), 2, "{:#?}", ai.stages);
+    assert_eq!(count(AiRole::VectorStore), 1);
+    assert_eq!(count(AiRole::Retriever), 1);
+    let fusion = ai
+        .stages
+        .iter()
+        .find(|s| s.role == AiRole::Fusion)
+        .expect("fusion");
+    assert_eq!(ai.edges.iter().filter(|e| e.to == fusion.id).count(), 4);
+}

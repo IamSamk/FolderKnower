@@ -575,7 +575,7 @@ fn read_model_texts(root: &Path, files: &[ark_scan::ScannedFile]) -> Vec<(String
             || [
                 "config", "settings", "store", "search", "embed", "retriev", "vector", "fusion",
                 "rank", "rag", "llm", "model", "graph", "chunk", "ingest", "pipeline", "agent",
-                "evidence", "answer",
+                "evidence", "answer", "fuse", "loop", "quer", "client", "builtin", "tool",
             ]
             .iter()
             .any(|k| name.contains(k))

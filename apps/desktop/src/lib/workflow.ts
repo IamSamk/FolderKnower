@@ -29,6 +29,8 @@ export interface WNode {
 export interface WRow {
   /** A dashed frame around parallel nodes, with its title. */
   group?: string;
+  /** Set when arrows should meet the group's frame, not each box inside it. */
+  id?: string;
   nodes: WNode[];
 }
 
@@ -132,7 +134,10 @@ export function aiWorkflow(ix: Indexed, feature?: Feature, run?: ExampleRun): Wo
     link(ns ?? nl, ne, "chunks");
     link(ne ?? ns ?? nl, nv, "vectors");
     const rows: WRow[] = [{ nodes: row1 }];
-    const kwIdx = kw.map((k) => stageNode(ix, k, "store", `Keyword index: ${k.name}`));
+    // One index box per library: several searches read the same index.
+    const kwIdx = kw
+      .filter((k, i) => kw.findIndex((o) => o.library === k.library) === i)
+      .map((k) => stageNode(ix, k, "store", `Keyword index: ${k.library}`));
     if (kwIdx.length) {
       rows.push({ nodes: kwIdx });
       link(ns ?? nl ?? ne, kwIdx[0], "text");
@@ -154,10 +159,17 @@ export function aiWorkflow(ix: Indexed, feature?: Feature, run?: ExampleRun): Wo
   online.push({ nodes: nplan ? [start, nplan] : [start] });
   link(start, nplan, "question");
 
+  // Every search the code runs is its own list: none is picked over another.
   const lists: WNode[] = [];
-  const retr = by(stages, "retriever");
+  const vectors = by(stages, "vectorStore");
+  // A "lexical" retriever (graph expansion of keyword hits) is not the dense search.
+  const retr = by(stages, "retriever").filter(
+    (r) => r.library !== "Knowledge graph" && r.params.lane !== "lexical",
+  );
+  const expand = by(stages, "retriever").filter((r) => r.params.lane === "lexical");
+  const graphs = by(stages, "retriever").filter((r) => r.library === "Knowledge graph");
   const dense = retr[0];
-  if (dense || (embedder && vstore)) {
+  if (dense || (embedder && vectors.length === 1)) {
     const items = [
       embedder ? `Embed the question with ${embedder.params.model ?? embedder.name}` : "",
       vstore ? `Nearest chunks in ${vstore.name}` : "",
@@ -168,13 +180,37 @@ export function aiWorkflow(ix: Indexed, feature?: Feature, run?: ExampleRun): Wo
       lists.push({
         id: "list:dense",
         title: "Meaning (dense)",
-        sub: vstore ? `reads: ${vstore.name}` : undefined,
+        sub: [embedder?.params.model ?? embedder?.name, vstore?.name].filter(Boolean).join(" → "),
         items,
         explain: "Finds chunks whose meaning is close to the question.",
         kind: "step",
         proof: proofOf(ix, src),
       });
   }
+  if (vectors.length > 1 || (!embedder && !dense))
+    for (const v of vectors)
+      lists.push({
+        id: `list:${v.id}`,
+        title: `Meaning (${v.name})`,
+        sub: v.library,
+        items: [
+          embedder ? `Embed the question with ${embedder.params.model ?? embedder.name}` : "",
+          "Nearest neighbours of that vector",
+        ].filter(Boolean),
+        explain: "Finds passages whose meaning is close to the question.",
+        kind: "step",
+        proof: proofOf(ix, v),
+      });
+  if (graphs.length)
+    lists.push({
+      id: "list:graph",
+      title: "Links (knowledge graph)",
+      sub: `${graphs.length} graph quer${graphs.length > 1 ? "ies" : "y"}`,
+      items: graphs.map((g) => g.name.replace("Knowledge graph: ", "")),
+      explain: "Follows stored links between names, topics and pages.",
+      kind: "step",
+      proof: graphs.flatMap((g) => proofOf(ix, g)).slice(0, 4),
+    });
   for (const k of kw)
     lists.push({
       id: `list:${k.id}`,
@@ -185,7 +221,7 @@ export function aiWorkflow(ix: Indexed, feature?: Feature, run?: ExampleRun): Wo
       kind: "step",
       proof: proofOf(ix, k),
     });
-  for (const r of retr.slice(dense ? 1 : 0))
+  for (const r of [...expand, ...retr.slice(dense ? 1 : 0)])
     lists.push({
       id: `list:${r.id}`,
       title: r.name,
@@ -194,13 +230,17 @@ export function aiWorkflow(ix: Indexed, feature?: Feature, run?: ExampleRun): Wo
       kind: "step",
       proof: proofOf(ix, r),
     });
+  // Several searches share one frame: one arrow in and one out, so none cross the boxes.
+  const SEARCHES = "group:search";
+  const heads: WNode[] =
+    lists.length > 1 ? [{ id: SEARCHES, title: "", kind: "step", proof: [] }] : lists;
   if (lists.length)
     online.push({
-      group: `Search: ${lists.length} ranked list${lists.length > 1 ? "s" : ""} run together`,
+      id: lists.length > 1 ? SEARCHES : undefined,
+      group: `Search: ${lists.length} way${lists.length > 1 ? "s" : ""} of finding evidence`,
       nodes: lists,
     });
-  const searchHead = lists[0];
-  if (searchHead) for (const l of lists) link(nplan ?? start, l, undefined);
+  for (const l of heads) link(nplan ?? start, l, undefined);
 
   const fusion = by(stages, "fusion")[0];
   const rerank = by(stages, "reranker")[0];
@@ -218,7 +258,7 @@ export function aiWorkflow(ix: Indexed, feature?: Feature, run?: ExampleRun): Wo
   let prev: WNode | undefined;
   const afterSearch = [nf, nr, np, nl2].filter(Boolean) as WNode[];
   for (const n of afterSearch) {
-    if (!prev) for (const l of lists) link(l, n);
+    if (!prev) for (const l of heads) link(l, n);
     else link(prev, n);
     prev = n;
   }

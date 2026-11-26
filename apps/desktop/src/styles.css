@@ -4110,3 +4110,9 @@ button.ak-sys-row:hover {
   background: var(--surface-2);
   font-size: 12px;
 }
+
+/* long commands and links in release notes wrap instead of scrolling sideways */
+.update-card__notes {
+  overflow-x: hidden;
+  overflow-wrap: anywhere;
+}

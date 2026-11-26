@@ -5,14 +5,18 @@ import { moves, run as runMove, selection, start } from "../lib/explore";
 import type { Indexed } from "../lib/graph";
 import { useStore } from "../store";
 
-const DEFAULT_QUESTION = "Explain what this does and why it matters in this part of the codebase.";
+const defaultQuestion = (name: string) =>
+  `Explain what ${name} does and why it matters in this part of the codebase.`;
 const MAX_LOOKS = 3;
 
 export function Explain({ id, ix }: { id: string; ix: Indexed }) {
   const slm = useStore((s) => s.slm);
   const model = useStore((s) => s.model);
   const reveal = useStore((s) => s.reveal);
-  const [q, setQ] = useState(DEFAULT_QUESTION);
+  const name = selection(ix, id)?.label ?? "this";
+  // What the reader typed; until then the question follows the selection.
+  const [typed, setQ] = useState<string | null>(null);
+  const q = typed ?? defaultQuestion(name);
   const [look, setLook] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [trail, setTrail] = useState<{ key: string; id: string }[]>([]);
@@ -22,6 +26,7 @@ export function Explain({ id, ix }: { id: string; ix: Indexed }) {
     setOut(null);
     setErr(null);
     setTrail([]);
+    setQ(null);
   }, [id]);
   const sel = selection(ix, id);
 
@@ -103,7 +108,7 @@ export function Explain({ id, ix }: { id: string; ix: Indexed }) {
       const r = await slmExplain({
         baseUrl: base,
         model,
-        question: `${q}\nThe selected ${sel.kind} is ${sel.label} (id ${sel.id}).`,
+        question: q,
         nodes: [...ctx.nodes.values()],
         edges: ctx.edges,
       });

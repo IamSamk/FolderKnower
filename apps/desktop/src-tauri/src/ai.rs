@@ -1007,11 +1007,12 @@ fn verdict(have: u64, minimum: u64, recommended: u64) -> &'static str {
 
 /// Advice by installed memory. The built-in runtime is CPU only.
 fn suggest(ram_gb: u64, threads: u64) -> &'static str {
-    if ram_gb < 8 || threads < 4 {
+    // A machine sold as 8, 16 or 32 GB reports a little less.
+    if ram_gb < 7 || threads < 4 {
         "Skip the local models on this computer. Every diagram, trace and health check works without them."
-    } else if ram_gb < 16 {
+    } else if ram_gb < 15 {
         "Use the built-in Laya and Qwen2.5 0.5B models. Explanations are short; check them against the cited code."
-    } else if ram_gb < 32 {
+    } else if ram_gb < 30 {
         "The built-in models run comfortably. For clearly better explanations, point the narrator at a 3B instruct model such as Qwen2.5-Coder 3B Q4_K_M (about 2 GB)."
     } else {
         "You have room for a 7B instruct model such as Qwen2.5-Coder 7B Q4_K_M (about 4.7 GB) as the narrator. It explains best, but answers slowly on the CPU."
@@ -1042,7 +1043,7 @@ pub fn ai_requirements(app: AppHandle) -> Result<Requirements, String> {
             minimum: "8 GB".to_owned(),
             recommended: "16 GB",
             yours: format!("{ram} GB"),
-            verdict: verdict(ram, 8, 16),
+            verdict: verdict(ram, 7, 15),
         },
         Requirement {
             what: "Processor threads",
@@ -1096,6 +1097,7 @@ mod tests {
         assert!(suggest(4, 8).starts_with("Skip"));
         assert!(suggest(8, 8).starts_with("Use the built-in"));
         assert!(suggest(16, 8).contains("3B"));
+        assert!(suggest(31, 24).contains("7B"));
         assert!(suggest(64, 16).contains("7B"));
         assert_eq!(verdict(8, 8, 16), "ok");
     }
