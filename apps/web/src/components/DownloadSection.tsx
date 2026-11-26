@@ -1,37 +1,47 @@
 import { Apple, Download, Laptop, Monitor, Terminal } from "lucide-react";
+import { fmtDate, fmtSize, getLatestRelease, pick, REPO } from "@/lib/releases";
 
-export function DownloadSection() {
+export async function DownloadSection() {
+  const latest = await getLatestRelease();
+  const fallback = `https://github.com/${REPO}/releases/latest`;
+  const exe = pick(latest, /_x64-setup\.exe$/);
+  const msi = pick(latest, /_x64_en-US\.msi$/);
+  const dmg = pick(latest, /_universal\.dmg$/);
+  const appimage = pick(latest, /\.AppImage$/);
+  const deb = pick(latest, /\.deb$/);
+  const rpm = pick(latest, /\.rpm$/);
+
   const releases = [
     {
       os: "Windows",
       icon: <Monitor size={28} />,
       desc: "Windows 10 / 11 (x64)",
-      primaryBtn: "Download .exe installer",
-      primaryUrl:
-        "https://github.com/IamSamk/Architekton/releases/latest/download/Architekton_0.3.0_x64-setup.exe",
+      primaryBtn: exe ? `Download .exe · ${fmtSize(exe.size)}` : "Download for Windows",
+      primaryUrl: exe?.url ?? fallback,
       secondaryText: "Download .msi package",
-      secondaryUrl:
-        "https://github.com/IamSamk/Architekton/releases/latest/download/Architekton_0.3.0_x64_en-US.msi",
-      badge: "In-App Updater enabled",
+      secondaryUrl: msi?.url ?? fallback,
+      badge: "Auto-updates",
     },
     {
       os: "macOS",
       icon: <Apple size={28} />,
       desc: "Universal (Apple Silicon & Intel)",
-      primaryBtn: "Download .dmg",
-      primaryUrl:
-        "https://github.com/IamSamk/Architekton/releases/latest/download/Architekton_0.3.0_universal.dmg",
-      secondaryText: "Right click → Open on first run",
+      primaryBtn: dmg ? `Download .dmg · ${fmtSize(dmg.size)}` : "Download for macOS",
+      primaryUrl: dmg?.url ?? fallback,
+      secondaryText: "Not notarized: right click, Open on first run",
       badge: "Universal Binary",
     },
     {
       os: "Linux",
       icon: <Laptop size={28} />,
       desc: "x86-64 AppImage, deb, rpm",
-      primaryBtn: "View Linux Packages",
-      primaryUrl: "https://github.com/IamSamk/Architekton/releases/latest",
-      secondaryText: "Available in .AppImage, .deb, .rpm",
-      badge: "Desktop Standard",
+      primaryBtn: appimage
+        ? `Download AppImage · ${fmtSize(appimage.size)}`
+        : "View Linux packages",
+      primaryUrl: appimage?.url ?? fallback,
+      secondaryText: [deb && ".deb", rpm && ".rpm"].filter(Boolean).join(" · ") || "deb and rpm",
+      secondaryUrl: deb?.url ?? fallback,
+      badge: "Auto-updates (AppImage)",
     },
   ];
 
@@ -49,15 +59,27 @@ export function DownloadSection() {
             Get Architekton Desktop
           </h2>
           <p className="text-[var(--ink-2)] text-base font-medium mt-3">
-            Available as a native desktop application with in-app self updates and as a standalone
-            Rust CLI.
+            Native desktop app that updates itself with a pop-up, plus a standalone Rust CLI.
           </p>
+          {latest && (
+            <p className="mt-4 text-sm font-mono text-[var(--ink-3)]">
+              Latest: <span className="font-bold text-[var(--ink)]">{latest.tag}</span> ·{" "}
+              {fmtDate(latest.publishedAt)} ·{" "}
+              <a href="/releases" className="underline hover:text-[var(--ink)]">
+                what&apos;s new
+              </a>{" "}
+              ·{" "}
+              <a href="/code-signing" className="underline hover:text-[var(--ink)]">
+                code signing policy
+              </a>
+            </p>
+          )}
         </div>
 
         {/* OS Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {releases.map((rel, idx) => (
-            <div key={idx} className="ak-card p-6 flex flex-col justify-between">
+          {releases.map((rel) => (
+            <div key={rel.os} className="ak-card p-6 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 rounded-lg bg-[var(--surface)] border-2 border-[var(--line)] flex items-center justify-center shadow-[2px_2px_0_var(--shade)]">

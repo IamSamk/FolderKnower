@@ -1,23 +1,100 @@
 name: Release
 
+# Tag push (vX.Y.Z) -> draft release with every installer + signed updater feed
+# (latest.json) -> optional Windows Authenticode signing (SignPath, free for OSS)
+# -> SHA256SUMS (+ optional GPG signature) and Sigstore build-provenance
+# attestations -> publish. The draft is only published when every step passed,
+# so the in-app updater never sees a half-finished release.
+#
+# Secrets (Settings -> Secrets and variables -> Actions):
+#   TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD   required (updater)
+#   GPG_PRIVATE_KEY, GPG_PASSPHRASE                                 optional (Linux AppImage + SHA256SUMS.asc)
+#   SIGNPATH_API_TOKEN                                              optional (Windows signing)
+# Variables:
+#   SIGNPATH_ORGANIZATION_ID, SIGNPATH_PROJECT_SLUG, SIGNPATH_POLICY_SLUG  (set all three to enable)
+# See docs/release/signing.md.
+
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to release (e.g. v0.1.0)"
+        description: "Tag to release (e.g. v0.3.1)"
         required: true
+      commit:
+        description: "Commit to tag when the tag does not exist yet (full SHA). Leave empty for an existing tag."
+        required: false
+        default: ""
 
 permissions:
   contents: write
 
 env:
   CARGO_TERM_COLOR: always
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+  # Source revision: an explicit commit (dispatch, tag created by the release) or the tag itself.
+  SRC: ${{ github.event.inputs.commit || github.event.inputs.tag || github.ref_name }}
 
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      notes: ${{ steps.notes.outputs.notes }}
+      signpath: ${{ steps.flags.outputs.signpath }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SRC }}
+      - name: Updater signing key must exist
+        env:
+          KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY is not set. Without it there is no signed latest.json and the in-app updater cannot see this release. See docs/release/signing.md."
+            exit 1
+          fi
+      - name: Tag matches app version
+        run: |
+          want="${TAG#v}"
+          have=$(jq -r .version apps/desktop/src-tauri/tauri.conf.json)
+          if [ "$want" != "$have" ]; then
+            echo "::error::Tag $TAG but tauri.conf.json says $have"
+            exit 1
+          fi
+      - name: Release notes from CHANGELOG.md
+        id: notes
+        run: |
+          v="${TAG#v}"
+          body=$(awk -v v="$v" '
+            $0 ~ "^## \\[?"v"\\]?" {on=1; next}
+            on && /^## / {exit}
+            on {print}
+          ' CHANGELOG.md | sed -e '/./,$!d')
+          [ -z "$body" ] && body="Bug fixes and improvements."
+          {
+            echo "notes<<__NOTES__"
+            echo "$body"
+            echo "__NOTES__"
+          } >> "$GITHUB_OUTPUT"
+      - name: Optional signing switches
+        id: flags
+        env:
+          SP_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SP_ORG: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          SP_PROJ: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          SP_POL: ${{ vars.SIGNPATH_POLICY_SLUG }}
+        run: |
+          if [ -n "$SP_TOKEN" ] && [ -n "$SP_ORG" ] && [ -n "$SP_PROJ" ] && [ -n "$SP_POL" ]; then
+            echo "signpath=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signpath=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::SignPath not configured: Windows installers ship unsigned (SmartScreen will warn)."
+          fi
+
   desktop:
     name: desktop (${{ matrix.name }})
+    needs: preflight
     strategy:
       fail-fast: false
       matrix:
@@ -32,14 +109,32 @@ jobs:
             os: ubuntu-22.04
             args: ""
     runs-on: ${{ matrix.os }}
+    env:
+      GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SRC }}
 
       - name: Linux system libraries for WebKitGTK
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev
+
+      - name: GPG key for AppImage signing (optional)
+        if: runner.os == 'Linux' && env.GPG_PRIVATE_KEY != ''
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          keyid=$(gpg --list-secret-keys --with-colons | awk -F: '/^sec/{print $5; exit}')
+          {
+            echo "SIGN=1"
+            echo "SIGN_KEY=$keyid"
+            echo "APPIMAGETOOL_SIGN_PASSPHRASE=$GPG_PASSPHRASE"
+            echo "APPIMAGETOOL_FORCE_SIGN=1"
+          } >> "$GITHUB_ENV"
 
       - name: Rust toolchain (from rust-toolchain.toml)
         run: rustup show active-toolchain || rustup toolchain install
@@ -67,19 +162,23 @@ jobs:
         with:
           projectPath: apps/desktop
           tauriScript: pnpm tauri
-          tagName: ${{ github.event.inputs.tag || github.ref_name }}
-          releaseName: Architekton ${{ github.event.inputs.tag || github.ref_name }}
+          tagName: ${{ env.TAG }}
+          releaseCommitish: ${{ github.event.inputs.commit || github.sha }}
+          releaseName: Architekton ${{ env.TAG }}
           includeUpdaterJson: true
           releaseBody: |
-            Offline codebase architecture explorer. Drop a repository folder and explore it from system tiers down to functions, API flows and the database.
+            ${{ needs.preflight.outputs.notes }}
 
-            **Install**
+            ## Install
             - Windows: `Architekton_*_x64-setup.exe` (or the `.msi`).
-            - macOS (Apple Silicon + Intel): `Architekton_*_universal.dmg`. The app is not notarized yet: right-click it and choose Open the first time, or run `xattr -cr /Applications/Architekton.app`.
+            - macOS (Apple Silicon + Intel): `Architekton_*_universal.dmg`. Not notarized: right-click and choose Open the first time, or run `xattr -cr /Applications/Architekton.app`.
             - Linux: `.AppImage` (chmod +x and run), `.deb` or `.rpm`.
+            - Already installed? The app updates itself: you will get a pop-up.
 
-            The `architekton-cli-*` archives contain the command-line indexer (`architekton index <repo> --out architecture.json`).
-          releaseDraft: false
+            ## Verify
+            - `SHA256SUMS.txt` lists every file. `gh attestation verify <file> -R IamSamk/Architekton` proves it was built by this repo's CI.
+            - Code signing policy: https://github.com/IamSamk/Architekton/blob/main/docs/release/signing.md
+          releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
 
@@ -102,6 +201,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SRC }}
       - run: rustup show active-toolchain || rustup toolchain install
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --release -p ark-cli
@@ -109,7 +210,6 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
           name="architekton-cli-${TAG}-${{ matrix.target }}"
           mkdir "$name"
@@ -121,4 +221,98 @@ jobs:
             tar czf "$name.tar.gz" "$name"
             asset="$name.tar.gz"
           fi
-          gh release upload "$TAG" "$asset" --clobber
+          gh release upload "$TAG" "$asset" --clobber -R "$GITHUB_REPOSITORY"
+
+  # Authenticode-sign the Windows installers through SignPath (free for OSS), then
+  # re-create their updater signatures so latest.json matches the signed bytes.
+  sign-windows:
+    needs: [preflight, desktop]
+    if: needs.preflight.outputs.signpath == 'true'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Fetch unsigned installers
+        run: |
+          mkdir unsigned
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" -D unsigned -p "*_x64-setup.exe" -p "*_x64_en-US.msi"
+          ls -l unsigned
+      - id: upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-unsigned
+          path: unsigned/*
+          if-no-files-found: error
+      - uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.upload.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 21600
+          output-artifact-directory: signed
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+      - name: Re-sign for the updater and replace assets
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p latest.json -D .
+          for f in signed/*; do
+            pnpm dlx @tauri-apps/cli@2 signer sign "$f"
+            name=$(basename "$f")
+            sig=$(cat "$f.sig")
+            jq --arg n "$name" --arg s "$sig" '
+              .platforms |= with_entries(
+                if (.value.url | endswith("/" + $n)) then .value.signature = $s else . end)
+            ' latest.json > latest.tmp && mv latest.tmp latest.json
+          done
+          gh release upload "$TAG" -R "$GITHUB_REPOSITORY" --clobber signed/* latest.json
+
+  publish:
+    needs: [preflight, desktop, cli, sign-windows]
+    if: >-
+      always() && needs.desktop.result == 'success' && needs.cli.result == 'success' &&
+      (needs.sign-windows.result == 'success' || needs.sign-windows.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+    steps:
+      - name: Download every asset
+        run: |
+          mkdir assets
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" -D assets
+          rm -f assets/SHA256SUMS.txt assets/SHA256SUMS.txt.asc
+      - name: Updater feed is complete
+        run: |
+          jq -e '.platforms | keys | (index("windows-x86_64") != null) and (index("linux-x86_64") != null) and (map(startswith("darwin")) | any)' assets/latest.json
+          jq -r '.platforms | keys[]' assets/latest.json
+          jq -r '.version' assets/latest.json
+      - name: Checksums
+        working-directory: assets
+        run: sha256sum -- * | grep -v ' latest.json$' > ../SHA256SUMS.txt && cat ../SHA256SUMS.txt
+      - name: GPG-sign checksums (optional)
+        if: env.GPG_PRIVATE_KEY != ''
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
+            --armor --detach-sign -o SHA256SUMS.txt.asc SHA256SUMS.txt
+      - name: Build-provenance attestations (Sigstore)
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-checksums: SHA256SUMS.txt
+      - name: Upload checksums and publish
+        run: |
+          gh release upload "$TAG" -R "$GITHUB_REPOSITORY" --clobber SHA256SUMS.txt $( [ -f SHA256SUMS.txt.asc ] && echo SHA256SUMS.txt.asc )
+          gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --draft=false --latest
