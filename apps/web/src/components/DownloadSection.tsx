@@ -74,6 +74,18 @@ export async function DownloadSection() {
               </a>
             </p>
           )}
+          <p className="mt-3 text-sm text-[var(--ink-3)]">
+            Windows builds are signed through the{" "}
+            <a
+              href="https://signpath.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-[var(--ink)]"
+            >
+              SignPath Foundation
+            </a>
+            . Every download also has a checksum and a build attestation.
+          </p>
         </div>
 
         {/* OS Cards */}

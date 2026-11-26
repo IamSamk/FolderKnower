@@ -34,6 +34,14 @@ export function Footer() {
             Code signing policy
           </a>
           <a
+            href="https://github.com/IamSamk/FolderKnower/blob/main/PRIVACY.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[var(--ink)]"
+          >
+            Privacy
+          </a>
+          <a
             href="https://github.com/IamSamk/FolderKnower/issues"
             target="_blank"
             rel="noopener noreferrer"
