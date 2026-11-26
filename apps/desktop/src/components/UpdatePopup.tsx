@@ -5,7 +5,7 @@
 
 import { Download, Sparkles, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   checkForUpdate,
   installUpdate,
@@ -72,6 +72,7 @@ export function UpdatePopup() {
   const [toast, setToast] = useState<string | null>(null);
 
   /** True once the feed answered, so the start-up retries can stop. */
+  const lastError = useRef<string | null>(null);
   const check = useCallback(async (manual: boolean): Promise<boolean> => {
     try {
       const info = await checkForUpdate();
@@ -81,9 +82,12 @@ export function UpdatePopup() {
       } else if (manual) {
         setToast("You have the latest version.");
       }
+      lastError.current = null;
       return true;
     } catch (e) {
       // offline or feed unreachable: the app keeps working, we try again later
+      lastError.current = String(e);
+      console.warn("update check failed:", e);
       if (manual) setToast(`Could not check for updates: ${String(e)}`);
       return false;
     }
@@ -91,9 +95,14 @@ export function UpdatePopup() {
 
   useEffect(() => {
     let answered = false;
-    const first = START_CHECKS_MS.map((ms) =>
+    const first = START_CHECKS_MS.map((ms, i) =>
       setTimeout(async () => {
-        if (!answered) answered = (await check(false)) || answered;
+        if (answered) return;
+        answered = await check(false);
+        // Every start-up try failed: say so once, so a broken feed is not silent.
+        if (!answered && i === START_CHECKS_MS.length - 1 && lastError.current) {
+          setToast(`Could not check for updates: ${lastError.current}`);
+        }
       }, ms),
     );
     const every = setInterval(() => check(false), RECHECK_MS);
