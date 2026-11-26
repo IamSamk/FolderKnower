@@ -8,3 +8,4 @@ dist/
 apps/desktop/src-tauri/gen/
 plan.md
 plan.d/
+*.tsbuildinfo
