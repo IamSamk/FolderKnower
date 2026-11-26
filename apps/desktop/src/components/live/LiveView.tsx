@@ -1,28 +1,24 @@
-// Live: what the computer is doing right now, explained. System memory and every CPU
-// core, the processes using the most, a breakdown of one process's memory into the
+// Live: what your project is doing right now, explained. Its own process tree, a breakdown of one process's memory into the
 // kinds a student meets in an OS course, and the local model servers with their KV
 // cache. Sampling is unprivileged and stays on this computer.
 
-import { Activity, Cpu, MemoryStick, Search, Server } from "lucide-react";
+import { Activity, Server } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fmtBytes } from "../../lib/insights";
+import { runPorts } from "../../lib/run";
 import {
   type ProcessDetail,
-  type ProcessRow,
   processDetail,
   type RuntimeStatus,
   runtimes,
-  type SystemSnapshot,
   simulated,
   systemSnapshot,
-  topProcesses,
 } from "../../lib/telemetry";
 import { KvCalculator } from "../insights/KvCache";
 import { RunPanel } from "./RunPanel";
 
 const HISTORY = 40;
-const INTERESTING = /python|node|ollama|llama|vllm|java|deno|bun|cargo|go$|uvicorn|gunicorn/i;
 
 export function Spark({
   v,
@@ -73,54 +69,6 @@ function Meter({
         />
       ))}
     </div>
-  );
-}
-
-function SystemCard({ s, memHist }: { s: SystemSnapshot; memHist: number[] }) {
-  const avg = s.cpus.reduce((a, b) => a + b, 0) / Math.max(1, s.cpus.length);
-  return (
-    <section className="ak-card">
-      <div className="ak-live-title">
-        <MemoryStick size={15} /> Memory
-        <span className="ak-muted ml-auto text-[12px]">{s.os}</span>
-      </div>
-      <div className="ak-live-big">
-        {fmtBytes(s.usedMemory)}{" "}
-        <span className="ak-muted text-[13px]">of {fmtBytes(s.totalMemory)} in use</span>
-      </div>
-      <Meter
-        total={s.totalMemory}
-        parts={[{ v: s.usedMemory, c: "var(--accent)", label: "used" }]}
-      />
-      <Spark v={memHist} max={s.totalMemory} />
-      <p className="ak-muted text-[12px]">
-        {fmtBytes(s.availableMemory)} can still be handed to programs. Swap holds{" "}
-        {fmtBytes(s.usedSwap)} of {fmtBytes(s.totalSwap)}: pages moved to disk when RAM ran short,
-        which is much slower to read back.
-      </p>
-      <div className="ak-live-title mt-4">
-        <Cpu size={15} /> {s.cpus.length} logical cores
-        {s.physicalCores ? <span className="ak-muted">({s.physicalCores} physical)</span> : null}
-        <span className="ak-muted ml-auto text-[12px]">{avg.toFixed(0)}% average</span>
-      </div>
-      <div
-        className="ak-cores"
-        style={{ gridTemplateColumns: `repeat(${Math.min(s.cpus.length, 32)}, minmax(0, 1fr))` }}
-      >
-        {s.cpus.map((c, i) => (
-          <div key={i} className="ak-core" title={`core ${i}: ${c.toFixed(0)}%`}>
-            <motion.span
-              animate={{ height: `${Math.max(3, c)}%` }}
-              transition={{ type: "spring", stiffness: 180, damping: 26 }}
-            />
-          </div>
-        ))}
-      </div>
-      <p className="ak-muted text-[12px]">
-        {s.cpuBrand}. One bar per core the OS schedules threads on. A single-threaded Python loop
-        can fill one bar at most; a model server spreads its math across many.
-      </p>
-    </section>
   );
 }
 
@@ -353,32 +301,51 @@ function RuntimeCard({ r }: { r: RuntimeStatus }) {
 }
 
 export function LiveView() {
-  const [sys, setSys] = useState<SystemSnapshot | null>(null);
-  const [rows, setRows] = useState<ProcessRow[]>([]);
-  const [rts, setRts] = useState<RuntimeStatus[]>([]);
-  const [sort, setSort] = useState<"memory" | "cpu">("memory");
-  const [q, setQ] = useState("");
-  const [pid, setPid] = useState<number | null>(null);
+  const [target, setTarget] = useState<number | null>(null);
+  const [sel, setSel] = useState<number | null>(null);
   const [detail, setDetail] = useState<ProcessDetail | null>(null);
+  const [selDetail, setSelDetail] = useState<ProcessDetail | null>(null);
+  const [rts, setRts] = useState<RuntimeStatus[]>([]);
+  const [ramBytes, setRam] = useState<number | undefined>();
   const hist = useRef(new Map<number, number[]>());
-  const memHist = useRef<number[]>([]);
   const [, force] = useState(0);
   const sim = simulated();
 
   useEffect(() => {
+    void systemSnapshot()
+      .then((s) => setRam(s.totalMemory))
+      .catch(() => undefined);
+  }, []);
+
+  // Everything below follows one process tree: the project's own. Nothing machine-wide.
+  useEffect(() => {
+    if (target == null) {
+      setDetail(null);
+      setSelDetail(null);
+      setRts([]);
+      return;
+    }
     let alive = true;
     let n = 0;
     const tick = async () => {
       try {
-        const [s, p] = await Promise.all([systemSnapshot(), topProcesses(sort, 60)]);
+        const d = await processDetail(target);
         if (!alive) return;
-        memHist.current = [...memHist.current, s.usedMemory].slice(-HISTORY);
-        for (const r of p)
-          hist.current.set(r.pid, [...(hist.current.get(r.pid) ?? []), r.memory].slice(-HISTORY));
-        setSys(s);
-        setRows(p);
-        setPid((cur) => cur ?? p.find((r) => INTERESTING.test(r.name))?.pid ?? p[0]?.pid ?? null);
-        if (n++ % 3 === 0) setRts(await runtimes().catch(() => []));
+        setDetail(d);
+        if (d)
+          for (const r of [d.row, ...d.children])
+            hist.current.set(r.pid, [...(hist.current.get(r.pid) ?? []), r.memory].slice(-HISTORY));
+        if (n++ % 3 === 0) {
+          const [all, ports] = await Promise.all([runtimes().catch(() => []), runPorts()]);
+          const mine = new Set([target, ...(d?.children.map((c) => c.pid) ?? [])]);
+          const myPorts = new Set(ports.filter((p) => mine.has(p.pid)).map((p) => p.port));
+          if (alive)
+            setRts(
+              sim
+                ? all
+                : all.filter((r) => myPorts.has(Number(/:(\d+)/.exec(r.endpoint)?.[1] ?? 0))),
+            );
+        }
         force((x) => x + 1);
       } catch {
         /* the next tick retries */
@@ -390,95 +357,83 @@ export function LiveView() {
       alive = false;
       clearInterval(t);
     };
-  }, [sort]);
+  }, [target, sim]);
 
+  const shownPid = sel ?? target;
   useEffect(() => {
-    if (pid == null) return;
+    if (shownPid == null || shownPid === target) {
+      setSelDetail(null);
+      return;
+    }
     let alive = true;
-    void processDetail(pid).then((d) => alive && setDetail(d));
+    void processDetail(shownPid).then((d) => alive && setSelDetail(d));
     return () => {
       alive = false;
     };
-  }, [pid, rows]);
+  }, [shownPid, target]);
 
-  const shown = q
-    ? rows.filter((r) => `${r.name} ${r.cmd}`.toLowerCase().includes(q.toLowerCase()))
-    : rows;
+  const rows = detail ? [detail.row, ...detail.children] : [];
+  const shown = selDetail ?? detail;
   return (
     <div className="ak-live">
       {sim && (
         <div className="ak-live-sim">
-          Simulated numbers: this is the browser demo. The desktop app reads your real machine,
-          without admin rights, and nothing leaves it.
+          Simulated numbers: this is the browser demo. The desktop app measures your own project
+          while it runs, and nothing leaves your computer.
         </div>
       )}
       <div className="ak-live-grid">
         <div className="space-y-4">
-          <RunPanel onInspect={setPid} />
-          {sys && <SystemCard s={sys} memHist={memHist.current} />}
-          <section className="ak-card">
-            <div className="ak-live-title">
-              Processes
-              <div className="ak-seg ml-auto">
-                <button
-                  type="button"
-                  className={sort === "memory" ? "on" : ""}
-                  onClick={() => setSort("memory")}
-                >
-                  memory
-                </button>
-                <button
-                  type="button"
-                  className={sort === "cpu" ? "on" : ""}
-                  onClick={() => setSort("cpu")}
-                >
-                  CPU
-                </button>
+          <RunPanel
+            onInspect={(p) => {
+              setTarget(p);
+              setSel(null);
+            }}
+          />
+          {detail && (
+            <section className="ak-card">
+              <div className="ak-live-title">
+                Your project's processes
+                <span className="ak-muted ml-auto text-[12px]">
+                  {rows.length} processes, {fmtBytes(detail.treeMemory)} together
+                </span>
               </div>
-            </div>
-            <label className="ak-workflow-search mb-2">
-              <Search size={13} />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="filter by name or command"
-              />
-            </label>
-            <div className="ak-proc">
-              {shown.slice(0, 40).map((r) => (
-                <button
-                  key={r.pid}
-                  type="button"
-                  className={pid === r.pid ? "on" : ""}
-                  onClick={() => setPid(r.pid)}
-                >
-                  <span className="ak-mono truncate">{r.name}</span>
-                  <Spark v={hist.current.get(r.pid) ?? []} />
-                  <span className="ak-mono">{fmtBytes(r.memory)}</span>
-                  <span className="ak-mono ak-muted">{r.cpu.toFixed(0)}%</span>
-                  <span className="ak-mono ak-muted">{r.threads ?? ""}</span>
-                </button>
-              ))}
-            </div>
-            <div className="ak-muted mt-1 text-[11px]">
-              columns: name, memory trend, resident memory, CPU, threads
-            </div>
-          </section>
+              <div className="ak-proc">
+                {rows.map((r) => (
+                  <button
+                    key={r.pid}
+                    type="button"
+                    className={shownPid === r.pid ? "on" : ""}
+                    onClick={() => setSel(r.pid)}
+                  >
+                    <span className="ak-mono truncate">{r.name}</span>
+                    <Spark v={hist.current.get(r.pid) ?? []} />
+                    <span className="ak-mono">{fmtBytes(r.memory)}</span>
+                    <span className="ak-mono ak-muted">{r.cpu.toFixed(0)}%</span>
+                    <span className="ak-mono ak-muted">{r.threads ?? ""}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="ak-muted mt-1 text-[11px]">
+                columns: name, memory trend, resident memory, CPU, threads
+              </div>
+            </section>
+          )}
         </div>
         <div className="space-y-4">
-          {detail && <DetailCard d={detail} />}
+          {shown && <DetailCard d={shown} />}
           {rts.map((r) => (
             <RuntimeCard key={r.endpoint} r={r} />
           ))}
-          {!rts.length && (
+          {!detail && (
             <section className="ak-card ak-muted text-[12.5px]">
-              No local model server answered (Ollama on 11434, llama-server on 8080, vLLM on 8000).
-              Start one and its loaded models and KV cache appear here.
+              Run your project or attach to it by port. Only that project's processes, containers
+              and model servers appear here, never the rest of this computer.
             </section>
           )}
           <section className="ak-card">
             <div className="ak-live-title">Will a model fit on this computer?</div>
-            <KvCalculator ramBytes={sys?.totalMemory} />
+            <KvCalculator ramBytes={ramBytes} />
           </section>
         </div>
       </div>

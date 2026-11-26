@@ -2,6 +2,12 @@
 
 Notes for each version are shown in the in-app update pop-up and on the website's releases page.
 
+## [0.11.0] - 2026-11-26
+
+### Live shows only your project
+- The Live tab no longer shows the whole computer. No system memory card, no machine-wide process list. It follows one process tree: the project you ran or attached to by port, with its children, containers and model servers it owns.
+- Opening a folder inside a bigger project analyses only that folder.
+
 ## [0.10.0] - 2026-11-26
 
 ### Run your project

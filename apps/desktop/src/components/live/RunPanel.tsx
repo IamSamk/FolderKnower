@@ -48,6 +48,10 @@ export function RunPanel({ onInspect }: { onInspect: (pid: number) => void }) {
   }, [root]);
 
   const live = st?.running ?? false;
+  const runPid = live ? (st?.pid ?? null) : null;
+  useEffect(() => {
+    if (runPid != null) onInspect(runPid);
+  }, [runPid]);
   useEffect(() => {
     if (!live && !attach) return;
     let alive = true;
@@ -83,7 +87,6 @@ export function RunPanel({ onInspect }: { onInspect: (pid: number) => void }) {
     };
   }, [live, attach]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll when new lines arrive
   useEffect(() => {
     logEl.current?.scrollTo({ top: logEl.current.scrollHeight });
   }, [st?.log.length]);
