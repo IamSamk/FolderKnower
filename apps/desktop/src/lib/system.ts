@@ -152,6 +152,7 @@ function syntheticServices(ix: Indexed): { services: Service[]; links: ServiceLi
     ["Gateway", "proxy", "gateway"],
     ["Backend", "api", "server"],
     ["Workers", "worker", "workers"],
+    ["Storage", "database", "database"],
   ];
   const services: Service[] = [];
   for (const [tier, kind, name] of map) {
@@ -188,6 +189,7 @@ export function hopService(ix: Indexed, h: RunHop, synthetic: boolean): string |
   if (!synthetic) return h.service;
   const t = ix.tierOf(h.node) ?? ix.tierOf(h.node.replace(/^route:.*#/, "file:"));
   if (h.kind === "ui" || h.kind === "response") return "tier:frontend";
+  if (h.kind === "data") return "tier:storage";
   if (h.kind === "stage") {
     const st = ix.g.insights?.ai?.stages.find((s) => s.id === h.node);
     const tt = st ? ix.tierOf(st.fileId) : undefined;

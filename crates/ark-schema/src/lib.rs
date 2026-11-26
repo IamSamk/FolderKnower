@@ -107,6 +107,7 @@ pub enum RunHopKind {
     Route,
     Proxy,
     Stage,
+    Data,
     Service,
     Response,
 }
@@ -121,6 +122,7 @@ pub enum RunVia {
     Proxy,
     Import,
     Pipeline,
+    Sql,
     Network,
     Return,
 }

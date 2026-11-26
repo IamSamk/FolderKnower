@@ -53,6 +53,9 @@ interface State {
   workflowFn: string | null;
   openWorkflow: (fnId?: string | null) => void;
   closeWorkflow: () => void;
+  /** Example run the System view should play next. */
+  systemRun: string | null;
+  playRun: (runId: string) => void;
   /** Run a scene change with a portal transition from `origin`. */
   go: (origin: Omit<PortalOrigin, "dir">, dir: PortalOrigin["dir"], change: () => void) => void;
 
@@ -101,6 +104,8 @@ export const useStore = create<State>((set, get) => ({
   openWorkflow: (fnId) =>
     set((s) => ({ workflowOpen: true, workflowFn: fnId === undefined ? s.workflowFn : fnId })),
   closeWorkflow: () => set({ workflowOpen: false }),
+  systemRun: null,
+  playRun: (runId) => set({ systemRun: runId, view: "system" }),
   go(origin, dir, change) {
     set({
       portal: { ...origin, dir },

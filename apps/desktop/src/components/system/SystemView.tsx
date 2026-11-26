@@ -48,6 +48,7 @@ const VIA_TEXT: Record<RunHop["via"], string> = {
   proxy: "forwarded by the proxy",
   import: "imported module",
   pipeline: "AI pipeline step",
+  sql: "database query",
   network: "network call to a container",
   return: "response",
 };
@@ -378,7 +379,8 @@ export function SystemView() {
   const ix = useStore((s) => s.ix);
   const reveal = useStore((s) => s.reveal);
   const runs = ix?.g.exampleRuns ?? [];
-  const [runId, setRunId] = useState(runs[0]?.id);
+  const systemRun = useStore((s) => s.systemRun);
+  const [runId, setRunId] = useState(systemRun ?? runs[0]?.id);
   const run = runs.find((r) => r.id === runId);
   const [step, setStep] = useState(-1);
   const [playing, setPlaying] = useState(false);
@@ -398,6 +400,15 @@ export function SystemView() {
     const t = setTimeout(() => setStep((s) => s + 1), step < 0 ? 300 : HOP_MS);
     return () => clearTimeout(t);
   }, [playing, step, run]);
+
+  // Asked to play a run from another view (UI map, Inspector): start it once.
+  useEffect(() => {
+    if (!systemRun) return;
+    setRunId(systemRun);
+    setStep(-1);
+    setPlaying(true);
+    useStore.setState({ systemRun: null });
+  }, [systemRun]);
 
   const play = useCallback(() => {
     if (!run) return;
@@ -457,6 +468,68 @@ export function SystemView() {
           )}
         </div>
         <MemorySplit m={m} />
+      </div>
+      <div className="ak-sys-controls">
+        {runs.length > 1 && (
+          <select
+            className="ak-input"
+            value={runId}
+            onChange={(e) => {
+              setRunId(e.target.value);
+              setStep(-1);
+              setPlaying(false);
+            }}
+          >
+            {runs.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.title}
+              </option>
+            ))}
+          </select>
+        )}
+        {run ? (
+          <>
+            <button
+              type="button"
+              className="ak-btn ak-sys-play"
+              onClick={() => (playing ? setPlaying(false) : play())}
+            >
+              {playing ? <Pause size={14} /> : <Play size={14} />}
+              {playing ? "Pause" : step >= 0 ? "Continue" : "Play example run"}
+            </button>
+            <button
+              type="button"
+              className="ak-iconbtn"
+              onClick={() => setStep((s) => Math.max(-1, s - 1))}
+              aria-label="Previous step"
+            >
+              <ChevronLeft size={15} />
+            </button>
+            <button
+              type="button"
+              className="ak-iconbtn"
+              onClick={() => setStep((s) => Math.min(run.hops.length - 1, s + 1))}
+              aria-label="Next step"
+            >
+              <ChevronRight size={15} />
+            </button>
+            <button
+              type="button"
+              className="ak-iconbtn"
+              onClick={() => {
+                setStep(-1);
+                setPlaying(false);
+              }}
+              aria-label="Reset"
+            >
+              {step >= 0 ? <RotateCcw size={15} /> : <Expand size={15} />}
+            </button>
+          </>
+        ) : (
+          <span className="ak-muted text-[12px]">
+            No UI element was traced to a backend route, so there is no example run yet.
+          </span>
+        )}
       </div>
       <div className="ak-sys-vp" ref={vp}>
         <motion.div
@@ -540,68 +613,6 @@ export function SystemView() {
             />
           )}
         </motion.div>
-        <div className="ak-sys-controls">
-          {runs.length > 1 && (
-            <select
-              className="ak-input"
-              value={runId}
-              onChange={(e) => {
-                setRunId(e.target.value);
-                setStep(-1);
-                setPlaying(false);
-              }}
-            >
-              {runs.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.title}
-                </option>
-              ))}
-            </select>
-          )}
-          {run ? (
-            <>
-              <button
-                type="button"
-                className="ak-btn ak-sys-play"
-                onClick={() => (playing ? setPlaying(false) : play())}
-              >
-                {playing ? <Pause size={14} /> : <Play size={14} />}
-                {playing ? "Pause" : step >= 0 ? "Continue" : "Play example run"}
-              </button>
-              <button
-                type="button"
-                className="ak-iconbtn"
-                onClick={() => setStep((s) => Math.max(-1, s - 1))}
-                aria-label="Previous step"
-              >
-                <ChevronLeft size={15} />
-              </button>
-              <button
-                type="button"
-                className="ak-iconbtn"
-                onClick={() => setStep((s) => Math.min(run.hops.length - 1, s + 1))}
-                aria-label="Next step"
-              >
-                <ChevronRight size={15} />
-              </button>
-              <button
-                type="button"
-                className="ak-iconbtn"
-                onClick={() => {
-                  setStep(-1);
-                  setPlaying(false);
-                }}
-                aria-label="Reset"
-              >
-                {step >= 0 ? <RotateCcw size={15} /> : <Expand size={15} />}
-              </button>
-            </>
-          ) : (
-            <span className="ak-muted text-[12px]">
-              No UI element was traced to a backend route, so there is no example run yet.
-            </span>
-          )}
-        </div>
         <AnimatePresence>
           {hop && run && (
             <motion.div

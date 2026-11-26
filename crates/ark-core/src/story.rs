@@ -12,8 +12,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use ark_schema::{
-    AiRole, CrossTierEdge, Deployment, ExampleRun, Finding, FunctionNode, RunHop, RunHopKind,
-    RunVia, Service, ServiceKind, SourceFileNode, SystemArchitectureGraph, UiElement,
+    AiRole, CrossTierEdge, Deployment, ExampleRun, Finding, FunctionNode, Protocol, RunHop,
+    RunHopKind, RunVia, Service, ServiceKind, SourceFileNode, SystemArchitectureGraph, UiElement,
 };
 
 const MAX_RUNS: usize = 6;
@@ -188,9 +188,12 @@ impl Run<'_, '_> {
         let file = self.ix.file_path(&u.file_id);
         let svc = self.ix.service_of_file(&u.file_id);
         let input = sample_input(self.g, u);
-        if let Some(inp) = self.g.ui_elements.iter().find(|x| {
-            x.file_id == u.file_id && x.id != u.id && x.tag == "input" && x.label.is_some()
-        }) {
+        if let Some(inp) = self
+            .g
+            .ui_elements
+            .iter()
+            .find(|x| same_screen(x, u) && x.id != u.id && is_text_input(x))
+        {
             self.push(RunHop {
                 node: inp.id.clone(),
                 kind: RunHopKind::Ui,
@@ -366,12 +369,12 @@ impl Run<'_, '_> {
             ),
         });
         self.follow_backend(&edge.target, back);
-        if let Some(fs) = svc {
+        {
             self.push(RunHop {
                 node: u.id.clone(),
                 kind: RunHopKind::Response,
                 label: "answer shown on screen".into(),
-                service: Some(fs.id.clone()),
+                service: svc_id(svc),
                 via: RunVia::Return,
                 proof: vec![edge.id.clone()],
                 confidence: 1.0,
@@ -438,6 +441,48 @@ impl Run<'_, '_> {
             {
                 for c in self.ix.linked_of_kind(&s.id, &[ServiceKind::Cache]) {
                     self.service_hop(s, c, &format!("{path} keeps its data in Redis."));
+                }
+            }
+        }
+        // Tables the handler (or a function it calls) reads or writes.
+        let mut touched: Vec<&str> = vec![handler];
+        touched.extend(by_file.values().flatten().copied());
+        let mut seen_models: BTreeSet<&str> = BTreeSet::new();
+        for f in touched {
+            for e in self.ix.cross.get(f).into_iter().flatten() {
+                if e.protocol != Protocol::Sql || !seen_models.insert(&e.target) {
+                    continue;
+                }
+                let Some(m) = self.g.data_models.iter().find(|m| m.id == e.target) else {
+                    continue;
+                };
+                let mut proof = vec![format!("{}:{}", self.ix.file_path(&m.file_id), m.line)];
+                proof.extend(e.evidence.iter().take(2).cloned());
+                self.push(RunHop {
+                    node: m.id.clone(),
+                    kind: RunHopKind::Data,
+                    label: m
+                        .table
+                        .clone()
+                        .map(|t| format!("{} ({t})", m.name))
+                        .unwrap_or_else(|| m.name.clone()),
+                    service: svc_id(svc),
+                    via: RunVia::Sql,
+                    proof,
+                    confidence: 0.85,
+                    explain: format!(
+                        "{} reads or writes the {} table through {} ({}).",
+                        self.ix.fn_label(f),
+                        m.table.as_deref().unwrap_or(&m.name),
+                        m.framework,
+                        e.evidence.first().map(String::as_str).unwrap_or("SQL")
+                    ),
+                });
+                if let Some(s) = svc {
+                    let dbs = self.ix.linked_of_kind(&s.id, &[ServiceKind::Database]);
+                    if let [one] = dbs.as_slice() {
+                        self.service_hop(s, one, "The rows live in the database.");
+                    }
                 }
             }
         }
@@ -581,10 +626,18 @@ impl Run<'_, '_> {
     }
 }
 
+fn same_screen(a: &UiElement, b: &UiElement) -> bool {
+    a.file_id == b.file_id && a.component == b.component
+}
+
+fn is_text_input(x: &UiElement) -> bool {
+    matches!(x.tag.as_str(), "input" | "textarea") && x.label.is_some()
+}
+
 fn sample_input(g: &SystemArchitectureGraph, u: &UiElement) -> Option<String> {
     g.ui_elements
         .iter()
-        .filter(|x| x.file_id == u.file_id && x.tag == "input")
+        .filter(|x| same_screen(x, u) && is_text_input(x))
         .find_map(|x| x.label.clone())
 }
 

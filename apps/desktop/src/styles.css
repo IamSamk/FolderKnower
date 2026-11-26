@@ -3229,13 +3229,11 @@ button.ak-sys-row:hover {
   background: #7cf0a6;
 }
 .ak-sys-controls {
-  position: absolute;
-  left: 16px;
-  top: 12px;
   display: flex;
   gap: 6px;
   align-items: center;
-  z-index: 6;
+  padding: 8px 20px;
+  border-bottom: var(--b) solid color-mix(in srgb, var(--line) 15%, transparent);
 }
 .ak-sys-controls select {
   max-width: 260px;
@@ -3307,4 +3305,91 @@ button.ak-sys-row:hover {
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* ---------------- M7: UI map as screens + where each element goes ---------------- */
+.ak-uiflow {
+  position: relative;
+  height: 100%;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: minmax(320px, 560px) minmax(280px, 380px);
+  gap: 140px;
+  padding: 22px 28px 120px;
+  align-items: start;
+}
+.ak-uiflow-wires {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.ak-uiflow-wires path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--ink) 35%, transparent);
+  stroke-width: 1.8;
+  stroke-dasharray: 5 5;
+  transition:
+    stroke 0.2s,
+    stroke-width 0.2s;
+}
+.ak-uiflow-wires path.dim {
+  opacity: 0.35;
+}
+.ak-uiflow-wires path.on {
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-dasharray: none;
+}
+.ak-uiflow-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+  z-index: 1;
+}
+.ak-uiflow-head {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.ak-uiflow .ak-uicard-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.ak-uiflow-el {
+  flex: 0 0 auto;
+}
+.ak-uiflow-el:has(.ak-mock-input),
+.ak-uiflow-el:has(.ak-mock-form) {
+  flex: 1 1 100%;
+}
+.ak-uidest {
+  border: var(--b) solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: var(--sh-sm);
+  padding: 10px 12px;
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+.ak-uidest-route {
+  background: color-mix(in srgb, #7cf0a6 22%, var(--surface));
+}
+.ak-uidest-local {
+  background: color-mix(in srgb, #5ec8ff 18%, var(--surface));
+}
+.ak-uidest-unwired {
+  opacity: 0.75;
+  border-style: dashed;
+}
+.ak-uidest.on {
+  box-shadow: var(--sh);
+  transform: translate(-2px, -2px);
 }

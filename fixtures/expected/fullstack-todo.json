@@ -2472,6 +2472,30 @@
           ],
           "confidence": 0.85,
           "explain": "login() calls create_access_token(), verify_password() in api/app/core/security.py."
+        },
+        {
+          "node": "model:api/app/models.py#User",
+          "kind": "data",
+          "label": "User (users)",
+          "via": "sql",
+          "proof": [
+            "api/app/models.py:7",
+            "orm.query(User)",
+            "orm.sqlalchemy"
+          ],
+          "confidence": 0.85,
+          "explain": "login() reads or writes the users table through sqlalchemy (orm.query(User))."
+        },
+        {
+          "node": "ui:web/src/components/LoginForm.tsx:14:4",
+          "kind": "response",
+          "label": "answer shown on screen",
+          "via": "return",
+          "proof": [
+            "xedge:fn:web/src/lib/api.ts#login->fn:api/app/routers/auth.py#login"
+          ],
+          "confidence": 1.0,
+          "explain": "The response travels back the same way and the screen updates."
         }
       ]
     },
@@ -2479,24 +2503,12 @@
       "id": "run:ui:web/src/components/TodoList.tsx:35:6",
       "title": "Done → PATCH /todos/:param/complete",
       "start": "ui:web/src/components/TodoList.tsx:35:6",
-      "sampleInput": "What needs doing?",
       "hops": [
-        {
-          "node": "ui:web/src/components/TodoList.tsx:20:6",
-          "kind": "ui",
-          "label": "type “What needs doing?”",
-          "via": "start",
-          "proof": [
-            "web/src/components/TodoList.tsx:20"
-          ],
-          "confidence": 1.0,
-          "explain": "The user types a question into the input on this screen."
-        },
         {
           "node": "ui:web/src/components/TodoList.tsx:35:6",
           "kind": "ui",
           "label": "<button> “Done”",
-          "via": "handler",
+          "via": "start",
           "proof": [
             "web/src/components/TodoList.tsx:35"
           ],
@@ -2525,6 +2537,30 @@
           ],
           "confidence": 1.0,
           "explain": "The browser sends http.PATCH :param/api/todos/:param/complete; the backend route PATCH /todos/:param/complete receives it and runs complete_todo()."
+        },
+        {
+          "node": "model:api/app/models.py#Todo",
+          "kind": "data",
+          "label": "Todo (todos)",
+          "via": "sql",
+          "proof": [
+            "api/app/models.py:15",
+            "orm.get(Todo)",
+            "orm.sqlalchemy"
+          ],
+          "confidence": 0.85,
+          "explain": "complete_todo() reads or writes the todos table through sqlalchemy (orm.get(Todo))."
+        },
+        {
+          "node": "ui:web/src/components/TodoList.tsx:35:6",
+          "kind": "response",
+          "label": "answer shown on screen",
+          "via": "return",
+          "proof": [
+            "xedge:fn:web/src/lib/api.ts#completeTodo->fn:api/app/routers/todos.py#complete_todo"
+          ],
+          "confidence": 1.0,
+          "explain": "The response travels back the same way and the screen updates."
         }
       ]
     }
