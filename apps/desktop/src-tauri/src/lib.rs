@@ -206,6 +206,8 @@ pub fn run() {
             ai::ai_status,
             ai::ai_install,
             ai::ai_remove,
+            ai::ai_link,
+            ai::ai_find,
             ai::ai_start_narrator,
             ai::ai_decide,
             telemetry::telemetry_system,

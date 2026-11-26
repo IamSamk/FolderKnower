@@ -3702,3 +3702,58 @@ button.ak-sys-row:hover {
 .ak-more-examples button:hover {
   text-decoration-color: currentColor;
 }
+
+/* M9: models the user already has. */
+.ak-ai-have {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 2px dashed var(--line);
+  border-radius: 12px;
+  font-size: 13px;
+}
+.ak-ai-have > span {
+  flex: 1;
+}
+.ak-ai-found {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  margin: 8px 0 4px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+.ak-ai-found li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+}
+.ak-ai-found li > div {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.ak-ai-found li > button {
+  flex-shrink: 0;
+}
+.ak-comp-linked {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+}
+.ak-comp-linked .ak-tag.ok {
+  background: #7cf0a6;
+  color: #111;
+}
+.ak-ai-dir {
+  font-size: 12px;
+  margin-top: 8px;
+  word-break: break-all;
+}

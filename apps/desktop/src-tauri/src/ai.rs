@@ -10,18 +10,24 @@
 //!
 //! Every download is pinned to an exact file and verified with SHA-256. Servers bind to
 //! 127.0.0.1 only and are killed when the app exits.
+//!
+//! Users who already have these files (LM Studio, Ollama, the Hugging Face cache, a
+//! llama.cpp build) can point the app at them instead of downloading. A linked file is
+//! checked before it is used: a GGUF header, and the pinned SHA-256 when it should be
+//! the exact model. Linked files are only ever read: removing one forgets the link and
+//! never deletes the user's file.
 
 use std::{
     collections::BTreeMap,
     fs,
-    io::{Read, Write},
+    io::{BufReader, Read, Write},
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
     sync::Mutex,
     time::{Duration, Instant},
 };
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -122,6 +128,57 @@ fn server_exe(dir: &Path) -> Option<PathBuf> {
     None
 }
 
+const DECIDER_FILE: &str = "laya-q8_0.gguf";
+const NARRATOR_FILE: &str = "qwen2.5-0.5b-instruct-q4_k_m.gguf";
+
+/// A file of the user's that stands in for a download.
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct Link {
+    path: String,
+    /// "exact": same SHA-256 as the pinned download. "compatible": a different GGUF
+    /// chat model, or a llama-server build that answered `--version`.
+    check: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    model_name: Option<String>,
+}
+
+fn read_links(dir: &Path) -> BTreeMap<String, Link> {
+    fs::read_to_string(dir.join("links.json"))
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or_default()
+}
+
+fn write_links(dir: &Path, links: &BTreeMap<String, Link>) -> Result<(), String> {
+    let s = serde_json::to_string_pretty(links).map_err(|e| e.to_string())?;
+    fs::write(dir.join("links.json"), s).map_err(|e| e.to_string())
+}
+
+/// The linked file when it is still there.
+fn live_link(dir: &Path, id: &str) -> Option<Link> {
+    read_links(dir)
+        .remove(id)
+        .filter(|l| Path::new(&l.path).is_file())
+}
+
+fn runtime_path(dir: &Path) -> Option<PathBuf> {
+    live_link(dir, "runtime")
+        .map(|l| PathBuf::from(l.path))
+        .or_else(|| server_exe(dir))
+}
+
+fn model_path(dir: &Path, id: &str) -> Option<PathBuf> {
+    let file = if id == "decider" {
+        DECIDER_FILE
+    } else {
+        NARRATOR_FILE
+    };
+    live_link(dir, id)
+        .map(|l| PathBuf::from(l.path))
+        .or_else(|| Some(dir.join("models").join(file)).filter(|p| p.is_file()))
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Component {
@@ -134,6 +191,9 @@ pub struct Component {
     size: u64,
     installed: bool,
     supported: bool,
+    /// Set when the component is the user's own file rather than a download.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    linked: Option<Link>,
 }
 
 #[derive(Serialize)]
@@ -143,16 +203,17 @@ pub struct AiStatus {
     decider_ready: bool,
     narrator_ready: bool,
     narrator_base_url: Option<String>,
+    /// Where downloads are saved.
+    install_dir: String,
 }
 
 fn status(app: &AppHandle) -> Result<AiStatus, String> {
     let dir = ai_dir(app)?;
     let rt = runtime_artifact();
-    let runtime = server_exe(&dir).is_some();
-    let decider = dir.join("models/laya-q8_0.gguf").is_file();
-    let narrator = dir
-        .join("models/qwen2.5-0.5b-instruct-q4_k_m.gguf")
-        .is_file();
+    let runtime = runtime_path(&dir).is_some();
+    let decider = model_path(&dir, "decider").is_some();
+    let narrator = model_path(&dir, "narrator").is_some();
+    let link = |id: &str| live_link(&dir, id);
     Ok(AiStatus {
         components: vec![
             Component {
@@ -165,6 +226,7 @@ fn status(app: &AppHandle) -> Result<AiStatus, String> {
                 size: rt.as_ref().map(|a| a.size).unwrap_or(0),
                 installed: runtime,
                 supported: rt.is_some(),
+                linked: link("runtime"),
             },
             Component {
                 id: "decider",
@@ -176,6 +238,7 @@ fn status(app: &AppHandle) -> Result<AiStatus, String> {
                 size: DECIDER.size,
                 installed: decider,
                 supported: rt.is_some(),
+                linked: link("decider"),
             },
             Component {
                 id: "narrator",
@@ -187,12 +250,14 @@ fn status(app: &AppHandle) -> Result<AiStatus, String> {
                 size: NARRATOR.size,
                 installed: narrator,
                 supported: rt.is_some(),
+                linked: link("narrator"),
             },
         ],
         decider_ready: runtime && decider,
         narrator_ready: runtime && narrator,
         narrator_base_url: (runtime && narrator)
             .then(|| format!("http://127.0.0.1:{NARRATOR_PORT}")),
+        install_dir: dir.display().to_string(),
     })
 }
 
@@ -339,13 +404,8 @@ pub async fn ai_install(app: AppHandle, id: String) -> Result<AiStatus, String> 
                     return Err("llama-server was not found in the runtime archive".to_owned());
                 }
             }
-            "decider" => download(&app2, &id, &DECIDER, &models.join("laya-q8_0.gguf"))?,
-            "narrator" => download(
-                &app2,
-                &id,
-                &NARRATOR,
-                &models.join("qwen2.5-0.5b-instruct-q4_k_m.gguf"),
-            )?,
+            "decider" => download(&app2, &id, &DECIDER, &models.join(DECIDER_FILE))?,
+            "narrator" => download(&app2, &id, &NARRATOR, &models.join(NARRATOR_FILE))?,
             _ => return Err("unknown component".to_owned()),
         }
         status(&app2)
@@ -362,15 +422,21 @@ pub fn ai_remove(
 ) -> Result<AiStatus, String> {
     state.shutdown();
     let dir = ai_dir(&app)?;
+    let mut links = read_links(&dir);
+    if links.remove(&id).is_some() {
+        // The user's own file: forget it, never delete it.
+        write_links(&dir, &links)?;
+        return status(&app);
+    }
     match id.as_str() {
         "runtime" => {
             let _ = fs::remove_dir_all(dir.join("runtime"));
         }
         "decider" => {
-            let _ = fs::remove_file(dir.join("models/laya-q8_0.gguf"));
+            let _ = fs::remove_file(dir.join("models").join(DECIDER_FILE));
         }
         "narrator" => {
-            let _ = fs::remove_file(dir.join("models/qwen2.5-0.5b-instruct-q4_k_m.gguf"));
+            let _ = fs::remove_file(dir.join("models").join(NARRATOR_FILE));
         }
         _ => return Err("unknown component".to_owned()),
     }
@@ -390,10 +456,9 @@ fn healthy(port: u16) -> bool {
 }
 
 fn ensure_server(app: &AppHandle, state: &AiState, which: &'static str) -> Result<u16, String> {
-    let (port, model, extra): (u16, &str, &[&str]) = match which {
+    let (port, extra): (u16, &[&str]) = match which {
         "decider" => (
             DECIDER_PORT,
-            "laya-q8_0.gguf",
             &[
                 "--ubatch-size",
                 "4096",
@@ -403,11 +468,7 @@ fn ensure_server(app: &AppHandle, state: &AiState, which: &'static str) -> Resul
                 "4096",
             ],
         ),
-        _ => (
-            NARRATOR_PORT,
-            "qwen2.5-0.5b-instruct-q4_k_m.gguf",
-            &["-c", "8192"],
-        ),
+        _ => (NARRATOR_PORT, &["-c", "8192"]),
     };
     {
         let mut servers = state.servers.lock().map_err(|_| "lock poisoned")?;
@@ -419,11 +480,9 @@ fn ensure_server(app: &AppHandle, state: &AiState, which: &'static str) -> Resul
         }
     }
     let dir = ai_dir(app)?;
-    let exe = server_exe(&dir).ok_or("the local AI runtime is not installed")?;
-    let model_path = dir.join("models").join(model);
-    if !model_path.is_file() {
-        return Err(format!("the {which} model is not installed"));
-    }
+    let exe = runtime_path(&dir).ok_or("the local AI runtime is not installed")?;
+    let model_path =
+        model_path(&dir, which).ok_or_else(|| format!("the {which} model is not installed"))?;
     let mut cmd = Command::new(&exe);
     cmd.arg("-m")
         .arg(&model_path)
@@ -501,4 +560,449 @@ pub async fn ai_decide(
     })
     .await
     .map_err(|e| e.to_string())?
+}
+
+// ---- Using files the user already has -------------------------------------------
+
+const GGUF_MAGIC: &[u8; 4] = b"GGUF";
+/// Model families that only embed text: they cannot write an explanation.
+const EMBED_ONLY: &[&str] = &["bert", "nomic-bert", "jina-bert-v2", "t5encoder", "clip"];
+
+/// `general.architecture` and `general.name` from a GGUF header, reading only the
+/// first metadata entries. Errors when the file is not GGUF.
+fn gguf_meta(path: &Path) -> Result<(Option<String>, Option<String>), String> {
+    let f = fs::File::open(path).map_err(|e| format!("cannot open the file: {e}"))?;
+    let mut r = BufReader::new(f);
+    let mut magic = [0u8; 4];
+    r.read_exact(&mut magic)
+        .map_err(|_| "the file is too short to be a model".to_owned())?;
+    if &magic != GGUF_MAGIC {
+        return Err("this is not a GGUF model file".to_owned());
+    }
+    let u32_ = |r: &mut BufReader<fs::File>| -> Result<u32, String> {
+        let mut b = [0u8; 4];
+        r.read_exact(&mut b).map_err(|e| e.to_string())?;
+        Ok(u32::from_le_bytes(b))
+    };
+    let u64_ = |r: &mut BufReader<fs::File>| -> Result<u64, String> {
+        let mut b = [0u8; 8];
+        r.read_exact(&mut b).map_err(|e| e.to_string())?;
+        Ok(u64::from_le_bytes(b))
+    };
+    let version = u32_(&mut r)?;
+    if version < 2 {
+        return Ok((None, None)); // GGUF v1 used 32-bit counts; too old to inspect
+    }
+    let _tensors = u64_(&mut r)?;
+    let kvs = u64_(&mut r)?;
+    fn read_str(r: &mut BufReader<fs::File>, len: u64) -> Result<String, String> {
+        if len > 1 << 20 {
+            return Err("damaged GGUF header".to_owned());
+        }
+        let mut b = vec![0u8; len as usize];
+        r.read_exact(&mut b).map_err(|e| e.to_string())?;
+        Ok(String::from_utf8_lossy(&b).into_owned())
+    }
+    fn skip(r: &mut BufReader<fs::File>, ty: u32, depth: u8) -> Result<(), String> {
+        let fixed = match ty {
+            0 | 1 | 7 => Some(1),
+            2 | 3 => Some(2),
+            4..=6 => Some(4),
+            10..=12 => Some(8),
+            _ => None,
+        };
+        let mut b8 = [0u8; 8];
+        if let Some(n) = fixed {
+            return r.seek_relative(n).map_err(|e| e.to_string());
+        }
+        match ty {
+            8 => {
+                r.read_exact(&mut b8).map_err(|e| e.to_string())?;
+                r.seek_relative(u64::from_le_bytes(b8) as i64)
+                    .map_err(|e| e.to_string())
+            }
+            9 if depth < 3 => {
+                let mut b4 = [0u8; 4];
+                r.read_exact(&mut b4).map_err(|e| e.to_string())?;
+                let inner = u32::from_le_bytes(b4);
+                r.read_exact(&mut b8).map_err(|e| e.to_string())?;
+                let n = u64::from_le_bytes(b8);
+                let size = match inner {
+                    0 | 1 | 7 => 1,
+                    2 | 3 => 2,
+                    4..=6 => 4,
+                    10..=12 => 8,
+                    _ => 0,
+                };
+                if size > 0 {
+                    return r
+                        .seek_relative((n * size) as i64)
+                        .map_err(|e| e.to_string());
+                }
+                for _ in 0..n {
+                    skip(r, inner, depth + 1)?;
+                }
+                Ok(())
+            }
+            _ => Err("damaged GGUF header".to_owned()),
+        }
+    }
+    let (mut arch, mut name) = (None, None);
+    for _ in 0..kvs.min(64) {
+        let klen = u64_(&mut r)?;
+        let key = read_str(&mut r, klen)?;
+        let ty = u32_(&mut r)?;
+        if ty == 8 && (key == "general.architecture" || key == "general.name") {
+            let vlen = u64_(&mut r)?;
+            let v = read_str(&mut r, vlen)?;
+            if key == "general.architecture" {
+                arch = Some(v);
+            } else {
+                name = Some(v);
+            }
+            if arch.is_some() && name.is_some() {
+                break;
+            }
+        } else {
+            skip(&mut r, ty, 0)?;
+        }
+    }
+    Ok((arch, name))
+}
+
+fn sha256_file(app: &AppHandle, id: &str, path: &Path, total: u64) -> Result<String, String> {
+    let mut f = fs::File::open(path).map_err(|e| e.to_string())?;
+    let mut hasher = Sha256::new();
+    let mut buf = vec![0u8; 1 << 20];
+    let (mut done, mut last) = (0u64, Instant::now());
+    loop {
+        let n = f.read(&mut buf).map_err(|e| e.to_string())?;
+        if n == 0 {
+            break;
+        }
+        hasher.update(&buf[..n]);
+        done += n as u64;
+        if last.elapsed() > Duration::from_millis(150) {
+            last = Instant::now();
+            let _ = app.emit(
+                "ai-progress",
+                InstallProgress {
+                    id: id.to_owned(),
+                    done,
+                    total,
+                    phase: "check",
+                },
+            );
+        }
+    }
+    Ok(hasher
+        .finalize()
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect())
+}
+
+/// `llama-server` inside a folder the user picked, or the file itself.
+fn find_server_in(p: &Path) -> Option<PathBuf> {
+    if p.is_file() {
+        return Some(p.to_path_buf());
+    }
+    let name = if cfg!(windows) {
+        "llama-server.exe"
+    } else {
+        "llama-server"
+    };
+    let mut stack = vec![(p.to_path_buf(), 0u8)];
+    while let Some((d, depth)) = stack.pop() {
+        for e in fs::read_dir(&d).ok()?.flatten() {
+            let q = e.path();
+            if q.is_dir() && depth < 4 {
+                stack.push((q, depth + 1));
+            } else if q.file_name().is_some_and(|n| n == name) {
+                return Some(q);
+            }
+        }
+    }
+    None
+}
+
+/// Run `exe --version` for up to 15 seconds and require llama.cpp's answer.
+fn check_server(exe: &Path) -> Result<(), String> {
+    let mut cmd = Command::new(exe);
+    cmd.arg("--version")
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x0800_0000);
+    }
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("could not run this file: {e}"))?;
+    let t0 = Instant::now();
+    loop {
+        if child.try_wait().map_err(|e| e.to_string())?.is_some() {
+            break;
+        }
+        if t0.elapsed() > Duration::from_secs(15) {
+            let _ = child.kill();
+            return Err("the program did not answer `--version`".to_owned());
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    let mut out = String::new();
+    if let Some(mut o) = child.stdout.take() {
+        let _ = o.read_to_string(&mut out);
+    }
+    if let Some(mut e) = child.stderr.take() {
+        let _ = e.read_to_string(&mut out);
+    }
+    if out.contains("version:") || out.contains("llama") {
+        Ok(())
+    } else {
+        Err("this program is not llama.cpp's llama-server".to_owned())
+    }
+}
+
+fn verify_link(app: &AppHandle, id: &str, path: &Path) -> Result<Link, String> {
+    if id == "runtime" {
+        let exe = find_server_in(path).ok_or("no llama-server program in that folder")?;
+        check_server(&exe)?;
+        return Ok(Link {
+            path: exe.display().to_string(),
+            check: "compatible".into(),
+            model_name: None,
+        });
+    }
+    let pinned = match id {
+        "decider" => &DECIDER,
+        "narrator" => &NARRATOR,
+        _ => return Err("unknown component".to_owned()),
+    };
+    let size = fs::metadata(path).map_err(|e| e.to_string())?.len();
+    let (arch, name) = gguf_meta(path)?;
+    if size == pinned.size && sha256_file(app, id, path, size)? == pinned.sha256 {
+        return Ok(Link {
+            path: path.display().to_string(),
+            check: "exact".into(),
+            model_name: name,
+        });
+    }
+    if id == "decider" {
+        return Err(
+            "Laya answers through its own decision interface, so it must be the exact Laya-Q8_0.gguf file. This one differs; install it instead.".to_owned(),
+        );
+    }
+    if let Some(a) = arch.as_deref()
+        && EMBED_ONLY.contains(&a)
+    {
+        return Err(format!(
+            "this is an embedding model ({a}); it turns text into numbers and cannot write explanations"
+        ));
+    }
+    if size > 24 * (1 << 30) {
+        return Err("this model is larger than 24 GB and would not run well on a CPU".to_owned());
+    }
+    Ok(Link {
+        path: path.display().to_string(),
+        check: "compatible".into(),
+        model_name: name.or(arch),
+    })
+}
+
+/// Use a file the user already has instead of downloading it.
+#[tauri::command]
+pub async fn ai_link(app: AppHandle, id: String, path: String) -> Result<AiStatus, String> {
+    let app2 = app.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let link = verify_link(&app2, &id, Path::new(&path))?;
+        app2.state::<AiState>().shutdown();
+        let dir = ai_dir(&app2)?;
+        let mut links = read_links(&dir);
+        links.insert(id, link);
+        write_links(&dir, &links)?;
+        status(&app2)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Found {
+    id: &'static str,
+    path: String,
+    size: u64,
+    /// Same size as the pinned file (or Ollama's blob name is its SHA-256): almost
+    /// certainly the exact model. Linking still checks.
+    likely_exact: bool,
+    label: String,
+}
+
+/// Look for models and llama-server in the places other tools keep them.
+#[tauri::command]
+pub async fn ai_find(app: AppHandle) -> Result<Vec<Found>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let home = app.path().home_dir().map_err(|e| e.to_string())?;
+        let roots = [
+            home.join(".cache/huggingface/hub"),
+            home.join(".lmstudio/models"),
+            home.join(".cache/lm-studio/models"),
+            home.join(".ollama/models/blobs"),
+            home.join(".cache/llama.cpp"),
+            home.join("models"),
+            home.join("Models"),
+            home.join("Downloads"),
+        ];
+        let mut out: Vec<Found> = Vec::new();
+        let mut visited = 0usize;
+        for root in roots {
+            let mut stack = vec![(root, 0u8)];
+            while let Some((d, depth)) = stack.pop() {
+                let Ok(rd) = fs::read_dir(&d) else { continue };
+                for e in rd.flatten() {
+                    visited += 1;
+                    if visited > 50_000 || out.len() >= 40 {
+                        break;
+                    }
+                    let p = e.path();
+                    let Ok(ft) = e.file_type() else { continue };
+                    if ft.is_dir() {
+                        if depth < 6 {
+                            stack.push((p, depth + 1));
+                        }
+                        continue;
+                    }
+                    let name = e.file_name().to_string_lossy().into_owned();
+                    let blob = name.strip_prefix("sha256-").map(str::to_owned);
+                    let gguf = name.to_ascii_lowercase().ends_with(".gguf");
+                    if !gguf && blob.is_none() {
+                        continue;
+                    }
+                    // Hugging Face snapshots are links into blobs/: follow them for size.
+                    let Ok(meta) = fs::metadata(&p) else { continue };
+                    let size = meta.len();
+                    if size < 50_000_000 {
+                        continue;
+                    }
+                    // Ollama names blobs by hash: only GGUF ones are models, and the
+                    // header carries a readable name.
+                    let name = if blob.is_some() {
+                        match gguf_meta(&p) {
+                            Ok((_, Some(n))) => format!("{n} (Ollama)"),
+                            Ok(_) => name.clone(),
+                            Err(_) => continue,
+                        }
+                    } else {
+                        name.clone()
+                    };
+                    for (id, a) in [("decider", &DECIDER), ("narrator", &NARRATOR)] {
+                        let exact = blob.as_deref().is_some_and(|h| h == a.sha256)
+                            || (size == a.size && blob.is_none());
+                        if exact {
+                            out.push(Found {
+                                id,
+                                path: p.display().to_string(),
+                                size,
+                                likely_exact: true,
+                                label: name.clone(),
+                            });
+                        }
+                    }
+                    if gguf && size != DECIDER.size && size != NARRATOR.size {
+                        out.push(Found {
+                            id: "narrator",
+                            path: p.display().to_string(),
+                            size,
+                            likely_exact: false,
+                            label: name.clone(),
+                        });
+                    }
+                }
+            }
+        }
+        // llama-server on PATH or in the usual install folders.
+        let exe = if cfg!(windows) {
+            "llama-server.exe"
+        } else {
+            "llama-server"
+        };
+        let mut dirs: Vec<PathBuf> = std::env::var_os("PATH")
+            .map(|p| std::env::split_paths(&p).collect())
+            .unwrap_or_default();
+        dirs.extend([
+            PathBuf::from("/opt/homebrew/bin"),
+            PathBuf::from("/usr/local/bin"),
+            home.join(".local/bin"),
+        ]);
+        if let Some(d) = dirs.iter().map(|d| d.join(exe)).find(|p| p.is_file()) {
+            out.push(Found {
+                id: "runtime",
+                path: d.display().to_string(),
+                size: fs::metadata(&d).map(|m| m.len()).unwrap_or(0),
+                likely_exact: false,
+                label: exe.to_owned(),
+            });
+        }
+        out.sort_by(|a, b| (a.id, !a.likely_exact, &a.path).cmp(&(b.id, !b.likely_exact, &b.path)));
+        out.dedup_by(|a, b| a.id == b.id && a.path == b.path);
+        Ok(out)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn gguf(kvs: &[(&str, u32, Vec<u8>)]) -> Vec<u8> {
+        let mut b = b"GGUF".to_vec();
+        b.extend(3u32.to_le_bytes());
+        b.extend(0u64.to_le_bytes());
+        b.extend((kvs.len() as u64).to_le_bytes());
+        for (k, ty, v) in kvs {
+            b.extend((k.len() as u64).to_le_bytes());
+            b.extend(k.as_bytes());
+            b.extend(ty.to_le_bytes());
+            b.extend(v);
+        }
+        b
+    }
+
+    fn s(v: &str) -> Vec<u8> {
+        let mut b = (v.len() as u64).to_le_bytes().to_vec();
+        b.extend(v.as_bytes());
+        b
+    }
+
+    #[test]
+    fn reads_architecture_and_name_past_other_entries() {
+        let dir = std::env::temp_dir().join(format!("ak-gguf-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let p = dir.join("m.gguf");
+        // u32 entry, then a string array, then the two strings we want.
+        let mut arr = 8u32.to_le_bytes().to_vec();
+        arr.extend(2u64.to_le_bytes());
+        arr.extend(s("a"));
+        arr.extend(s("bc"));
+        fs::write(
+            &p,
+            gguf(&[
+                ("general.alignment", 4, 32u32.to_le_bytes().to_vec()),
+                ("tokenizer.ggml.tokens", 9, arr),
+                ("general.architecture", 8, s("qwen2")),
+                ("general.name", 8, s("Qwen2.5 0.5B Instruct")),
+            ]),
+        )
+        .unwrap();
+        let (arch, name) = gguf_meta(&p).unwrap();
+        assert_eq!(arch.as_deref(), Some("qwen2"));
+        assert_eq!(name.as_deref(), Some("Qwen2.5 0.5B Instruct"));
+        fs::write(&p, b"PK\x03\x04 not a model").unwrap();
+        assert!(gguf_meta(&p).unwrap_err().contains("not a GGUF"));
+        let _ = fs::remove_dir_all(&dir);
+    }
 }

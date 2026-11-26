@@ -330,6 +330,8 @@ export interface AiComponent {
   size: number;
   installed: boolean;
   supported: boolean;
+  /** The user's own file, used instead of a download. */
+  linked?: { path: string; check: "exact" | "compatible"; modelName?: string };
 }
 
 export interface AiStatus {
@@ -337,13 +339,24 @@ export interface AiStatus {
   deciderReady: boolean;
   narratorReady: boolean;
   narratorBaseUrl: string | null;
+  /** Where downloads are saved. */
+  installDir: string;
+}
+
+/** A model or llama-server already on this computer. */
+export interface AiFound {
+  id: AiComponent["id"];
+  path: string;
+  size: number;
+  likelyExact: boolean;
+  label: string;
 }
 
 export interface AiProgress {
   id: string;
   done: number;
   total: number;
-  phase: "download" | "verified" | "extract";
+  phase: "download" | "verified" | "extract" | "check";
 }
 
 export async function aiStatus(): Promise<AiStatus | null> {
@@ -362,6 +375,37 @@ export async function aiInstall(
   } finally {
     un();
   }
+}
+
+/** Use a file the user already has; the app checks it before saving the link. */
+export async function aiLink(
+  id: string,
+  path: string,
+  onProgress: (p: AiProgress) => void,
+): Promise<AiStatus> {
+  const { listen } = await import("@tauri-apps/api/event");
+  const un = await listen<AiProgress>("ai-progress", (e) => onProgress(e.payload));
+  try {
+    return await invoke<AiStatus>("ai_link", { id, path });
+  } finally {
+    un();
+  }
+}
+
+export async function aiFind(): Promise<AiFound[]> {
+  return invoke<AiFound[]>("ai_find");
+}
+
+/** Ask for a file: a .gguf model, or the llama-server program. */
+export async function pickModelFile(id: string): Promise<string | null> {
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const res = await open({
+    directory: false,
+    multiple: false,
+    title: id === "runtime" ? "Choose llama-server" : "Choose a .gguf model file",
+    filters: id === "runtime" ? undefined : [{ name: "GGUF model", extensions: ["gguf"] }],
+  });
+  return typeof res === "string" ? res : null;
 }
 
 export async function aiRemove(id: string): Promise<AiStatus> {
