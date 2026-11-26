@@ -1,152 +1,116 @@
-import { Apple, Download, Laptop, Monitor, Terminal } from "lucide-react";
-import { fmtDate, fmtSize, getLatestRelease, pick, REPO } from "@/lib/releases";
+import { Terminal } from "lucide-react";
+import {
+  fmtDate,
+  fmtSize,
+  getLatestRelease,
+  INSTALLERS,
+  type InstallerKey,
+  pick,
+} from "@/lib/releases";
+import { CopyCommand } from "./CopyCommand";
+import { DownloadCards, type Platform } from "./DownloadCards";
+
+function file(latest: Awaited<ReturnType<typeof getLatestRelease>>, key: InstallerKey) {
+  const a = pick(latest, INSTALLERS[key]);
+  return a ? { href: `/download/${key}`, size: fmtSize(a.size) } : null;
+}
 
 export async function DownloadSection() {
   const latest = await getLatestRelease();
-  const fallback = `https://github.com/${REPO}/releases/latest`;
-  const exe = pick(latest, /_x64-setup\.exe$/);
-  const msi = pick(latest, /_x64_en-US\.msi$/);
-  const dmg = pick(latest, /_universal\.dmg$/);
-  const appimage = pick(latest, /\.AppImage$/);
-  const deb = pick(latest, /\.deb$/);
-  const rpm = pick(latest, /\.rpm$/);
 
-  const releases = [
+  const platforms: Platform[] = [
     {
-      os: "Windows",
-      icon: <Monitor size={28} />,
-      desc: "Windows 10 / 11 (x64)",
-      primaryBtn: exe ? `Download .exe · ${fmtSize(exe.size)}` : "Download for Windows",
-      primaryUrl: exe?.url ?? fallback,
-      secondaryText: "Download .msi package",
-      secondaryUrl: msi?.url ?? fallback,
-      badge: "Auto-updates",
+      os: "windows",
+      name: "Windows",
+      req: "Windows 10 or 11, x64",
+      main: { label: ".exe installer", ...file(latest, "windows") },
+      extra: [{ label: ".msi", ...file(latest, "windows-msi") }],
+      note: "Updates itself.",
     },
     {
-      os: "macOS",
-      icon: <Apple size={28} />,
-      desc: "Universal (Apple Silicon & Intel)",
-      primaryBtn: dmg ? `Download .dmg · ${fmtSize(dmg.size)}` : "Download for macOS",
-      primaryUrl: dmg?.url ?? fallback,
-      secondaryText: "Not notarized: right click, Open on first run",
-      badge: "Universal Binary",
+      os: "macos",
+      name: "macOS",
+      req: "Apple silicon and Intel",
+      main: { label: ".dmg", ...file(latest, "macos") },
+      extra: [],
+      note: "Not notarized yet. The first time, right-click the app and choose Open.",
     },
     {
-      os: "Linux",
-      icon: <Laptop size={28} />,
-      desc: "x86-64 AppImage, deb, rpm",
-      primaryBtn: appimage
-        ? `Download AppImage · ${fmtSize(appimage.size)}`
-        : "View Linux packages",
-      primaryUrl: appimage?.url ?? fallback,
-      secondaryText: [deb && ".deb", rpm && ".rpm"].filter(Boolean).join(" · ") || "deb and rpm",
-      secondaryUrl: deb?.url ?? fallback,
-      badge: "Auto-updates (AppImage)",
+      os: "linux",
+      name: "Linux",
+      req: "x86-64",
+      main: { label: "AppImage", ...file(latest, "linux") },
+      extra: [
+        { label: ".deb", ...file(latest, "linux-deb") },
+        { label: ".rpm", ...file(latest, "linux-rpm") },
+      ],
+      note: "The AppImage updates itself.",
     },
   ];
 
   return (
     <section
       id="download"
-      className="py-24 border-t-[2.5px] border-[var(--line)] bg-[var(--surface-2)]"
+      className="scroll-mt-16 py-24 border-t-[2.5px] border-[var(--line)] bg-[var(--surface-2)]"
     >
       <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <div className="ak-badge bg-[var(--tier-ui)] text-[#1f1d36] mb-3 font-bold">
-            Releases & Installers
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-[var(--ink)]">
-            Get FolderKnower Desktop
+        <div className="max-w-2xl mb-12">
+          <p className="ak-eyebrow mb-3">Download</p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--ink)]">
+            Get FolderKnower for your desktop
           </h2>
           <p className="text-[var(--ink-2)] text-base font-medium mt-3">
-            Native desktop app that updates itself with a pop-up, plus a standalone Rust CLI.
-          </p>
-          {latest && (
-            <p className="mt-4 text-sm font-mono text-[var(--ink-3)]">
-              Latest: <span className="font-bold text-[var(--ink)]">{latest.tag}</span> ·{" "}
-              {fmtDate(latest.publishedAt)} ·{" "}
-              <a href="/releases" className="underline hover:text-[var(--ink)]">
-                what&apos;s new
-              </a>{" "}
-              ·{" "}
-              <a href="/code-signing" className="underline hover:text-[var(--ink)]">
-                code signing policy
-              </a>
-            </p>
-          )}
-          <p className="mt-3 text-sm text-[var(--ink-3)]">
-            Windows builds are signed through the{" "}
-            <a
-              href="https://signpath.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-[var(--ink)]"
-            >
-              SignPath Foundation
-            </a>
-            . Every download also has a checksum and a build attestation.
+            {latest ? (
+              <>
+                Version <span className="font-mono font-bold text-[var(--ink)]">{latest.tag}</span>,
+                released {fmtDate(latest.publishedAt)}. The app shows a pop-up when a new version is
+                ready.
+              </>
+            ) : (
+              <>
+                The first release is building now. The download buttons start working as soon as it
+                is published.
+              </>
+            )}
           </p>
         </div>
 
-        {/* OS Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {releases.map((rel) => (
-            <div key={rel.os} className="ak-card p-6 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-lg bg-[var(--surface)] border-2 border-[var(--line)] flex items-center justify-center shadow-[2px_2px_0_var(--shade)]">
-                    {rel.icon}
-                  </div>
-                  <span className="ak-badge bg-[var(--surface-2)] text-[11px]">{rel.badge}</span>
-                </div>
-                <h3 className="text-xl font-extrabold text-[var(--ink)] mb-1">{rel.os}</h3>
-                <p className="text-xs text-[var(--ink-3)] font-mono mb-6">{rel.desc}</p>
-              </div>
+        <DownloadCards platforms={platforms} ready={Boolean(latest)} />
 
-              <div className="flex flex-col gap-3">
-                <a
-                  href={rel.primaryUrl}
-                  className="ak-btn ak-btn-accent w-full text-center py-2.5 text-sm"
-                >
-                  <Download size={16} />
-                  <span>{rel.primaryBtn}</span>
-                </a>
-                {rel.secondaryUrl ? (
-                  <a
-                    href={rel.secondaryUrl}
-                    className="text-xs text-center font-bold text-[var(--ink-2)] hover:text-[var(--ink)] underline"
-                  >
-                    {rel.secondaryText}
-                  </a>
-                ) : (
-                  <span className="text-xs text-center font-medium text-[var(--ink-3)]">
-                    {rel.secondaryText}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        <p className="mt-8 text-sm text-[var(--ink-2)]">
+          Each file has a SHA-256 checksum and a build attestation.{" "}
+          <a href="/releases" className="ak-link">
+            Release notes
+          </a>{" "}
+          ·{" "}
+          <a href="/code-signing" className="ak-link">
+            Code signing policy
+          </a>
+        </p>
 
-        {/* CLI Section */}
-        <div className="ak-card p-6 sm:p-8 bg-[var(--surface)] flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-[var(--mark)] border-2 border-[var(--line)] flex items-center justify-center font-black text-xl shadow-[2px_2px_0_var(--shade)]">
-              <Terminal size={24} />
+        <div className="ak-card mt-12 p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex items-start gap-4">
+            <div className="shrink-0 w-12 h-12 rounded-[var(--r-sm)] bg-[var(--surface-2)] border-2 border-[var(--line)] flex items-center justify-center">
+              <Terminal size={22} strokeWidth={2.5} />
             </div>
             <div>
-              <h4 className="font-extrabold text-base text-[var(--ink)]">
-                Prefer the Command Line?
-              </h4>
-              <p className="text-xs sm:text-sm text-[var(--ink-2)] font-medium mt-0.5">
-                Run the indexer as <code>fknow</code> in CI or any terminal. On Windows:{" "}
-                <code>irm folderknower.vercel.app/i.ps1 | iex</code>
+              <h3 className="font-extrabold text-lg text-[var(--ink)]">Use it from a terminal</h3>
+              <p className="text-sm text-[var(--ink-2)] font-medium mt-1 max-w-md">
+                The <code className="font-mono font-bold text-[var(--ink)]">fknow</code> command
+                writes the same <code className="font-mono">architecture.json</code> in CI or any
+                shell.
               </p>
             </div>
           </div>
-
-          <div className="bg-[var(--code-bg)] border-2 border-[var(--line)] rounded-lg px-4 py-2.5 font-mono text-xs sm:text-sm text-[var(--ink)] font-bold shadow-[2px_2px_0_var(--shade)]">
-            curl -fsSL folderknower.vercel.app/i | sh
+          <div className="flex flex-col gap-3 min-w-0">
+            <CopyCommand
+              label="macOS and Linux"
+              command="curl -fsSL folderknower.vercel.app/i | sh"
+            />
+            <CopyCommand
+              label="Windows PowerShell"
+              command="irm folderknower.vercel.app/i.ps1 | iex"
+            />
           </div>
         </div>
       </div>

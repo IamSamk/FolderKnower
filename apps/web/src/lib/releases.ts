@@ -70,9 +70,24 @@ export async function getReleases(): Promise<Release[]> {
   return (list ?? []).filter((r) => !r.draft).map(toRelease);
 }
 
-/** First asset whose name matches, else the release page. */
+/** First asset whose name matches. */
 export function pick(release: Release | null, re: RegExp): Asset | null {
   return release?.assets.find((a) => re.test(a.name)) ?? null;
+}
+
+/** Installer files by short key, as built by .github/workflows/release.yml. */
+export const INSTALLERS = {
+  windows: /_x64-setup\.exe$/,
+  "windows-msi": /_x64_en-US\.msi$/,
+  macos: /_universal\.dmg$/,
+  linux: /\.AppImage$/,
+  "linux-deb": /\.deb$/,
+  "linux-rpm": /\.rpm$/,
+} as const;
+
+export type InstallerKey = keyof typeof INSTALLERS;
+export function isInstallerKey(k: string): k is InstallerKey {
+  return Object.hasOwn(INSTALLERS, k);
 }
 
 export function fmtSize(bytes: number) {

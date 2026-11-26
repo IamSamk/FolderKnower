@@ -2,60 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
+/* All colours in OKLCH. One accent (--accent); tier colours are data colours for diagrams only. */
 :root,
 :root[data-theme="light"] {
-  --paper: #eceef6;
-  --paper-dot: #c3c6d9;
-  --surface: #ffffff;
-  --surface-2: #f6f7fb;
-  --ink: #1f1d36;
-  --ink-2: #57546f;
-  --ink-3: #8f8ca6;
-  --line: #1f1d36;
-  --shade: #1f1d36;
-  --accent: #5b4bff;
-  --on-accent: #ffffff;
-  --mark: #ffe14d;
-  --danger: #e5484d;
-  --code-bg: #f7f6fb;
+  color-scheme: light;
+  --paper: oklch(95% 0.011 275);
+  --paper-dot: oklch(83% 0.027 279);
+  --surface: oklch(100% 0 0);
+  --surface-2: oklch(97.7% 0.005 275);
+  --surface-3: oklch(100% 0 0);
+  --ink: oklch(24.6% 0.047 286);
+  --ink-2: oklch(45.9% 0.044 290);
+  --ink-3: oklch(52% 0.04 290);
+  --line: oklch(24.6% 0.047 286);
+  --hair: oklch(24.6% 0.047 286 / 0.14);
+  --shade: oklch(24.6% 0.047 286);
+  --accent: oklch(55% 0.253 278);
+  --accent-soft: oklch(55% 0.253 278 / 0.12);
+  --on-accent: oklch(100% 0 0);
+  --danger: oklch(62.6% 0.193 23);
+  --ok: oklch(58% 0.15 150);
+  --code-bg: oklch(97.5% 0.007 295);
+  --on-tier: oklch(24.6% 0.047 286);
 
   --r-sm: 8px;
-  --r: 14px;
+  --r: 16px;
   --r-lg: 20px;
   --b: 2.5px;
-  --sh-sm: 2.5px 2.5px 0 var(--shade);
-  --sh: 4.5px 4.5px 0 var(--shade);
-  --sh-lg: 7px 7px 0 var(--shade);
+  --sh-sm: 2px 2px 0 var(--shade);
+  --sh: 4px 4px 0 var(--shade);
+  --sh-lg: 8px 8px 0 var(--shade);
 
-  /* Tier colors */
-  --tier-ui: #ffdd55;
-  --tier-gateway: #ff8b53;
-  --tier-backend: #8b7dff;
-  --tier-workers: #5eead4;
-  --tier-storage: #5fe38a;
+  --tier-ui: oklch(90.2% 0.155 95);
+  --tier-gateway: oklch(75.4% 0.157 45);
+  --tier-backend: oklch(78% 0.11 285);
+  --tier-workers: oklch(85.5% 0.125 181);
+  --tier-storage: oklch(82.1% 0.171 151);
 }
 
+/* Dark mode: depth comes from lighter surfaces (paper < surface-2 < surface < surface-3). */
 :root[data-theme="dark"] {
-  --paper: #131224;
-  --paper-dot: #2a2848;
-  --surface: #1e1c38;
-  --surface-2: #18172e;
-  --ink: #f2f0ff;
-  --ink-2: #b4b0d8;
-  --ink-3: #7e7a9e;
-  --line: #060514;
-  --shade: #060514;
-  --accent: #9285ff;
-  --on-accent: #0f0d26;
-  --mark: #ffe14d;
-  --danger: #ff6b6b;
-  --code-bg: #16152b;
+  color-scheme: dark;
+  --paper: oklch(19.4% 0.036 285);
+  --paper-dot: oklch(29.5% 0.057 285);
+  --surface: oklch(25.5% 0.05 285);
+  --surface-2: oklch(22% 0.044 284);
+  --surface-3: oklch(30% 0.055 285);
+  --ink: oklch(96.1% 0.02 292);
+  --ink-2: oklch(77.4% 0.057 290);
+  --ink-3: oklch(66% 0.05 290);
+  --line: oklch(12.8% 0.035 284);
+  --hair: oklch(96.1% 0.02 292 / 0.12);
+  --shade: oklch(12.8% 0.035 284);
+  --accent: oklch(68.4% 0.175 286);
+  --accent-soft: oklch(68.4% 0.175 286 / 0.16);
+  --on-accent: oklch(17.8% 0.05 284);
+  --danger: oklch(71.2% 0.181 23);
+  --ok: oklch(77.4% 0.192 150);
+  --code-bg: oklch(20.9% 0.043 284);
 
-  --tier-ui: #ffd233;
-  --tier-gateway: #ff7633;
-  --tier-backend: #7966ff;
-  --tier-workers: #2dd4bf;
-  --tier-storage: #3dd66e;
+  --tier-ui: oklch(87.8% 0.168 92);
+  --tier-gateway: oklch(71.9% 0.184 44);
+  --tier-backend: oklch(74% 0.13 285);
+  --tier-workers: oklch(78.5% 0.133 182);
+  --tier-storage: oklch(77.4% 0.192 150);
 }
 
 * {
@@ -66,7 +76,6 @@ html,
 body {
   background-color: var(--paper);
   color: var(--ink);
-  min-height: 100dvh;
   margin: 0;
   padding: 0;
   transition:
@@ -74,81 +83,156 @@ body {
     color 0.25s ease;
 }
 
-/* Neo-brutalist buttons */
-.ak-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-weight: 700;
-  font-size: 14px;
-  padding: 10px 20px;
-  background: var(--surface);
-  color: var(--ink);
-  border: var(--b) solid var(--line);
-  border-radius: var(--r-sm);
-  box-shadow: var(--sh);
-  cursor: pointer;
-  transition:
-    transform 0.12s ease,
-    box-shadow 0.12s ease;
-  user-select: none;
-  text-decoration: none;
-}
+@layer components {
+  /* Neo-brutalist buttons */
+  .ak-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 10px 20px;
+    background: var(--surface);
+    color: var(--ink);
+    border: var(--b) solid var(--line);
+    border-radius: var(--r-sm);
+    box-shadow: var(--sh);
+    cursor: pointer;
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.12s ease;
+    user-select: none;
+    text-decoration: none;
+  }
 
-.ak-btn:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: var(--sh-lg);
-}
+  .ak-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--sh-lg);
+  }
 
-.ak-btn:active {
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0 var(--shade);
-}
+  .ak-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--shade);
+  }
 
-.ak-btn-accent {
-  background: var(--accent);
-  color: var(--on-accent);
-}
+  .ak-btn-accent {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
 
-.ak-btn-mark {
-  background: var(--mark);
-  color: #1f1d36;
-}
+  .ak-btn:focus-visible,
+  .ak-link:focus-visible,
+  a:focus-visible,
+  button:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+  }
 
-/* Neo-brutalist cards */
-.ak-card {
-  background: var(--surface);
-  border: var(--b) solid var(--line);
-  border-radius: var(--r);
-  box-shadow: var(--sh);
-  padding: 24px;
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
-}
+  .ak-btn[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+    box-shadow: var(--sh-sm);
+  }
 
-.ak-card-interactive:hover {
-  transform: translate(-3px, -3px);
-  box-shadow: var(--sh-lg);
-}
+  /* Icon stroke matches the bold button and label text. */
+  .ak-btn svg,
+  .ak-eyebrow svg {
+    stroke-width: 2.5;
+  }
 
-/* Neo-brutalist badges */
-.ak-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono), monospace;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 4px 12px;
-  border: var(--b) solid var(--line);
-  border-radius: 9999px;
-  box-shadow: var(--sh-sm);
-}
+  /* Quiet text link: underline appears on hover so it reads as clickable. */
+  .ak-link {
+    color: var(--ink-2);
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: var(--hair);
+    text-underline-offset: 3px;
+    transition:
+      color 0.15s ease,
+      text-decoration-color 0.15s ease;
+  }
 
-/* Dot grid background */
-.bg-dot-pattern {
-  background-image: radial-gradient(var(--paper-dot) 1.5px, transparent 1.5px);
-  background-size: 24px 24px;
+  .ak-link:hover {
+    color: var(--ink);
+    text-decoration-color: currentColor;
+  }
+
+  /* Small section label: plain text, no pill. */
+  .ak-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono), monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  /* Icon swap: the outgoing icon blurs while it fades. */
+  .ak-swap {
+    display: grid;
+  }
+
+  .ak-swap > * {
+    grid-area: 1 / 1;
+    transition:
+      opacity 0.2s ease,
+      filter 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .ak-swap > [data-on="false"] {
+    opacity: 0;
+    filter: blur(4px);
+    transform: scale(0.6);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ak-btn,
+    .ak-card,
+    .ak-swap > * {
+      transition: none;
+    }
+  }
+
+  /* Neo-brutalist cards */
+  .ak-card {
+    background: var(--surface);
+    border: var(--b) solid var(--line);
+    border-radius: var(--r);
+    box-shadow: var(--sh);
+    padding: 24px;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .ak-card-interactive:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: var(--sh-lg);
+  }
+
+  /* Neo-brutalist badges */
+  .ak-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono), monospace;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border: var(--b) solid var(--line);
+    border-radius: 9999px;
+    box-shadow: var(--sh-sm);
+  }
+
+  /* Dot grid background */
+  .bg-dot-pattern {
+    background-image: radial-gradient(var(--paper-dot) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+  }
 }

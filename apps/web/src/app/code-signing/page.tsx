@@ -23,31 +23,31 @@ const rows: [string, string][] = [
 
 export default function CodeSigningPage() {
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-dvh flex flex-col">
       <Header />
       <section className="flex-1 py-16">
         <article className="max-w-3xl mx-auto px-6 text-[var(--ink-2)] leading-relaxed">
-          <div className="ak-badge bg-[var(--tier-ui)] text-[#1f1d36] mb-3 font-bold">Trust</div>
+          <p className="ak-eyebrow mb-3">Trust</p>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[var(--ink)]">
             Code signing policy
           </h1>
           <p className="mt-4">
             Windows release binaries are intended to be signed with free code signing provided by{" "}
-            <a className="underline" href="https://signpath.io">
+            <a className="ak-link" href="https://signpath.io">
               SignPath.io
             </a>
             , certificate by{" "}
-            <a className="underline" href="https://signpath.org">
+            <a className="ak-link" href="https://signpath.org">
               SignPath Foundation
             </a>
             . Until that is approved, the table below shows exactly what is and is not signed.
           </p>
 
-          <div className="ak-card mt-8 overflow-hidden">
+          <div className="ak-card mt-8 p-0 overflow-x-auto">
             <table className="w-full text-sm">
               <tbody>
                 {rows.map(([k, v]) => (
-                  <tr key={k} className="border-b-2 border-[var(--line)] last:border-0">
+                  <tr key={k} className="border-b-2 border-[var(--hair)] last:border-0">
                     <th className="text-left align-top p-3 font-extrabold text-[var(--ink)] w-1/3">
                       {k}
                     </th>
@@ -68,7 +68,7 @@ export default function CodeSigningPage() {
             25D0 153E F05D 3609 0054 3DBF 0441 7AD3 82B1 0392
           </p>
           <p className="mt-2">
-            <a className="underline" href="/folderknower-release.asc">
+            <a className="ak-link" href="/folderknower-release.asc">
               Download the public key
             </a>{" "}
             (ed25519, expires 2028-11-25).
@@ -85,20 +85,20 @@ export default function CodeSigningPage() {
           <ul className="mt-2 list-disc pl-5">
             <li>
               Committers and reviewers:{" "}
-              <a className="underline" href="https://github.com/IamSamk">
+              <a className="ak-link" href="https://github.com/IamSamk">
                 IamSamk
               </a>
             </li>
             <li>
               Approvers:{" "}
-              <a className="underline" href="https://github.com/IamSamk">
+              <a className="ak-link" href="https://github.com/IamSamk">
                 IamSamk
               </a>
             </li>
           </ul>
 
           <h2 className="mt-8 text-xl font-extrabold text-[var(--ink)]">Verify a download</h2>
-          <pre className="mt-2 p-4 rounded-lg border-2 border-[var(--line)] bg-[var(--code-bg)] text-xs font-mono overflow-x-auto">
+          <pre className="mt-2 p-4 rounded-[var(--r-sm)] border-2 border-[var(--hair)] bg-[var(--code-bg)] text-xs text-[var(--ink)] font-mono overflow-x-auto">
             {`# checksum
 sha256sum -c SHA256SUMS.txt --ignore-missing
 
@@ -114,7 +114,7 @@ Get-AuthenticodeSignature .\\FolderKnower_*_x64-setup.exe`}
             The app makes no network calls except the update check to GitHub Releases and optional
             model downloads you start yourself. See{" "}
             <a
-              className="underline"
+              className="ak-link"
               href="https://github.com/IamSamk/FolderKnower/blob/main/PRIVACY.md"
             >
               PRIVACY.md

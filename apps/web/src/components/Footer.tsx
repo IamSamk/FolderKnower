@@ -3,26 +3,29 @@ import { GithubIcon } from "./Icons";
 export function Footer() {
   return (
     <footer className="border-t-[2.5px] border-[var(--line)] bg-[var(--paper)] py-12">
-      <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-6 text-sm font-bold text-[var(--ink-2)]">
-        <div className="flex items-center gap-2">
+      <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6 text-sm font-bold text-[var(--ink-2)]">
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <span>© 2026 FolderKnower by</span>
           <a
             href="https://github.com/IamSamk"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[var(--ink)] underline hover:text-[var(--accent)]"
+            className="ak-link text-[var(--ink)]"
           >
             IamSamk
           </a>
           <span>· MIT OR Apache-2.0</span>
         </div>
 
-        <div className="flex items-center gap-6">
+        <nav
+          aria-label="Footer"
+          className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3"
+        >
           <a
             href="https://github.com/IamSamk/FolderKnower"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-[var(--ink)] flex items-center gap-1.5"
+            className="hover:text-[var(--ink)] flex items-center gap-2"
           >
             <GithubIcon size={16} />
             Repository
@@ -49,7 +52,7 @@ export function Footer() {
           >
             Issues
           </a>
-        </div>
+        </nav>
       </div>
     </footer>
   );

@@ -13,13 +13,11 @@ export const revalidate = 600;
 export default async function ReleasesPage() {
   const releases = await getReleases();
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-dvh flex flex-col">
       <Header />
       <section className="flex-1 py-16">
         <div className="max-w-4xl mx-auto px-6">
-          <div className="ak-badge bg-[var(--tier-ui)] text-[#1f1d36] mb-3 font-bold">
-            Changelog
-          </div>
+          <p className="ak-eyebrow mb-3">Changelog</p>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[var(--ink)]">Releases</h1>
           <p className="text-[var(--ink-2)] mt-3 font-medium">
             Installed apps pick these up on their own and show an update pop-up. Every file is
@@ -28,12 +26,9 @@ export default async function ReleasesPage() {
           </p>
 
           {releases.length === 0 && (
-            <p className="mt-10 text-[var(--ink-3)]">
-              Could not reach GitHub right now.{" "}
-              <a className="underline" href="https://github.com/IamSamk/FolderKnower/releases">
-                See releases on GitHub
-              </a>
-              .
+            <p className="ak-card mt-10 text-[var(--ink-2)] font-medium">
+              No release is published yet. The first one is building now and shows here when it is
+              ready.
             </p>
           )}
 
@@ -48,17 +43,14 @@ export default async function ReleasesPage() {
                   <div className="flex flex-wrap items-baseline gap-3">
                     <h2 className="text-2xl font-extrabold text-[var(--ink)]">{r.tag}</h2>
                     {i === 0 && (
-                      <span className="ak-badge bg-[var(--mark)] text-[#1f1d36] text-[11px]">
+                      <span className="font-mono text-xs font-bold text-[var(--accent)]">
                         latest
                       </span>
                     )}
                     <span className="text-xs font-mono text-[var(--ink-3)]">
                       {fmtDate(r.publishedAt)}
                     </span>
-                    <a
-                      href={r.url}
-                      className="ml-auto text-xs font-bold underline text-[var(--ink-2)]"
-                    >
+                    <a href={r.url} className="ak-link ml-auto text-xs">
                       on GitHub
                     </a>
                   </div>
@@ -83,7 +75,7 @@ export default async function ReleasesPage() {
                         <a
                           key={a.name}
                           href={a.url}
-                          className="ak-badge bg-[var(--surface-2)] text-[11px] font-mono hover:bg-[var(--mark)] hover:text-[#1f1d36]"
+                          className="ak-badge bg-[var(--surface-2)] text-[11px] font-mono hover:bg-[var(--accent)] hover:text-[var(--on-accent)] transition-colors"
                         >
                           {a.name.replace(/^FolderKnower[_-]/, "")} · {fmtSize(a.size)}
                         </a>

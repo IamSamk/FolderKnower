@@ -4,55 +4,55 @@ import { Layers, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { GithubIcon } from "./Icons";
 
+const NAV = [
+  { href: "/#explorer", label: "How it works" },
+  { href: "/#features", label: "Features" },
+  { href: "/releases", label: "Releases" },
+];
+
 export function Header() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
-    const saved = localStorage.getItem("ak-theme") as "dark" | "light" | null;
-    if (saved) {
-      setTheme(saved);
-      document.documentElement.setAttribute("data-theme", saved);
-    }
+    const current = document.documentElement.getAttribute("data-theme");
+    if (current === "light" || current === "dark") setTheme(current);
   }, []);
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
-    localStorage.setItem("ak-theme", next);
+    try {
+      localStorage.setItem("ak-theme", next);
+    } catch {
+      // Storage can be blocked; the theme still changes for this visit.
+    }
     document.documentElement.setAttribute("data-theme", next);
   };
 
   return (
     <header className="sticky top-0 z-50 border-b-[2.5px] border-[var(--line)] bg-[var(--paper)]/90 backdrop-blur-md">
-      <div className="max-w-6xl mx-auto px-6 h-18 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
         <a
           href="/"
-          className="flex items-center gap-2.5 font-black text-xl tracking-tight text-[var(--ink)] no-underline"
+          className="flex items-center gap-2.5 font-black text-xl tracking-tight text-[var(--ink)]"
         >
-          <span className="w-8 h-8 rounded-lg bg-[var(--mark)] border-2 border-[var(--line)] flex items-center justify-center font-black text-sm shadow-[2px_2px_0_var(--shade)]">
-            <Layers size={18} strokeWidth={2.5} className="text-[#1f1d36]" />
+          <span className="w-8 h-8 rounded-[var(--r-sm)] bg-[var(--accent)] border-2 border-[var(--line)] flex items-center justify-center">
+            <Layers size={18} strokeWidth={2.5} className="text-[var(--on-accent)]" />
           </span>
           <span>FolderKnower</span>
         </a>
 
-        <nav className="hidden md:flex items-center gap-7 font-bold text-sm text-[var(--ink-2)]">
-          <a href="/#explorer" className="hover:text-[var(--ink)] transition-colors">
-            Explorer
-          </a>
-          <a href="/#features" className="hover:text-[var(--ink)] transition-colors">
-            Features
-          </a>
-          <a href="/#download" className="hover:text-[var(--ink)] transition-colors">
-            Downloads
-          </a>
-          <a href="/releases" className="hover:text-[var(--ink)] transition-colors">
-            Releases
-          </a>
+        <nav className="hidden md:flex items-center gap-8 font-bold text-sm text-[var(--ink-2)]">
+          {NAV.map((n) => (
+            <a key={n.href} href={n.href} className="hover:text-[var(--ink)] transition-colors">
+              {n.label}
+            </a>
+          ))}
           <a
             href="https://github.com/IamSamk/FolderKnower"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 hover:text-[var(--ink)] transition-colors"
+            className="flex items-center gap-2 hover:text-[var(--ink)] transition-colors"
           >
             <GithubIcon size={16} />
             GitHub
@@ -63,13 +63,16 @@ export function Header() {
           <button
             type="button"
             onClick={toggleTheme}
-            className="ak-btn p-2.5 bg-[var(--surface)] text-[var(--ink)]"
-            aria-label="Toggle theme"
+            className="ak-btn w-10 h-10 p-0"
+            aria-label={theme === "dark" ? "Use light theme" : "Use dark theme"}
           >
-            {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+            <span className="ak-swap">
+              <Sun size={18} data-on={theme === "dark"} />
+              <Moon size={18} data-on={theme === "light"} />
+            </span>
           </button>
-          <a href="/#download" className="ak-btn ak-btn-mark hidden sm:inline-flex">
-            Get App
+          <a href="/download" className="ak-btn ak-btn-accent hidden sm:inline-flex">
+            Download
           </a>
         </div>
       </div>
