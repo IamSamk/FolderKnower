@@ -127,7 +127,8 @@ export async function DownloadSection() {
                 Prefer the Command Line?
               </h4>
               <p className="text-xs sm:text-sm text-[var(--ink-2)] font-medium mt-0.5">
-                Run the indexer as <code>fknow</code> in CI or any terminal. On Windows: <code>irm folderknower.vercel.app/i.ps1 | iex</code>
+                Run the indexer as <code>fknow</code> in CI or any terminal. On Windows:{" "}
+                <code>irm folderknower.vercel.app/i.ps1 | iex</code>
               </p>
             </div>
           </div>
