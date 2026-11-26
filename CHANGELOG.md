@@ -4,6 +4,8 @@ Notes for each version are shown in the in-app update pop-up and on the website'
 
 ## [Unreleased]
 
+## [0.14.1] - 2026-11-27
+
 ### Every search path is shown
 - A system with several searches now shows each one: vector search, each keyword search, and graph search, all feeding the fusion step. Nothing is picked over another.
 - Explain asks about the selection by name. A 32 GB computer is offered the 7B suggestion.
