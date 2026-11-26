@@ -4,6 +4,9 @@ Notes for each version are shown in the in-app update pop-up and on the website'
 
 ## [Unreleased]
 
+### Detection
+- A web page calling its own backend (`/v1/chat/completions`, `/api/chat`) is no longer shown as the language model in the AI pipeline.
+
 ## [0.13.1] - 2026-11-26
 
 ### App

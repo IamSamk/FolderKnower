@@ -472,6 +472,23 @@ def chat(p):
 }
 
 #[test]
+fn browser_calls_to_own_backend_are_not_a_model() {
+    let web = "export const req = (p) => fetch(p);\nexport const chat = () => req(\"/v1/chat/completions\", {});\n";
+    let py = "import requests\ndef ask(p):\n    return requests.post(\"http://localhost:11434/api/chat\", json={\"model\": \"qwen3\"})\n";
+    let out = crate::ai::analyze(
+        &[
+            pf("frontend/src/lib/api.js", Language::JavaScript, web),
+            pf("app/src/llm/client.py", Language::Python, py),
+        ],
+        &[],
+    );
+    let ai = out.ai.expect("ai");
+    let llm: Vec<_> = ai.stages.iter().filter(|s| s.role == AiRole::Llm).collect();
+    assert_eq!(llm.len(), 1, "{llm:#?}");
+    assert!(llm[0].file_id.contains("client.py"), "{llm:#?}");
+}
+
+#[test]
 fn model_ids_and_fts_in_config_files() {
     use crate::InfraFile;
     let texts = [

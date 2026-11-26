@@ -245,8 +245,9 @@ pub fn analyze_with(
                 .first_string
                 .as_deref()
                 .filter(|u| u.contains("://") || u.starts_with('/') || u.contains("localhost"))
-                // A browser calling its own `/api/...` is not calling a model server.
-                .filter(|u| !(u.starts_with("/api/") && is_web_source(path)))
+                // A browser calling a relative path (`/api/chat`, `/v1/chat/completions`) is
+                // calling its own backend, not a model server.
+                .filter(|u| !(u.starts_with('/') && is_web_source(path)))
                 .map(|u| format!("url:{u}"));
             if let Some(comp) = cat.components.iter().find(|c| {
                 c.patterns
