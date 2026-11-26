@@ -183,3 +183,40 @@ fn golden(name: &str) {
         "golden mismatch; run with UPDATE_GOLDEN=1 and review the diff"
     );
 }
+
+#[test]
+fn rag_agent_example_run_is_grounded() {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/repos/rag-agent");
+    let opts = Options {
+        no_cache: true,
+        ..Options::default()
+    };
+    let (g, _) = analyze(&dir, &opts, &|_| {}).unwrap();
+    assert!(
+        g.summary.headline.starts_with("AI system in 6 containers"),
+        "{}",
+        g.summary.headline
+    );
+    let run = g.example_runs.first().expect("a run");
+    use ark_schema::RunHopKind as K;
+    let kinds: Vec<K> = run.hops.iter().map(|h| h.kind).collect();
+    let pos = |k: K| kinds.iter().position(|x| *x == k).unwrap();
+    assert!(pos(K::Ui) < pos(K::Proxy) && pos(K::Proxy) < pos(K::Route));
+    assert_eq!(kinds.last(), Some(&K::Response));
+    let svcs: Vec<&str> = run
+        .hops
+        .iter()
+        .filter(|h| h.kind == K::Service)
+        .map(|h| h.node.as_str())
+        .collect();
+    assert_eq!(svcs, ["svc:cache", "svc:chroma", "svc:ollama"]);
+    for h in &run.hops {
+        assert!(!h.proof.is_empty(), "hop {} has no proof", h.label);
+        assert!(h.confidence > 0.0 && h.confidence <= 1.0);
+        if let Some(s) = &h.service {
+            let d = g.insights.as_ref().unwrap().deployment.as_ref().unwrap();
+            assert!(d.services.iter().any(|x| &x.id == s), "unknown service {s}");
+        }
+    }
+    assert_eq!(run.sample_input.as_deref(), Some("What is chunk overlap?"));
+}

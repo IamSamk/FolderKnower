@@ -1,0 +1,36 @@
+# Container images Architekton recognizes in docker-compose files and Dockerfiles.
+# `match` is a regex over the image name without registry prefix and tag
+# (e.g. `qdrant/qdrant`, `postgres`, `ollama/ollama`). First match wins.
+version: "services 0.1.0"
+images:
+  - { match: '^qdrant/qdrant$', kind: vectorStore, name: Qdrant, explain: "Qdrant vector database. Stores embeddings and returns the nearest ones to a query vector; it can also hold sparse vectors for keyword-style search, so one engine serves hybrid search." }
+  - { match: '(^|/)milvus', kind: vectorStore, name: Milvus, explain: "Milvus vector database for large collections of embeddings, with dense and sparse indexes." }
+  - { match: '^semitechnologies/weaviate$|(^|/)weaviate$', kind: vectorStore, name: Weaviate, explain: "Weaviate vector database. Its hybrid query mixes vector similarity with BM25 keyword scores using an alpha weight." }
+  - { match: '^chromadb/chroma$|(^|/)chroma$', kind: vectorStore, name: Chroma, explain: "Chroma vector store running as a server: collections of embeddings with metadata filters." }
+  - { match: '(^|/)pgvector', kind: vectorStore, name: "Postgres + pgvector", explain: "PostgreSQL with the pgvector extension: embeddings live in a normal table column and nearest-neighbour search is SQL. Full-text search (tsvector) in the same database gives the keyword half of hybrid search." }
+  - { match: '(^|/)(elasticsearch|elastic/elasticsearch)$', kind: searchEngine, name: Elasticsearch, explain: "Elasticsearch: inverted index with BM25 keyword ranking, plus dense_vector fields for semantic search; often the sparse side of hybrid search." }
+  - { match: '(^|/)opensearch$', kind: searchEngine, name: OpenSearch, explain: "OpenSearch: BM25 keyword search plus k-NN vector search, with a hybrid query that normalizes and combines both." }
+  - { match: '(^|/)(meilisearch|typesense)', kind: searchEngine, name: "Search engine", explain: "A typo-tolerant keyword search engine used for instant search boxes." }
+  - { match: '^ollama/ollama$', kind: modelServer, name: Ollama, explain: "Ollama model server. Loads GGUF models into RAM/VRAM and answers chat and embedding requests over HTTP on port 11434." }
+  - { match: '^vllm/vllm-openai$|(^|/)vllm', kind: modelServer, name: vLLM, explain: "vLLM model server with an OpenAI-compatible API. PagedAttention and continuous batching let many requests share the GPU." }
+  - { match: 'llama\.cpp|llama-cpp|llamacpp', kind: modelServer, name: llama.cpp server, explain: "llama.cpp server: runs quantized GGUF models on CPU or GPU with a small footprint." }
+  - { match: 'text-generation-inference', kind: modelServer, name: "Hugging Face TGI", explain: "Text Generation Inference server for open models." }
+  - { match: 'text-embeddings-inference', kind: modelServer, name: "Hugging Face TEI", explain: "Text Embeddings Inference: a fast server that only turns text into vectors (and reranks)." }
+  - { match: '(^|/)(infinity|michaelf34/infinity)', kind: modelServer, name: Infinity, explain: "Infinity: serves embedding and reranking models over HTTP." }
+  - { match: '^(postgres|postgis/postgis|bitnami/postgresql|supabase/postgres)$', kind: database, name: PostgreSQL, explain: "PostgreSQL relational database: tables, SQL, transactions." }
+  - { match: '^(mysql|mariadb|bitnami/mysql)$', kind: database, name: MySQL, explain: "MySQL/MariaDB relational database." }
+  - { match: '^(mongo|mongodb/mongodb-community-server|bitnami/mongodb)$', kind: database, name: MongoDB, explain: "MongoDB document database: stores JSON-like documents." }
+  - { match: '(^|/)neo4j$', kind: database, name: Neo4j, explain: "Neo4j graph database: nodes and relationships, queried with Cypher. Used for knowledge graphs and GraphRAG." }
+  - { match: '(^|/)clickhouse', kind: database, name: ClickHouse, explain: "ClickHouse column store for fast analytics queries." }
+  - { match: '^(redis|redis/redis-stack|redis/redis-stack-server|bitnami/redis|valkey/valkey)$', kind: cache, name: Redis, explain: "Redis in-memory key-value store: caches, sessions, rate limits, queues. Redis Stack adds vector search." }
+  - { match: '^(memcached|bitnami/memcached)$', kind: cache, name: Memcached, explain: "Memcached: a plain in-memory cache." }
+  - { match: '^(rabbitmq|bitnami/rabbitmq)$', kind: broker, name: RabbitMQ, explain: "RabbitMQ message broker: queues that hand jobs from the API to workers." }
+  - { match: '(^|/)(kafka|cp-kafka|redpanda)', kind: broker, name: Kafka, explain: "Kafka-compatible event log: producers append events, consumers read them in order." }
+  - { match: '^nats$', kind: broker, name: NATS, explain: "NATS: lightweight publish/subscribe messaging." }
+  - { match: '^(nginx|nginxinc/nginx-unprivileged)$', kind: proxy, name: nginx, explain: "nginx reverse proxy: serves the built frontend and forwards /api calls to the backend." }
+  - { match: '^(traefik|caddy|envoyproxy/envoy|haproxy)$', kind: proxy, name: "Reverse proxy", explain: "Reverse proxy: one public entry point that routes requests to the right container." }
+  - { match: '(^|/)minio$', kind: objectStore, name: MinIO, explain: "MinIO object storage (S3-compatible): uploaded files, PDFs and model artifacts." }
+  - { match: '(^|/)(prometheus|grafana|jaeger|all-in-one|otel/opentelemetry-collector.*|langfuse|phoenix)$', kind: observability, name: Observability, explain: "Collects metrics or traces so you can see what the system did." }
+  # Base images for code built in this repository: the code decides the kind.
+  - { match: '^node$|^oven/bun$|^denoland/deno$', kind: other, name: Node.js, explain: "" }
+  - { match: '^python$|^(tiangolo/uvicorn-gunicorn.*)$', kind: other, name: Python, explain: "" }

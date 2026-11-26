@@ -13,15 +13,929 @@
       "tree-sitter-typescript": "0.23.2"
     }
   },
-  "contentRoot": "968917de2f8506b5da63019a2e739ad8ca29993cfc862b12e868b309aa8db618",
+  "contentRoot": "9319e953b12a0e30939511757d624c7a8fb97b2784d4ed6ca3a9d9e2ca8134b6",
   "tiers": [
+    {
+      "id": "tier:frontend",
+      "label": "Frontend",
+      "evidence": [
+        "tier.fe.component",
+        "tier.fe.dir",
+        "tier.fe.framework",
+        "tier.fe.http-client"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:frontend:app",
+          "name": "app",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:web/src/App.tsx",
+              "path": "web/src/App.tsx",
+              "language": "typescript",
+              "contentHash": "b100f5fb00749fd5ef6fd55e1cbd65e2221054483f786094442da8cade111993",
+              "lines": 27,
+              "tierConfidence": 0.99,
+              "role": "component",
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:web/src/App.tsx#App",
+                  "name": "App",
+                  "visibility": "public",
+                  "lineRange": [
+                    5,
+                    27
+                  ],
+                  "byteRange": [
+                    103,
+                    755
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Client state",
+                      "layer": "data",
+                      "ruleId": "data.state.client"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 6,
+                      "label": "const [question, setQuestion] = useState(\"\");"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 7,
+                      "label": "const [answer, setAnswer] = useState(\"\");"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 19,
+                      "label": "return ("
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:web/src/App.tsx#ask",
+                  "name": "ask",
+                  "visibility": "internal",
+                  "lineRange": [
+                    9,
+                    17
+                  ],
+                  "byteRange": [
+                    215,
+                    492
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "JSON serialization",
+                      "layer": "data",
+                      "ruleId": "data.serialize.json"
+                    },
+                    {
+                      "concept": "HTTP request",
+                      "layer": "network",
+                      "ruleId": "net.http.client"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 10,
+                      "label": "const res = await fetch(`${API}/ask`,"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 15,
+                      "label": "const data = await res.json();"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 16,
+                      "label": "setAnswer(data.answer);"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tier:backend",
+      "label": "Backend",
+      "evidence": [
+        "tier.be.framework",
+        "tier.be.routes",
+        "tier.propagated",
+        "tier.sh.schemas"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:backend:agent",
+          "name": "agent",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": [
+              "file:app/api.py"
+            ]
+          },
+          "files": [
+            {
+              "id": "file:app/agent.py",
+              "path": "app/agent.py",
+              "language": "python",
+              "contentHash": "558976a8213817da5f50d7b353fb8351dab72cec259a88e49874d50fb4f58187",
+              "lines": 44,
+              "tierConfidence": 0.8,
+              "imports": [
+                {
+                  "target": "file:app/retrieve.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:app/agent.py#search_book",
+                  "name": "search_book",
+                  "visibility": "public",
+                  "lineRange": [
+                    17,
+                    21
+                  ],
+                  "byteRange": [
+                    574,
+                    776
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "question",
+                        "type": "str"
+                      }
+                    ],
+                    "returnType": "str"
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.loop.depth-1"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 20,
+                      "label": "docs = hybrid_search(STORE, KEYWORDS, question)"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 21,
+                      "label": "return \"\\n\\n\".join(d.page_content for d in docs)"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:app/retrieve.py#hybrid_search",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:app/agent.py#call_model",
+                  "name": "call_model",
+                  "visibility": "public",
+                  "lineRange": [
+                    24,
+                    27
+                  ],
+                  "byteRange": [
+                    779,
+                    1037
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "state",
+                        "type": "dict"
+                      }
+                    ],
+                    "returnType": "dict"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 25,
+                      "label": "model = llm.bind_tools([search_book])"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 26,
+                      "label": "reply = model.invoke(prompt.format_messages(context=state.ge…"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 27,
+                      "label": "return {\"messages\": [reply], \"steps\": state.get(\"steps\", 0) …"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:app/agent.py#should_continue",
+                  "name": "should_continue",
+                  "visibility": "public",
+                  "lineRange": [
+                    30,
+                    36
+                  ],
+                  "byteRange": [
+                    1040,
+                    1229
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "state",
+                        "type": "dict"
+                      }
+                    ],
+                    "returnType": "str"
+                  },
+                  "complexity": {
+                    "cyclomatic": 3,
+                    "cognitive": 2,
+                    "maxNesting": 1,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "branch",
+                      "line": 32,
+                      "label": "if state.get(\"steps\", 0) >= 4",
+                      "children": [
+                        {
+                          "kind": "return",
+                          "line": 33,
+                          "label": "return END"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "branch",
+                      "line": 34,
+                      "label": "if last.tool_calls",
+                      "children": [
+                        {
+                          "kind": "return",
+                          "line": 35,
+                          "label": "return \"tools\""
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "return",
+                      "line": 36,
+                      "label": "return END"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                }
+              ]
+            },
+            {
+              "id": "file:app/api.py",
+              "path": "app/api.py",
+              "language": "python",
+              "contentHash": "60d6363bc1e7a648edb4549168102376fdb1d1dcc687645a304866afdcc5d4d7",
+              "lines": 27,
+              "tierConfidence": 0.94,
+              "role": "route-handler",
+              "imports": [
+                {
+                  "target": "file:app/agent.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:app/memory.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:app/api.py#ask",
+                  "name": "ask",
+                  "visibility": "public",
+                  "lineRange": [
+                    16,
+                    27
+                  ],
+                  "byteRange": [
+                    326,
+                    760
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "body",
+                        "type": "Ask"
+                      }
+                    ],
+                    "returnType": "dict"
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 18,
+                      "label": "q = normalize(body.question)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 19,
+                      "label": "hit = cached_answer(q)"
+                    },
+                    {
+                      "kind": "branch",
+                      "line": 20,
+                      "label": "if hit",
+                      "children": [
+                        {
+                          "kind": "return",
+                          "line": 21,
+                          "label": "return {\"answer\": hit, \"cached\": True}"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "call",
+                      "line": 22,
+                      "label": "remember(body.session, \"user\", body.question)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 23,
+                      "label": "out = agent.invoke({\"question\": q, \"history\": history(body.s…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 25,
+                      "label": "remember(body.session, \"assistant\", answer)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 26,
+                      "label": "store_answer(q, answer)"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 27,
+                      "label": "return {\"answer\": answer, \"cached\": False}"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:app/memory.py#cached_answer",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    },
+                    {
+                      "target": "fn:app/memory.py#history",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    },
+                    {
+                      "target": "fn:app/memory.py#normalize",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    },
+                    {
+                      "target": "fn:app/memory.py#remember",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    },
+                    {
+                      "target": "fn:app/memory.py#store_answer",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                }
+              ]
+            },
+            {
+              "id": "file:app/retrieve.py",
+              "path": "app/retrieve.py",
+              "language": "python",
+              "contentHash": "37b795da2349b9bb5ee4c48aab41c27aaf607c45ee88e97754b743a6a294a49f",
+              "lines": 19,
+              "tierConfidence": 0.8,
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:app/retrieve.py#hybrid_search",
+                  "name": "hybrid_search",
+                  "visibility": "public",
+                  "lineRange": [
+                    11,
+                    19
+                  ],
+                  "byteRange": [
+                    274,
+                    771
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "store"
+                      },
+                      {
+                        "name": "keywords"
+                      },
+                      {
+                        "name": "question",
+                        "type": "str"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 4,
+                    "cognitive": 3,
+                    "maxNesting": 1,
+                    "timeBigO": "O(N log N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.loop.depth-1",
+                      "bigo.lib.sort",
+                      "space.alloc-in-loop",
+                      "space.lib.sort"
+                    ],
+                    "memoryFlags": [
+                      "alloc-in-loop"
+                    ]
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 12,
+                      "label": "dense = store.as_retriever(search_type=\"similarity\", search_…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 13,
+                      "label": "fused = EnsembleRetriever(retrievers=[dense, keywords], weig…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 14,
+                      "label": "candidates = fused.invoke(question)"
+                    },
+                    {
+                      "kind": "branch",
+                      "line": 15,
+                      "label": "if not candidates",
+                      "children": [
+                        {
+                          "kind": "return",
+                          "line": 16,
+                          "label": "return []"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "call",
+                      "line": 17,
+                      "label": "scores = reranker.predict([(question, c.page_content) for c …"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 18,
+                      "label": "ranked = sorted(zip(scores, candidates), key=lambda p: p[0],…"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 19,
+                      "label": "return [doc for _, doc in ranked[:TOP_N]]"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:app/agent.py#search_book"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
     {
       "id": "tier:storage",
       "label": "Storage",
       "evidence": [
-        "tier.db.dir"
+        "tier.db.dir",
+        "tier.db.packages"
       ],
       "clusters": [
+        {
+          "id": "cluster:storage:memory",
+          "name": "memory",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:app/memory.py",
+              "path": "app/memory.py",
+              "language": "python",
+              "contentHash": "f44a9f39ca1363f3ccc7c68b91e3a49b8c19150afb56f01fc08033d90814e19d",
+              "lines": 35,
+              "tierConfidence": 0.9,
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:app/memory.py#remember",
+                  "name": "remember",
+                  "visibility": "public",
+                  "lineRange": [
+                    14,
+                    17
+                  ],
+                  "byteRange": [
+                    251,
+                    436
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "session",
+                        "type": "str"
+                      },
+                      {
+                        "name": "role",
+                        "type": "str"
+                      },
+                      {
+                        "name": "text",
+                        "type": "str"
+                      }
+                    ],
+                    "returnType": "None"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "JSON serialization",
+                      "layer": "data",
+                      "ruleId": "data.serialize.json"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 16,
+                      "label": "r.rpush(key, json.dumps({\"role\": role, \"text\": text}))"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 17,
+                      "label": "r.ltrim(key, -HISTORY_TURNS * 2, -1)"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:app/api.py#ask"
+                  ]
+                },
+                {
+                  "id": "fn:app/memory.py#history",
+                  "name": "history",
+                  "visibility": "public",
+                  "lineRange": [
+                    20,
+                    21
+                  ],
+                  "byteRange": [
+                    439,
+                    550
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "session",
+                        "type": "str"
+                      }
+                    ],
+                    "returnType": "list[dict]"
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(N)",
+                    "basis": [
+                      "bigo.loop.depth-1",
+                      "space.alloc-in-loop"
+                    ],
+                    "memoryFlags": [
+                      "alloc-in-loop"
+                    ]
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "JSON serialization",
+                      "layer": "data",
+                      "ruleId": "data.serialize.json"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 21,
+                      "label": "return [json.loads(x) for x in r.lrange(f\"chat:{session}\", 0…"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:app/api.py#ask"
+                  ]
+                },
+                {
+                  "id": "fn:app/memory.py#cached_answer",
+                  "name": "cached_answer",
+                  "visibility": "public",
+                  "lineRange": [
+                    24,
+                    26
+                  ],
+                  "byteRange": [
+                    553,
+                    713
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "question",
+                        "type": "str"
+                      }
+                    ],
+                    "returnType": "str | None"
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Redis cache",
+                      "layer": "data",
+                      "ruleId": "data.cache.redis"
+                    },
+                    {
+                      "concept": "Route registration",
+                      "layer": "network",
+                      "ruleId": "net.http.route"
+                    },
+                    {
+                      "concept": "Hashing",
+                      "layer": "os",
+                      "ruleId": "os.crypto.hash"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 25,
+                      "label": "hit = r.get(\"ans:\" + hashlib.sha256(question.encode()).hexdi…"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 26,
+                      "label": "return hit.decode() if hit else None"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:app/api.py#ask"
+                  ]
+                },
+                {
+                  "id": "fn:app/memory.py#store_answer",
+                  "name": "store_answer",
+                  "visibility": "public",
+                  "lineRange": [
+                    29,
+                    30
+                  ],
+                  "byteRange": [
+                    716,
+                    857
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "question",
+                        "type": "str"
+                      },
+                      {
+                        "name": "answer",
+                        "type": "str"
+                      }
+                    ],
+                    "returnType": "None"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Redis cache",
+                      "layer": "data",
+                      "ruleId": "data.cache.redis"
+                    },
+                    {
+                      "concept": "Hashing",
+                      "layer": "os",
+                      "ruleId": "os.crypto.hash"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 30,
+                      "label": "r.setex(\"ans:\" + hashlib.sha256(question.encode()).hexdigest…"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:app/api.py#ask"
+                  ]
+                },
+                {
+                  "id": "fn:app/memory.py#normalize",
+                  "name": "normalize",
+                  "visibility": "public",
+                  "lineRange": [
+                    33,
+                    35
+                  ],
+                  "byteRange": [
+                    885,
+                    967
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "question",
+                        "type": "str"
+                      }
+                    ],
+                    "returnType": "str"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 35,
+                      "label": "return \" \".join(question.lower().split())"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:app/api.py#ask"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
         {
           "id": "cluster:storage:model",
           "name": "model",
@@ -553,8 +1467,8 @@
       "evidence": [],
       "clusters": [
         {
-          "id": "cluster:shared:agent",
-          "name": "agent",
+          "id": "cluster:shared:ingest",
+          "name": "ingest",
           "method": {
             "algo": "louvain",
             "seed": 0,
@@ -562,197 +1476,6 @@
             "anchors": []
           },
           "files": [
-            {
-              "id": "file:app/agent.py",
-              "path": "app/agent.py",
-              "language": "python",
-              "contentHash": "558976a8213817da5f50d7b353fb8351dab72cec259a88e49874d50fb4f58187",
-              "lines": 44,
-              "tierConfidence": 0.3,
-              "imports": [
-                {
-                  "target": "file:app/retrieve.py",
-                  "provenance": "ts_resolved",
-                  "confidence": 0.95
-                }
-              ],
-              "functions": [
-                {
-                  "id": "fn:app/agent.py#search_book",
-                  "name": "search_book",
-                  "visibility": "public",
-                  "lineRange": [
-                    17,
-                    21
-                  ],
-                  "byteRange": [
-                    574,
-                    776
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "question",
-                        "type": "str"
-                      }
-                    ],
-                    "returnType": "str"
-                  },
-                  "complexity": {
-                    "cyclomatic": 2,
-                    "cognitive": 1,
-                    "maxNesting": 1,
-                    "timeBigO": "O(N)",
-                    "spaceBigO": "O(1)",
-                    "basis": [
-                      "bigo.loop.depth-1"
-                    ],
-                    "memoryFlags": []
-                  },
-                  "ontologyTags": [],
-                  "flow": [
-                    {
-                      "kind": "call",
-                      "line": 20,
-                      "label": "docs = hybrid_search(STORE, KEYWORDS, question)"
-                    },
-                    {
-                      "kind": "return",
-                      "line": 21,
-                      "label": "return \"\\n\\n\".join(d.page_content for d in docs)"
-                    }
-                  ],
-                  "calls": [
-                    {
-                      "target": "fn:app/retrieve.py#hybrid_search",
-                      "provenance": "ts_resolved",
-                      "confidence": 0.85
-                    }
-                  ],
-                  "calledBy": []
-                },
-                {
-                  "id": "fn:app/agent.py#call_model",
-                  "name": "call_model",
-                  "visibility": "public",
-                  "lineRange": [
-                    24,
-                    27
-                  ],
-                  "byteRange": [
-                    779,
-                    1037
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "state",
-                        "type": "dict"
-                      }
-                    ],
-                    "returnType": "dict"
-                  },
-                  "complexity": {
-                    "cyclomatic": 1,
-                    "cognitive": 0,
-                    "maxNesting": 0,
-                    "timeBigO": "O(1)",
-                    "spaceBigO": "O(1)",
-                    "basis": [
-                      "bigo.no-loops"
-                    ],
-                    "memoryFlags": []
-                  },
-                  "ontologyTags": [],
-                  "flow": [
-                    {
-                      "kind": "call",
-                      "line": 25,
-                      "label": "model = llm.bind_tools([search_book])"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 26,
-                      "label": "reply = model.invoke(prompt.format_messages(context=state.ge…"
-                    },
-                    {
-                      "kind": "return",
-                      "line": 27,
-                      "label": "return {\"messages\": [reply], \"steps\": state.get(\"steps\", 0) …"
-                    }
-                  ],
-                  "calls": [],
-                  "calledBy": []
-                },
-                {
-                  "id": "fn:app/agent.py#should_continue",
-                  "name": "should_continue",
-                  "visibility": "public",
-                  "lineRange": [
-                    30,
-                    36
-                  ],
-                  "byteRange": [
-                    1040,
-                    1229
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "state",
-                        "type": "dict"
-                      }
-                    ],
-                    "returnType": "str"
-                  },
-                  "complexity": {
-                    "cyclomatic": 3,
-                    "cognitive": 2,
-                    "maxNesting": 1,
-                    "timeBigO": "O(1)",
-                    "spaceBigO": "O(1)",
-                    "basis": [
-                      "bigo.no-loops"
-                    ],
-                    "memoryFlags": []
-                  },
-                  "ontologyTags": [],
-                  "flow": [
-                    {
-                      "kind": "branch",
-                      "line": 32,
-                      "label": "if state.get(\"steps\", 0) >= 4",
-                      "children": [
-                        {
-                          "kind": "return",
-                          "line": 33,
-                          "label": "return END"
-                        }
-                      ]
-                    },
-                    {
-                      "kind": "branch",
-                      "line": 34,
-                      "label": "if last.tool_calls",
-                      "children": [
-                        {
-                          "kind": "return",
-                          "line": 35,
-                          "label": "return \"tools\""
-                        }
-                      ]
-                    },
-                    {
-                      "kind": "return",
-                      "line": 36,
-                      "label": "return END"
-                    }
-                  ],
-                  "calls": [],
-                  "calledBy": []
-                }
-              ]
-            },
             {
               "id": "file:app/ingest.py",
               "path": "app/ingest.py",
@@ -851,109 +1574,6 @@
                   ],
                   "calls": [],
                   "calledBy": []
-                }
-              ]
-            },
-            {
-              "id": "file:app/retrieve.py",
-              "path": "app/retrieve.py",
-              "language": "python",
-              "contentHash": "37b795da2349b9bb5ee4c48aab41c27aaf607c45ee88e97754b743a6a294a49f",
-              "lines": 19,
-              "tierConfidence": 0.3,
-              "imports": [],
-              "functions": [
-                {
-                  "id": "fn:app/retrieve.py#hybrid_search",
-                  "name": "hybrid_search",
-                  "visibility": "public",
-                  "lineRange": [
-                    11,
-                    19
-                  ],
-                  "byteRange": [
-                    274,
-                    771
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "store"
-                      },
-                      {
-                        "name": "keywords"
-                      },
-                      {
-                        "name": "question",
-                        "type": "str"
-                      }
-                    ]
-                  },
-                  "complexity": {
-                    "cyclomatic": 4,
-                    "cognitive": 3,
-                    "maxNesting": 1,
-                    "timeBigO": "O(N log N)",
-                    "spaceBigO": "O(N)",
-                    "basis": [
-                      "bigo.loop.depth-1",
-                      "bigo.lib.sort",
-                      "space.alloc-in-loop",
-                      "space.lib.sort"
-                    ],
-                    "memoryFlags": [
-                      "alloc-in-loop"
-                    ]
-                  },
-                  "ontologyTags": [],
-                  "flow": [
-                    {
-                      "kind": "call",
-                      "line": 12,
-                      "label": "dense = store.as_retriever(search_type=\"similarity\", search_…"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 13,
-                      "label": "fused = EnsembleRetriever(retrievers=[dense, keywords], weig…"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 14,
-                      "label": "candidates = fused.invoke(question)"
-                    },
-                    {
-                      "kind": "branch",
-                      "line": 15,
-                      "label": "if not candidates",
-                      "children": [
-                        {
-                          "kind": "return",
-                          "line": 16,
-                          "label": "return []"
-                        }
-                      ]
-                    },
-                    {
-                      "kind": "call",
-                      "line": 17,
-                      "label": "scores = reranker.predict([(question, c.page_content) for c …"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 18,
-                      "label": "ranked = sorted(zip(scores, candidates), key=lambda p: p[0],…"
-                    },
-                    {
-                      "kind": "return",
-                      "line": 19,
-                      "label": "return [doc for _, doc in ranked[:TOP_N]]"
-                    }
-                  ],
-                  "calls": [],
-                  "calledBy": [
-                    "fn:app/agent.py#search_book"
-                  ]
                 }
               ]
             },
@@ -1545,12 +2165,42 @@
       ]
     }
   ],
-  "crossTierEdges": [],
+  "crossTierEdges": [
+    {
+      "id": "xedge:fn:web/src/App.tsx#ask->fn:app/api.py#ask",
+      "source": "fn:web/src/App.tsx#ask",
+      "target": "fn:app/api.py#ask",
+      "protocol": "HTTP/REST",
+      "evidence": [
+        "http.POST :param/ask",
+        "route.fastapi",
+        "match.exact"
+      ]
+    }
+  ],
   "nonCodeNodes": [
+    {
+      "id": "noncode:Dockerfile",
+      "path": "Dockerfile",
+      "kind": "infra",
+      "relatesTo": []
+    },
     {
       "id": "noncode:README.md",
       "path": "README.md",
       "kind": "doc",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:deploy/nginx.conf",
+      "path": "deploy/nginx.conf",
+      "kind": "infra",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:docker-compose.yml",
+      "path": "docker-compose.yml",
+      "kind": "infra",
       "relatesTo": []
     },
     {
@@ -1576,31 +2226,140 @@
       "path": "requirements.txt",
       "kind": "manifest",
       "relatesTo": []
+    },
+    {
+      "id": "noncode:web/Dockerfile",
+      "path": "web/Dockerfile",
+      "kind": "infra",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:web/package.json",
+      "path": "web/package.json",
+      "kind": "manifest",
+      "relatesTo": []
     }
   ],
   "summary": {
-    "kind": "library",
-    "headline": "Library with 6 modules.",
+    "kind": "full-stack",
+    "headline": "AI system in 6 containers: frontend (web) → proxy (proxy) → API (api), backed by model server (ollama), vector store (chroma), cache (cache).",
     "findings": [
       {
-        "text": "Sorted 6 files by what they do, not where they live: 0 frontend, 0 gateway/middleware, 0 backend, 1 data, 0 worker, 5 shared.",
+        "text": "6 services from Dockerfile, deploy/nginx.conf, docker-compose.yml, web/Dockerfile; 5 links proven by env URLs, depends_on or proxy rules. Memory limits add up to 15.3 GB; 1 service(s) ask for a GPU.",
+        "evidence": [
+          "svc:web",
+          "svc:proxy",
+          "svc:api",
+          "svc:ollama",
+          "svc:chroma",
+          "svc:cache"
+        ]
+      },
+      {
+        "text": "Agentic RAG: a model decides, in a loop, when to retrieve and which tools to call",
+        "evidence": [
+          "insights.ai"
+        ]
+      },
+      {
+        "text": "Sorted 9 files by what they do, not where they live: 1 frontend, 0 gateway/middleware, 3 backend, 2 data, 0 worker, 3 shared.",
         "evidence": [
           "tier.*"
+        ]
+      },
+      {
+        "text": "Found 1 HTTP routes (fastapi).",
+        "evidence": [
+          "route:POST /ask#app/api.py"
+        ]
+      },
+      {
+        "text": "1 client calls reach 1 backend handlers over HTTP.",
+        "evidence": [
+          "xedge:fn:web/src/App.tsx#ask->fn:app/api.py#ask"
+        ]
+      },
+      {
+        "text": "0 tables and 1 schemas/DTOs; 0 schemas mirror a table; 0 functions touch the database.",
+        "evidence": [
+          "model:app/api.py#Ask"
+        ]
+      },
+      {
+        "text": "1 UI elements are wired to handlers you can follow into the code.",
+        "evidence": [
+          "ui:web/src/App.tsx:23:6"
         ]
       }
     ],
     "stats": {
-      "files": 6,
-      "functions": 21,
-      "lines": 225,
+      "files": 9,
+      "functions": 29,
+      "lines": 314,
       "languages": {
-        "python": 6
+        "python": 8,
+        "typescript": 1
       }
     }
   },
-  "dataModels": [],
-  "routes": [],
-  "uiElements": [],
+  "dataModels": [
+    {
+      "id": "model:app/api.py#Ask",
+      "name": "Ask",
+      "kind": "schema",
+      "framework": "pydantic",
+      "fileId": "file:app/api.py",
+      "line": 11,
+      "fields": [
+        {
+          "name": "question",
+          "type": "str",
+          "primaryKey": false,
+          "nullable": false
+        },
+        {
+          "name": "session",
+          "type": "str",
+          "primaryKey": false,
+          "nullable": false
+        }
+      ],
+      "relations": [],
+      "mirrors": []
+    }
+  ],
+  "routes": [
+    {
+      "id": "route:POST /ask#app/api.py",
+      "method": "POST",
+      "path": "/ask",
+      "framework": "fastapi",
+      "fileId": "file:app/api.py",
+      "line": 16,
+      "handler": "fn:app/api.py#ask"
+    }
+  ],
+  "uiElements": [
+    {
+      "id": "ui:web/src/App.tsx:22:6",
+      "tag": "input",
+      "label": "What is chunk overlap?",
+      "fileId": "file:web/src/App.tsx",
+      "line": 22,
+      "component": "fn:web/src/App.tsx#App",
+      "event": "onChange"
+    },
+    {
+      "id": "ui:web/src/App.tsx:23:6",
+      "tag": "button",
+      "label": "Ask",
+      "fileId": "file:web/src/App.tsx",
+      "line": 23,
+      "component": "fn:web/src/App.tsx#App",
+      "event": "onClick",
+      "handler": "fn:web/src/App.tsx#ask"
+    }
+  ],
   "questions": [
     {
       "id": "q:algorithms/",
@@ -1613,22 +2372,10 @@
       ],
       "suggested": "Shared",
       "confidence": 0.3
-    },
-    {
-      "id": "q:app/",
-      "text": "I'm only 30% sure `app/` (4 files) belongs to Shared. What is it?",
-      "subject": "app/",
-      "options": [
-        "Shared",
-        "Workers",
-        "Backend"
-      ],
-      "suggested": "Shared",
-      "confidence": 0.3
     }
   ],
   "insights": {
-    "rulesetVersion": "patterns 0.1.0 / catalog 0.1.0",
+    "rulesetVersion": "patterns 0.1.0 / catalog 0.1.0 / services 0.1.0",
     "dataStructures": [
       {
         "id": "dsa:fn:algorithms/structures.py#TreeNode.__init__:binaryTree:",
@@ -1825,6 +2572,20 @@
             "call": "heapq.heappop"
           }
         ]
+      },
+      {
+        "id": "dsa:fn:app/memory.py#normalize:memoization:normalize",
+        "kind": "memoization",
+        "fileId": "file:app/memory.py",
+        "functionId": "fn:app/memory.py#normalize",
+        "line": 33,
+        "subject": "normalize",
+        "ruleId": "dsa.memo.decorator",
+        "confidence": 0.9,
+        "evidence": [
+          "@lru_cache(maxsize=1024)"
+        ],
+        "ops": []
       }
     ],
     "ai": {
@@ -2295,6 +3056,30 @@
         "evidence": [
           "knowledge/"
         ]
+      },
+      {
+        "name": "FastAPI",
+        "category": "web framework",
+        "explain": "Python web API framework; routes are typed functions validated with Pydantic.",
+        "evidence": [
+          "fastapi"
+        ]
+      },
+      {
+        "name": "React",
+        "category": "UI library",
+        "explain": "Builds UIs from components; re-renders when state changes.",
+        "evidence": [
+          "react"
+        ]
+      },
+      {
+        "name": "Redis",
+        "category": "in-memory store",
+        "explain": "In-memory key-value store used for caches, queues and pub/sub.",
+        "evidence": [
+          "redis"
+        ]
       }
     ],
     "memoryTechniques": [
@@ -2317,6 +3102,24 @@
         "explain": "keep_alive decides how long Ollama keeps the model loaded in RAM/VRAM after a request. num_ctx sets the context length, which sizes the KV cache."
       },
       {
+        "id": "mem:mem.redis.capped-list:app/memory.py",
+        "name": "Capped history in Redis (rolling buffer)",
+        "engine": "Redis",
+        "fileId": "file:app/memory.py",
+        "line": 17,
+        "setting": "r.ltrim(...)",
+        "explain": "Pushes each new item onto a Redis list and trims it to the last N, so the list works as a ring buffer. Used for chat history, memory per conversation stays fixed however long it runs, and every API worker sees the same history because it lives in the Redis container, not in the process."
+      },
+      {
+        "id": "mem:mem.redis.ttl-cache:app/memory.py",
+        "name": "Response cache with expiry (TTL)",
+        "engine": "Redis",
+        "fileId": "file:app/memory.py",
+        "line": 30,
+        "setting": "r.setex(...)",
+        "explain": "Stores a computed result under a key with a time-to-live. A repeat request reads the stored copy instead of recomputing; Redis deletes the key when the TTL runs out, and its maxmemory policy evicts old keys when it is full."
+      },
+      {
         "id": "mem:mem.vllm.paged:app/serve.py",
         "name": "PagedAttention KV cache",
         "engine": "vLLM",
@@ -2334,6 +3137,435 @@
         "setting": "enable_prefix_caching=True",
         "explain": "When two prompts start with the same tokens (same system prompt, same document), vLLM reuses the KV blocks it already computed for that prefix instead of recomputing them. Time-to-first-token drops for repeated prefixes."
       }
-    ]
-  }
+    ],
+    "deployment": {
+      "sources": [
+        "Dockerfile",
+        "deploy/nginx.conf",
+        "docker-compose.yml",
+        "web/Dockerfile"
+      ],
+      "services": [
+        {
+          "id": "svc:web",
+          "name": "web",
+          "kind": "frontend",
+          "image": "node:22-alpine",
+          "buildContext": "web",
+          "command": "npm run dev -- --host",
+          "ports": [
+            "5173:5173"
+          ],
+          "volumes": [],
+          "envKeys": [
+            "VITE_API_URL"
+          ],
+          "codeFiles": 1,
+          "declaredIn": "docker-compose.yml:3",
+          "explain": "Frontend built from this repository (1 source file): the screens the user sees in the browser."
+        },
+        {
+          "id": "svc:proxy",
+          "name": "proxy",
+          "kind": "proxy",
+          "image": "nginx:1.27-alpine",
+          "ports": [
+            "8080:80"
+          ],
+          "volumes": [
+            "./deploy/nginx.conf:/etc/nginx/nginx.conf:ro"
+          ],
+          "envKeys": [],
+          "codeFiles": 0,
+          "declaredIn": "docker-compose.yml:12",
+          "explain": "nginx reverse proxy: serves the built frontend and forwards /api calls to the backend."
+        },
+        {
+          "id": "svc:api",
+          "name": "api",
+          "kind": "api",
+          "image": "python:3.12-slim",
+          "buildContext": "",
+          "command": "uvicorn app.api:app --host 0.0.0.0 --port 8000",
+          "entryFile": "file:app/api.py",
+          "ports": [
+            "8000"
+          ],
+          "memoryLimit": 2147483648,
+          "cpuLimit": "2",
+          "volumes": [],
+          "envKeys": [
+            "CHROMA_URL",
+            "MAX_TURNS",
+            "OLLAMA_BASE_URL",
+            "REDIS_URL"
+          ],
+          "codeFiles": 8,
+          "declaredIn": "docker-compose.yml:19",
+          "explain": "Backend API built from this repository (8 source files): receives HTTP requests and runs the app logic."
+        },
+        {
+          "id": "svc:ollama",
+          "name": "ollama",
+          "kind": "modelServer",
+          "image": "ollama/ollama:0.12.3",
+          "ports": [],
+          "memoryLimit": 12884901888,
+          "gpu": true,
+          "volumes": [
+            "models:/root/.ollama"
+          ],
+          "envKeys": [
+            "OLLAMA_KEEP_ALIVE",
+            "OLLAMA_NUM_PARALLEL"
+          ],
+          "codeFiles": 0,
+          "declaredIn": "docker-compose.yml:39",
+          "explain": "Ollama model server. Loads GGUF models into RAM/VRAM and answers chat and embedding requests over HTTP on port 11434. A model stays loaded for 10m after its last request. Up to 4 requests share one loaded model, each with its own KV cache."
+        },
+        {
+          "id": "svc:chroma",
+          "name": "chroma",
+          "kind": "vectorStore",
+          "image": "chromadb/chroma:1.1.0",
+          "ports": [],
+          "memoryLimit": 1073741824,
+          "volumes": [
+            "index:/data"
+          ],
+          "envKeys": [],
+          "codeFiles": 0,
+          "declaredIn": "docker-compose.yml:56",
+          "explain": "Chroma vector store running as a server: collections of embeddings with metadata filters."
+        },
+        {
+          "id": "svc:cache",
+          "name": "cache",
+          "kind": "cache",
+          "image": "redis:7.4-alpine",
+          "command": "redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru",
+          "ports": [],
+          "memoryLimit": 314572800,
+          "volumes": [],
+          "envKeys": [],
+          "codeFiles": 0,
+          "declaredIn": "docker-compose.yml:62",
+          "explain": "Redis in-memory key-value store: caches, sessions, rate limits, queues. Redis Stack adds vector search. It may hold 256mb of data; when full it evicts keys by the allkeys-lru policy."
+        }
+      ],
+      "links": [
+        {
+          "from": "svc:api",
+          "to": "svc:cache",
+          "via": "env",
+          "detail": "REDIS_URL -> cache:6379"
+        },
+        {
+          "from": "svc:api",
+          "to": "svc:chroma",
+          "via": "env",
+          "detail": "CHROMA_URL -> chroma:8000"
+        },
+        {
+          "from": "svc:api",
+          "to": "svc:ollama",
+          "via": "env",
+          "detail": "OLLAMA_BASE_URL -> ollama:11434"
+        },
+        {
+          "from": "svc:proxy",
+          "to": "svc:api",
+          "via": "proxy",
+          "detail": "proxy_pass in deploy/nginx.conf"
+        },
+        {
+          "from": "svc:web",
+          "to": "svc:proxy",
+          "via": "env",
+          "detail": "VITE_API_URL -> proxy:80"
+        }
+      ]
+    }
+  },
+  "exampleRuns": [
+    {
+      "id": "run:ui:web/src/App.tsx:23:6",
+      "title": "Ask → POST /ask",
+      "start": "ui:web/src/App.tsx:23:6",
+      "sampleInput": "What is chunk overlap?",
+      "hops": [
+        {
+          "node": "ui:web/src/App.tsx:22:6",
+          "kind": "ui",
+          "label": "type “What is chunk overlap?”",
+          "service": "svc:web",
+          "via": "start",
+          "proof": [
+            "web/src/App.tsx:22"
+          ],
+          "confidence": 1.0,
+          "explain": "The user types a question into the input on this screen."
+        },
+        {
+          "node": "ui:web/src/App.tsx:23:6",
+          "kind": "ui",
+          "label": "<button> “Ask”",
+          "service": "svc:web",
+          "via": "handler",
+          "proof": [
+            "web/src/App.tsx:23"
+          ],
+          "confidence": 1.0,
+          "explain": "The user clicks this button."
+        },
+        {
+          "node": "fn:web/src/App.tsx#ask",
+          "kind": "function",
+          "label": "ask()",
+          "service": "svc:web",
+          "via": "handler",
+          "proof": [
+            "web/src/App.tsx:9"
+          ],
+          "confidence": 1.0,
+          "explain": "Its onClick handler runs in the browser."
+        },
+        {
+          "node": "svc:proxy",
+          "kind": "proxy",
+          "label": "proxy (reverse proxy)",
+          "service": "svc:proxy",
+          "via": "http",
+          "proof": [
+            "VITE_API_URL -> proxy:80",
+            "proxy_pass in deploy/nginx.conf"
+          ],
+          "confidence": 0.9,
+          "explain": "The request reaches the reverse proxy “proxy” first (VITE_API_URL -> proxy:80), which forwards it to api (proxy_pass in deploy/nginx.conf)."
+        },
+        {
+          "node": "route:POST /ask#app/api.py",
+          "kind": "route",
+          "label": "POST /ask",
+          "service": "svc:api",
+          "via": "proxy",
+          "proof": [
+            "xedge:fn:web/src/App.tsx#ask->fn:app/api.py#ask",
+            "app/api.py:16"
+          ],
+          "confidence": 1.0,
+          "explain": "The browser sends http.POST :param/ask; the backend route POST /ask receives it and runs ask()."
+        },
+        {
+          "node": "file:app/memory.py",
+          "kind": "function",
+          "label": "cached_answer(), history(), normalize(), remember(), store_answer() in app/memory.py",
+          "service": "svc:api",
+          "via": "call",
+          "proof": [
+            "app/memory.py:24",
+            "app/memory.py:20",
+            "app/memory.py:33",
+            "app/memory.py:14",
+            "app/memory.py:29"
+          ],
+          "confidence": 0.85,
+          "explain": "ask() calls cached_answer(), history(), normalize(), remember(), store_answer() in app/memory.py (Capped history in Redis (rolling buffer); Response cache with expiry (TTL))."
+        },
+        {
+          "node": "svc:cache",
+          "kind": "service",
+          "label": "cache container",
+          "service": "svc:cache",
+          "via": "network",
+          "proof": [
+            "REDIS_URL -> cache:6379",
+            "docker-compose.yml:62"
+          ],
+          "confidence": 0.8,
+          "explain": "app/memory.py keeps its data in Redis. The cache container is reached over the network (REDIS_URL -> cache:6379)."
+        },
+        {
+          "node": "file:app/agent.py",
+          "kind": "function",
+          "label": "hand off to app/agent.py",
+          "service": "svc:api",
+          "via": "import",
+          "proof": [
+            "app/api.py imports app/agent.py"
+          ],
+          "confidence": 0.7,
+          "explain": "ask() uses the pipeline defined in app/agent.py (matched by import; the call itself is dynamic)."
+        },
+        {
+          "node": "ai:agent:bind_tools",
+          "kind": "stage",
+          "label": "bind_tools",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/agent.py:25",
+            "ai.agent.langchain"
+          ],
+          "confidence": 0.9,
+          "explain": "Agent loop. The model chooses a tool, the tool runs, the result goes back to the model, and this repeats until the model decides it is done."
+        },
+        {
+          "node": "ai:router:StateGraph",
+          "kind": "stage",
+          "label": "StateGraph",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/agent.py:39",
+            "ai.router.langgraph"
+          ],
+          "confidence": 0.9,
+          "explain": "runs: A router (decision step). After a node runs, a function looks at the state and picks the next node, for example \"call a tool again\" or \"finish\". This is what turns a straight pipeline into a loop. Settings in the code: nodes=agent, tools."
+        },
+        {
+          "node": "ai:tool:search_book",
+          "kind": "stage",
+          "label": "search_book",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/agent.py:17",
+            "ai.tool.decorated-function"
+          ],
+          "confidence": 0.9,
+          "explain": "call tool: Tool. A function the model may ask to run (search, calculator, database query). Its result is fed back to the model."
+        },
+        {
+          "node": "ai:vectorStore:Chroma.from_documents",
+          "kind": "stage",
+          "label": "Chroma.from_documents",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/ingest.py:19",
+            "ai.store.vector"
+          ],
+          "confidence": 0.9,
+          "explain": "nearest-neighbour search: Vector store. Keeps every chunk's vector with its text and metadata, indexed (often HNSW) for fast nearest-neighbour search. Settings in the code: collection_name=book, persist_directory=persist_dir."
+        },
+        {
+          "node": "svc:chroma",
+          "kind": "service",
+          "label": "chroma container",
+          "service": "svc:chroma",
+          "via": "network",
+          "proof": [
+            "CHROMA_URL -> chroma:8000",
+            "docker-compose.yml:56"
+          ],
+          "confidence": 0.8,
+          "explain": "The work behind Chroma.from_documents happens in its own container. The chroma container is reached over the network (CHROMA_URL -> chroma:8000)."
+        },
+        {
+          "node": "ai:retriever:as_retriever",
+          "kind": "stage",
+          "label": "as_retriever",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/retrieve.py:12",
+            "ai.retrieve.as-retriever"
+          ],
+          "confidence": 0.9,
+          "explain": "retrieve (as a tool): Retriever. Embeds the question and returns the k chunks whose vectors are closest (top-k). Settings in the code: k=8, search_kwargs={\"k\": 8}, search_type=similarity."
+        },
+        {
+          "node": "ai:keywordIndex:BM25Retriever.from_documents",
+          "kind": "stage",
+          "label": "BM25Retriever.from_documents",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/ingest.py:20",
+            "ai.keyword.bm25"
+          ],
+          "confidence": 0.9,
+          "explain": "keyword hits: BM25 is keyword search. It scores chunks by how often the query words appear in them, discounted by how common those words are everywhere. It finds exact names and codes that embeddings miss. Settings in the code: k=8."
+        },
+        {
+          "node": "ai:fusion:EnsembleRetriever",
+          "kind": "stage",
+          "label": "EnsembleRetriever",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/retrieve.py:13",
+            "ai.fusion.ensemble"
+          ],
+          "confidence": 0.9,
+          "explain": "top-k chunks: Fusion merges two ranked lists (dense vectors and BM25 keywords) into one. Reciprocal Rank Fusion gives each chunk 1/(60 + rank) from every list and adds them up, so chunks that rank well in both win. Settings in the code: weights=[0.6, 0.4]."
+        },
+        {
+          "node": "ai:reranker:CrossEncoder",
+          "kind": "stage",
+          "label": "CrossEncoder",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/retrieve.py:8",
+            "ai.rerank.cross-encoder"
+          ],
+          "confidence": 0.9,
+          "explain": "fused candidates: Reranker (cross-encoder). Reads the question and each candidate chunk together and scores how well they match. Slower than vector search but much more precise, so it re-orders the top-k candidates and keeps the best top-n. Settings in the code: model=cross-encoder/ms-marco-MiniLM-L-6-v2."
+        },
+        {
+          "node": "ai:prompt:ChatPromptTemplate.from_messages",
+          "kind": "stage",
+          "label": "ChatPromptTemplate.from_messages",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/agent.py:11",
+            "ai.prompt.template"
+          ],
+          "confidence": 0.9,
+          "explain": "top-n chunks: Prompt template. Puts the instructions, the retrieved chunks and the question into the text the model will read."
+        },
+        {
+          "node": "ai:llm:ChatOllama",
+          "kind": "stage",
+          "label": "ChatOllama",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/agent.py:9",
+            "ai.llm.chat-wrapper"
+          ],
+          "confidence": 0.9,
+          "explain": "prompt: Language model call. Reads the prompt and generates the answer token by token; with tools enabled it can answer with a tool call instead. Settings in the code: model=qwen3:4b, num_ctx=8192, temperature=0."
+        },
+        {
+          "node": "svc:ollama",
+          "kind": "service",
+          "label": "ollama container",
+          "service": "svc:ollama",
+          "via": "network",
+          "proof": [
+            "OLLAMA_BASE_URL -> ollama:11434",
+            "docker-compose.yml:39"
+          ],
+          "confidence": 0.8,
+          "explain": "The work behind ChatOllama happens in its own container. The ollama container is reached over the network (OLLAMA_BASE_URL -> ollama:11434)."
+        },
+        {
+          "node": "ui:web/src/App.tsx:23:6",
+          "kind": "response",
+          "label": "answer shown on screen",
+          "service": "svc:web",
+          "via": "return",
+          "proof": [
+            "xedge:fn:web/src/App.tsx#ask->fn:app/api.py#ask"
+          ],
+          "confidence": 1.0,
+          "explain": "The response travels back the same way and the screen updates."
+        }
+      ]
+    }
+  ]
 }

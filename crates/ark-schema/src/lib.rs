@@ -52,6 +52,77 @@ pub struct SystemArchitectureGraph {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub insights: Option<Insights>,
+    /// Example runs: what happens, hop by hop, when a user uses one UI element. Every hop
+    /// carries the code or config line that proves it; nothing is guessed.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<ExampleRun>>", optional)]
+    pub example_runs: Vec<ExampleRun>,
+}
+
+/// One request followed from a UI element through the services and back.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct ExampleRun {
+    /// `run:<ui element id>`.
+    pub id: String,
+    pub title: String,
+    /// The UI element the user acts on.
+    pub start: String,
+    /// Text the user would type, taken from the screen's placeholder or label.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub sample_input: Option<String>,
+    pub hops: Vec<RunHop>,
+}
+
+/// One step of an example run.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct RunHop {
+    /// Graph id of what runs at this step (ui, fn, route, ai stage or svc id).
+    pub node: String,
+    pub kind: RunHopKind,
+    pub label: String,
+    /// The service (container) this step runs in, when the deployment is known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub service: Option<String>,
+    /// How control got here from the previous hop.
+    pub via: RunVia,
+    /// `path:line` locations and evidence ids that prove the hop.
+    pub proof: Vec<String>,
+    /// 1.0 for a resolved call or declared link; lower when matched by import or kind.
+    pub confidence: f64,
+    /// One sentence for the narrator.
+    pub explain: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum RunHopKind {
+    Ui,
+    Function,
+    Route,
+    Proxy,
+    Stage,
+    Service,
+    Response,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum RunVia {
+    Start,
+    Handler,
+    Call,
+    Http,
+    Proxy,
+    Import,
+    Pipeline,
+    Network,
+    Return,
 }
 
 /// Project-level classification with its evidence.
@@ -629,11 +700,16 @@ pub struct Insights {
     pub ai: Option<AiArchitecture>,
     pub libraries: Vec<KnownLibrary>,
     pub memory_techniques: Vec<MemoryTechnique>,
+    /// Containers and services from docker-compose / Dockerfiles, and how they connect.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub deployment: Option<Deployment>,
 }
 
 impl Insights {
     pub fn is_empty(&self) -> bool {
         self.data_structures.is_empty()
+            && self.deployment.is_none()
             && self.ai.is_none()
             && self.libraries.is_empty()
             && self.memory_techniques.is_empty()
@@ -815,6 +891,117 @@ pub struct MemoryTechnique {
     pub line: u32,
     pub setting: String,
     pub explain: String,
+}
+
+/// How the project runs: the services declared in compose files and Dockerfiles.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct Deployment {
+    /// Compose files and Dockerfiles that were read.
+    pub sources: Vec<String>,
+    pub services: Vec<Service>,
+    pub links: Vec<ServiceLink>,
+}
+
+/// One container or process in the deployment.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct Service {
+    /// `svc:<name>`.
+    pub id: String,
+    pub name: String,
+    pub kind: ServiceKind,
+    /// Image as written (`qdrant/qdrant:v1.12.4`), or the Dockerfile base image when built.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub image: Option<String>,
+    /// Build context folder, relative to the repository root, when the image is built here.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub build_context: Option<String>,
+    /// Start command (compose `command` or Dockerfile CMD/ENTRYPOINT).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub command: Option<String>,
+    /// File id of the program the command starts (e.g. `uvicorn app.main:app` -> app/main.py).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub entry_file: Option<String>,
+    /// Published or exposed ports as written.
+    pub ports: Vec<String>,
+    /// Memory limit in bytes (`deploy.resources.limits.memory` or `mem_limit`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "number")]
+    pub memory_limit: Option<u64>,
+    /// Memory reservation in bytes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "number")]
+    pub memory_reservation: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub cpu_limit: Option<String>,
+    /// Asks for a GPU (device reservation, `gpus:` or the nvidia runtime).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(as = "Option<bool>", optional)]
+    pub gpu: bool,
+    /// Volume mounts as written (`qdrant_data:/qdrant/storage`).
+    pub volumes: Vec<String>,
+    /// Environment variable names only; values are never stored.
+    pub env_keys: Vec<String>,
+    /// Number of source files inside the build context.
+    pub code_files: u32,
+    /// Where the service is declared, `path:line`.
+    pub declared_in: String,
+    /// Student-facing sentence: what this service is for.
+    pub explain: String,
+}
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema, TS,
+)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub enum ServiceKind {
+    Frontend,
+    Proxy,
+    Api,
+    Worker,
+    Agent,
+    ModelServer,
+    VectorStore,
+    SearchEngine,
+    Database,
+    Cache,
+    Broker,
+    ObjectStore,
+    Observability,
+    Other,
+}
+
+/// A connection between services, with the line that proves it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct ServiceLink {
+    pub from: String,
+    pub to: String,
+    pub via: LinkVia,
+    /// e.g. `QDRANT_URL -> qdrant:6333`, or `depends_on`.
+    pub detail: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub enum LinkVia {
+    /// An environment variable points at the other service's host name.
+    Env,
+    /// `depends_on` / `links`: start order, not proof of traffic on its own.
+    DependsOn,
+    /// A proxy config routes to it.
+    Proxy,
 }
 
 /// JSON Schema for [`SystemArchitectureGraph`], pretty-printed with a trailing newline.

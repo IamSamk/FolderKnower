@@ -255,3 +255,145 @@ export async function ask(q) {
         .unwrap();
     assert_eq!(r.params["k"], "4");
 }
+
+mod deployment {
+    use crate::deployment::{CodeFile, InfraFile, analyze, parse_bytes};
+    use ark_schema::{LinkVia, ServiceKind, TierLabel};
+
+    const COMPOSE: &str = r#"
+services:
+  web:
+    build: ./web
+    environment:
+      API_URL: http://api:8000
+  api:
+    build:
+      context: ./backend
+    command: uvicorn app.main:app --port 8000
+    environment:
+      - QDRANT_URL=http://vectors:6333
+      - REDIS_URL=redis://cache:6379
+      - LLM_URL=${LLM_URL:-http://llm:8000/v1}
+    deploy:
+      resources:
+        limits: { memory: 1.5g, cpus: "1" }
+  vectors:
+    image: qdrant/qdrant:v1.15.0
+    mem_limit: 2048m
+  llm:
+    image: vllm/vllm-openai:latest
+    command: --model Qwen/Qwen3-4B --gpu-memory-utilization 0.9
+    gpus: all
+  cache:
+    image: docker.io/library/redis:7
+    command: ["redis-server", "--maxmemory", "128mb"]
+"#;
+
+    fn run() -> ark_schema::Deployment {
+        let infra = [
+            InfraFile {
+                path: "docker-compose.yml",
+                text: COMPOSE,
+            },
+            InfraFile {
+                path: "web/Dockerfile",
+                text: "FROM node:22\nCMD [\"npm\",\"start\"]",
+            },
+            InfraFile {
+                path: "backend/Dockerfile",
+                text: "FROM python:3.12\nEXPOSE 8000",
+            },
+        ];
+        let code = [
+            CodeFile {
+                path: "web/src/App.tsx",
+                tier: TierLabel::Frontend,
+            },
+            CodeFile {
+                path: "backend/app/main.py",
+                tier: TierLabel::Backend,
+            },
+            CodeFile {
+                path: "backend/app/memory.py",
+                tier: TierLabel::Backend,
+            },
+        ];
+        analyze(&infra, &code).expect("deployment")
+    }
+
+    #[test]
+    fn sizes_parse() {
+        assert_eq!(parse_bytes("1.5g"), Some(1_610_612_736));
+        assert_eq!(parse_bytes("2048m"), Some(2_147_483_648));
+        assert_eq!(parse_bytes("512k"), Some(524_288));
+        assert_eq!(parse_bytes("lots"), None);
+    }
+
+    #[test]
+    fn services_kinds_limits_and_entry() {
+        let d = run();
+        let by = |n: &str| d.services.iter().find(|s| s.name == n).unwrap();
+        assert_eq!(by("web").kind, ServiceKind::Frontend);
+        assert_eq!(by("web").code_files, 1);
+        let api = by("api");
+        assert_eq!(api.kind, ServiceKind::Api);
+        assert_eq!(api.code_files, 2);
+        assert_eq!(api.memory_limit, Some(1_610_612_736));
+        assert_eq!(api.entry_file.as_deref(), Some("file:backend/app/main.py"));
+        assert_eq!(by("vectors").kind, ServiceKind::VectorStore);
+        assert_eq!(by("vectors").memory_limit, Some(2_147_483_648));
+        let llm = by("llm");
+        assert_eq!(llm.kind, ServiceKind::ModelServer);
+        assert!(llm.gpu);
+        assert!(llm.explain.contains("0.9 of the GPU"));
+        let cache = by("cache");
+        assert_eq!(cache.kind, ServiceKind::Cache);
+        assert!(cache.explain.contains("128mb"));
+    }
+
+    #[test]
+    fn links_only_from_proven_hosts() {
+        let d = run();
+        let has = |a: &str, b: &str| {
+            d.links.iter().any(|l| {
+                l.from == format!("svc:{a}") && l.to == format!("svc:{b}") && l.via == LinkVia::Env
+            })
+        };
+        assert!(has("web", "api"));
+        assert!(has("api", "vectors"));
+        assert!(has("api", "cache"));
+        assert!(has("api", "llm"), "default inside ${{VAR:-default}} counts");
+        assert!(!d.links.iter().any(|l| l.from == "svc:vectors"));
+    }
+
+    #[test]
+    fn deterministic() {
+        assert_eq!(run(), run());
+    }
+}
+
+#[test]
+fn recognizes_qdrant_sparse_dense_hybrid() {
+    let src = r#"
+from qdrant_client import QdrantClient, models
+from fastembed import SparseTextEmbedding, TextEmbedding
+
+client = QdrantClient(url="http://qdrant:6333")
+dense = TextEmbedding("BAAI/bge-small-en-v1.5")
+sparse = SparseTextEmbedding(model_name="prithivida/Splade_PP_en_v1")
+
+def search(q):
+    return client.query_points(
+        "docs",
+        prefetch=[models.Prefetch(query=dv, using="dense", limit=20), models.Prefetch(query=sv, using="sparse", limit=20)],
+        query=models.FusionQuery(fusion=models.Fusion.RRF),
+        limit=5,
+    )
+"#;
+    let out = crate::ai::analyze(&[pf("search.py", Language::Python, src)], &[]);
+    let ai = out.ai.expect("ai");
+    let roles: Vec<AiRole> = ai.stages.iter().map(|s| s.role).collect();
+    assert!(roles.contains(&AiRole::KeywordIndex), "{roles:?}");
+    assert!(roles.contains(&AiRole::Fusion), "{roles:?}");
+    assert!(roles.contains(&AiRole::Embedder), "{roles:?}");
+}

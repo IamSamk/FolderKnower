@@ -121,6 +121,8 @@ impl OtherKind {
             });
         }
         if name == "dockerfile"
+            || name.starts_with("dockerfile.")
+            || name.ends_with(".dockerfile")
             || name.starts_with("docker-compose")
             || name.starts_with("compose.")
             || name.ends_with(".tf")
@@ -130,6 +132,7 @@ impl OtherKind {
             || name == "vercel.json"
             || name == "netlify.toml"
             || name == "nginx.conf"
+            || (name.ends_with(".conf") && lower.contains("nginx"))
             || name == "procfile"
         {
             return Some(Self::Infra);

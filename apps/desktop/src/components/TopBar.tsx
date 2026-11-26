@@ -2,6 +2,7 @@ import {
   Activity,
   Boxes,
   Brain,
+  Container,
   Database,
   Download,
   Laptop,
@@ -88,7 +89,8 @@ export function TopBar() {
   if (!ix) return null;
   const top = stack[stack.length - 1];
   const views: { k: View; label: string; icon: React.ReactNode }[] = [
-    { k: "architecture", label: "Architecture", icon: <Network size={15} strokeWidth={2.2} /> },
+    { k: "system", label: "System", icon: <Container size={15} strokeWidth={2.2} /> },
+    { k: "architecture", label: "Code map", icon: <Network size={15} strokeWidth={2.2} /> },
     { k: "ui", label: "UI map", icon: <Boxes size={15} strokeWidth={2.2} /> },
     { k: "er", label: "Data", icon: <Database size={15} strokeWidth={2.2} /> },
     { k: "insights", label: "How it works", icon: <Brain size={15} strokeWidth={2.2} /> },
@@ -157,7 +159,7 @@ export function TopBar() {
         </nav>
       )}
       <div className="ml-auto flex items-center gap-2">
-        {view !== "live" && (
+        {view !== "live" && view !== "system" && (
           <button
             type="button"
             className={`ak-tool ak-tool-label ${workflowOpen ? "on" : ""}`}

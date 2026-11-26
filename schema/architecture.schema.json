@@ -21,6 +21,13 @@
         "$ref": "#/$defs/DataModel"
       }
     },
+    "exampleRuns": {
+      "description": "Example runs: what happens, hop by hop, when a user uses one UI element. Every hop\ncarries the code or config line that proves it; nothing is guessed.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ExampleRun"
+      }
+    },
     "generator": {
       "$ref": "#/$defs/GeneratorInfo"
     },
@@ -550,6 +557,37 @@
         }
       ]
     },
+    "Deployment": {
+      "description": "How the project runs: the services declared in compose files and Dockerfiles.",
+      "type": "object",
+      "properties": {
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ServiceLink"
+          }
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Service"
+          }
+        },
+        "sources": {
+          "description": "Compose files and Dockerfiles that were read.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "sources",
+        "services",
+        "links"
+      ]
+    },
     "DsaFinding": {
       "description": "A data structure or algorithmic pattern used inside one function.",
       "type": "object",
@@ -690,6 +728,43 @@
         "target",
         "provenance",
         "confidence"
+      ]
+    },
+    "ExampleRun": {
+      "description": "One request followed from a UI element through the services and back.",
+      "type": "object",
+      "properties": {
+        "hops": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RunHop"
+          }
+        },
+        "id": {
+          "description": "`run:<ui element id>`.",
+          "type": "string"
+        },
+        "sampleInput": {
+          "description": "Text the user would type, taken from the screen's placeholder or label.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "start": {
+          "description": "The UI element the user acts on.",
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "start",
+        "hops"
       ]
     },
     "Finding": {
@@ -949,6 +1024,17 @@
             "$ref": "#/$defs/DsaFinding"
           }
         },
+        "deployment": {
+          "description": "Containers and services from docker-compose / Dockerfiles, and how they connect.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Deployment"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "libraries": {
           "type": "array",
           "items": {
@@ -1000,6 +1086,25 @@
         "category",
         "explain",
         "evidence"
+      ]
+    },
+    "LinkVia": {
+      "oneOf": [
+        {
+          "description": "An environment variable points at the other service's host name.",
+          "type": "string",
+          "const": "env"
+        },
+        {
+          "description": "`depends_on` / `links`: start order, not proof of traffic on its own.",
+          "type": "string",
+          "const": "dependsOn"
+        },
+        {
+          "description": "A proxy config routes to it.",
+          "type": "string",
+          "const": "proxy"
+        }
       ]
     },
     "LiveTelemetry": {
@@ -1345,11 +1450,254 @@
         "line"
       ]
     },
+    "RunHop": {
+      "description": "One step of an example run.",
+      "type": "object",
+      "properties": {
+        "confidence": {
+          "description": "1.0 for a resolved call or declared link; lower when matched by import or kind.",
+          "type": "number",
+          "format": "double"
+        },
+        "explain": {
+          "description": "One sentence for the narrator.",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/RunHopKind"
+        },
+        "label": {
+          "type": "string"
+        },
+        "node": {
+          "description": "Graph id of what runs at this step (ui, fn, route, ai stage or svc id).",
+          "type": "string"
+        },
+        "proof": {
+          "description": "`path:line` locations and evidence ids that prove the hop.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "service": {
+          "description": "The service (container) this step runs in, when the deployment is known.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "via": {
+          "description": "How control got here from the previous hop.",
+          "$ref": "#/$defs/RunVia"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "node",
+        "kind",
+        "label",
+        "via",
+        "proof",
+        "confidence",
+        "explain"
+      ]
+    },
+    "RunHopKind": {
+      "type": "string",
+      "enum": [
+        "ui",
+        "function",
+        "route",
+        "proxy",
+        "stage",
+        "service",
+        "response"
+      ]
+    },
+    "RunVia": {
+      "type": "string",
+      "enum": [
+        "start",
+        "handler",
+        "call",
+        "http",
+        "proxy",
+        "import",
+        "pipeline",
+        "network",
+        "return"
+      ]
+    },
     "SchemaVersion": {
       "description": "Schema version tag. Only `\"2.0\"` is valid.",
       "type": "string",
       "enum": [
         "2.0"
+      ]
+    },
+    "Service": {
+      "description": "One container or process in the deployment.",
+      "type": "object",
+      "properties": {
+        "buildContext": {
+          "description": "Build context folder, relative to the repository root, when the image is built here.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "codeFiles": {
+          "description": "Number of source files inside the build context.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "command": {
+          "description": "Start command (compose `command` or Dockerfile CMD/ENTRYPOINT).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cpuLimit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "declaredIn": {
+          "description": "Where the service is declared, `path:line`.",
+          "type": "string"
+        },
+        "entryFile": {
+          "description": "File id of the program the command starts (e.g. `uvicorn app.main:app` -> app/main.py).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "envKeys": {
+          "description": "Environment variable names only; values are never stored.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "explain": {
+          "description": "Student-facing sentence: what this service is for.",
+          "type": "string"
+        },
+        "gpu": {
+          "description": "Asks for a GPU (device reservation, `gpus:` or the nvidia runtime).",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "`svc:<name>`.",
+          "type": "string"
+        },
+        "image": {
+          "description": "Image as written (`qdrant/qdrant:v1.12.4`), or the Dockerfile base image when built.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "$ref": "#/$defs/ServiceKind"
+        },
+        "memoryLimit": {
+          "description": "Memory limit in bytes (`deploy.resources.limits.memory` or `mem_limit`).",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "memoryReservation": {
+          "description": "Memory reservation in bytes.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "name": {
+          "type": "string"
+        },
+        "ports": {
+          "description": "Published or exposed ports as written.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "volumes": {
+          "description": "Volume mounts as written (`qdrant_data:/qdrant/storage`).",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "ports",
+        "volumes",
+        "envKeys",
+        "codeFiles",
+        "declaredIn",
+        "explain"
+      ]
+    },
+    "ServiceKind": {
+      "type": "string",
+      "enum": [
+        "frontend",
+        "proxy",
+        "api",
+        "worker",
+        "agent",
+        "modelServer",
+        "vectorStore",
+        "searchEngine",
+        "database",
+        "cache",
+        "broker",
+        "objectStore",
+        "observability",
+        "other"
+      ]
+    },
+    "ServiceLink": {
+      "description": "A connection between services, with the line that proves it.",
+      "type": "object",
+      "properties": {
+        "detail": {
+          "description": "e.g. `QDRANT_URL -> qdrant:6333`, or `depends_on`.",
+          "type": "string"
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "via": {
+          "$ref": "#/$defs/LinkVia"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to",
+        "via",
+        "detail"
       ]
     },
     "Signature": {

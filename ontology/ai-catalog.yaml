@@ -55,7 +55,7 @@ components:
   - id: ai.embed.sentence-transformers
     role: embedder
     library: sentence-transformers
-    match: ['^SentenceTransformer$', 'HuggingFaceEmbeddings$', 'HuggingFaceBgeEmbeddings$', 'HuggingFaceEmbedding$', 'FastEmbedEmbeddings$', 'TextEmbedding$']
+    match: ['^SentenceTransformer$', 'HuggingFaceEmbeddings$', 'HuggingFaceBgeEmbeddings$', 'HuggingFaceEmbedding$', 'FastEmbedEmbeddings$', '(^|\.)TextEmbedding$']
     params: [model_name, model, device, normalize_embeddings, truncate_dim]
     positional: model
   - id: ai.embed.openai
@@ -91,6 +91,17 @@ components:
     match: ['^BM25Retriever(\.from_documents|\.from_texts|\.from_defaults)?$', '^BM25Okapi$', '^BM25$', 'bm25s\.(BM25|tokenize)$']
     params: [k, similarity_top_k, k1, b]
     explain: BM25 is keyword search. It scores chunks by how often the query words appear in them, discounted by how common those words are everywhere. It finds exact names and codes that embeddings miss.
+  - id: ai.keyword.sparse
+    role: keywordIndex
+    library: sparse embeddings
+    match: ['^(SparseTextEmbedding|SparseEmbedding|SpladeEncoder|BM42|SparseVectorParams|SparseVector)$', 'models\.(SparseVectorParams|SparseVector|SparseIndexParams)$', 'FastEmbedSparse$', 'SPLADE$']
+    params: [model_name, modifier, index]
+    explain: A sparse vector has one slot per vocabulary word and is almost all zeros; only the words in the text (and, for SPLADE, learned related words) get weights. It behaves like learned keyword search, stored next to the dense vector so one query can use both.
+  - id: ai.keyword.tsvector
+    role: keywordIndex
+    library: Postgres full-text
+    match: ['(^|\.)(to_tsvector|plainto_tsquery|websearch_to_tsquery|ts_rank|ts_rank_cd)$']
+    explain: Postgres full-text search. to_tsvector turns text into stemmed words with positions, a GIN index makes lookups fast and ts_rank scores matches. Combined with pgvector it gives hybrid search inside one database.
   # ---------------- retrieval ----------------
   - id: ai.retrieve.as-retriever
     role: retriever
@@ -111,8 +122,8 @@ components:
   - id: ai.fusion.ensemble
     role: fusion
     library: hybrid search
-    match: ['EnsembleRetriever$', 'QueryFusionRetriever$', 'reciprocal_rank_fusion$', '^rrf$', 'HybridSearch$']
-    params: [weights, mode, similarity_top_k, num_queries, c]
+    match: ['EnsembleRetriever$', 'QueryFusionRetriever$', 'reciprocal_rank_fusion$', '^rrf$', 'HybridSearch$', 'models\.(FusionQuery|Prefetch)$', '^(FusionQuery|Prefetch)$', '\.hybrid$', 'HybridFusion$']
+    params: [weights, mode, similarity_top_k, num_queries, c, fusion, alpha, limit, fusion_type, retrieval_mode]
     explain: Fusion merges two ranked lists (dense vectors and BM25 keywords) into one. Reciprocal Rank Fusion gives each chunk 1/(60 + rank) from every list and adds them up, so chunks that rank well in both win.
   # ---------------- reranking ----------------
   - id: ai.rerank.cross-encoder
@@ -340,6 +351,25 @@ memory:
     match: ['^(ollama\.)?(chat|generate|embed)$', '^ChatOllama$', '^OllamaLLM$']
     kwarg: '(keep_alive|num_ctx|options)'
     explain: keep_alive decides how long Ollama keeps the model loaded in RAM/VRAM after a request. num_ctx sets the context length, which sizes the KV cache.
+
+  - id: mem.redis.capped-list
+    name: Capped history in Redis (rolling buffer)
+    engine: Redis
+    match: ['\.(ltrim|xtrim)$', '\.(xadd)$']
+    requires: [redis, ioredis, '@upstash/redis']
+    explain: Pushes each new item onto a Redis list and trims it to the last N, so the list works as a ring buffer. Used for chat history, memory per conversation stays fixed however long it runs, and every API worker sees the same history because it lives in the Redis container, not in the process.
+  - id: mem.redis.ttl-cache
+    name: Response cache with expiry (TTL)
+    engine: Redis
+    match: ['\.(setex|psetex|expire|pexpire)$']
+    requires: [redis, ioredis, '@upstash/redis']
+    explain: Stores a computed result under a key with a time-to-live. A repeat request reads the stored copy instead of recomputing; Redis deletes the key when the TTL runs out, and its maxmemory policy evicts old keys when it is full.
+  - id: mem.py.lru
+    name: In-process LRU cache (memoization)
+    engine: Python functools
+    match: ['(^|\.)(lru_cache|cache)$']
+    requires: [functools]
+    explain: Keeps the results of recent calls in a dict inside this Python process. When it holds maxsize entries the least recently used one is dropped. Each worker process has its own copy, so it is fast but not shared.
 
 libraries:
   # ---- AI / ML ----

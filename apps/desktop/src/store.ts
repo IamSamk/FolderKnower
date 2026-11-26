@@ -12,7 +12,7 @@ import {
 } from "./lib/backend";
 import { type Hop, type Indexed, index, trace } from "./lib/graph";
 
-export type View = "architecture" | "er" | "ui" | "insights" | "live";
+export type View = "system" | "architecture" | "er" | "ui" | "insights" | "live";
 export type Focus =
   | { level: "system" }
   | { level: "tier"; tier: TierLabel }
@@ -127,7 +127,10 @@ export const useStore = create<State>((set, get) => ({
         stack: [{ level: "system" }],
         selected: null,
         hops: [],
-        view: "architecture",
+        view:
+          result.graph.insights?.deployment?.services.length || result.graph.exampleRuns?.length
+            ? "system"
+            : "architecture",
         workflowOpen: false,
         workflowFn: null,
       });

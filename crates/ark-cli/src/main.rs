@@ -38,6 +38,23 @@ enum Cmd {
         #[arg(short, long)]
         quiet: bool,
     },
+    /// Grounded example run: what happens, hop by hop, when a user uses a UI element.
+    ///
+    /// Built for AI narrators as a tool call: every hop carries the `path:line` or the
+    /// compose link that proves it, and nothing outside the graph is ever returned.
+    Run {
+        /// Repository root, or an architecture.json written by `index`.
+        path: PathBuf,
+        /// UI element id (or part of it, or its label) to start from; default: deepest run.
+        #[arg(long)]
+        from: Option<String>,
+        /// List the available runs (id, title, hop count) instead of printing one.
+        #[arg(long)]
+        list: bool,
+        /// Print a numbered plain-text story instead of JSON.
+        #[arg(long)]
+        text: bool,
+    },
     /// Print the JSON Schema of architecture.json.
     Schema,
     /// Print the Systems Ontology catalogue (concepts + teaching text) as JSON.
@@ -56,6 +73,12 @@ fn main() -> ExitCode {
             println!("{}", serde_json::to_string_pretty(&rules).expect("json"));
             ExitCode::SUCCESS
         }
+        Cmd::Run {
+            path,
+            from,
+            list,
+            text,
+        } => run_cmd(&path, from.as_deref(), list, text),
         Cmd::Schema => {
             print!("{}", ark_schema::json_schema_string());
             ExitCode::SUCCESS
@@ -127,4 +150,72 @@ fn main() -> ExitCode {
             }
         }
     }
+}
+
+fn run_cmd(path: &std::path::Path, from: Option<&str>, list: bool, text: bool) -> ExitCode {
+    let graph: ark_schema::SystemArchitectureGraph = if path.is_dir() {
+        match analyze(path, &Options::default(), &|_| {}) {
+            Ok((g, _)) => g,
+            Err(e) => {
+                eprintln!("error: {e}");
+                return ExitCode::FAILURE;
+            }
+        }
+    } else {
+        match std::fs::read_to_string(path).map(|s| serde_json::from_str(&s)) {
+            Ok(Ok(g)) => g,
+            Ok(Err(e)) => {
+                eprintln!("{} is not an architecture.json: {e}", path.display());
+                return ExitCode::from(2);
+            }
+            Err(e) => {
+                eprintln!("cannot read {}: {e}", path.display());
+                return ExitCode::FAILURE;
+            }
+        }
+    };
+    let runs = &graph.example_runs;
+    if list {
+        let rows: Vec<serde_json::Value> = runs
+            .iter()
+            .map(|r| serde_json::json!({"id": r.id, "title": r.title, "start": r.start, "hops": r.hops.len()}))
+            .collect();
+        println!("{}", serde_json::to_string_pretty(&rows).expect("json"));
+        return ExitCode::SUCCESS;
+    }
+    let pick = match from {
+        None => runs.first(),
+        Some(q) => runs.iter().find(|r| {
+            r.start == q
+                || r.id == q
+                || r.start.contains(q)
+                || r.title.to_lowercase().contains(&q.to_lowercase())
+        }),
+    };
+    let Some(run) = pick else {
+        eprintln!(
+            "no example run{}; a run needs a UI element whose handler reaches a backend route",
+            from.map(|q| format!(" matches {q:?}")).unwrap_or_default()
+        );
+        return ExitCode::from(3);
+    };
+    if text {
+        println!("{}", run.title);
+        for (i, h) in run.hops.iter().enumerate() {
+            println!(
+                "{:>2}. [{}] {} - {} (proof: {})",
+                i + 1,
+                h.service
+                    .as_deref()
+                    .unwrap_or("-")
+                    .trim_start_matches("svc:"),
+                h.label,
+                h.explain,
+                h.proof.join(", ")
+            );
+        }
+    } else {
+        println!("{}", serde_json::to_string_pretty(run).expect("json"));
+    }
+    ExitCode::SUCCESS
 }

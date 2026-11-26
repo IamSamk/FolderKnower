@@ -11,6 +11,8 @@ use std::{
     time::Instant,
 };
 
+mod story;
+
 use ark_link::{LinkInputs, ParsedFile, file_id, fn_id, link};
 use ark_ontology::Ontology;
 use ark_parse::{EXTRACTOR_VERSION, FileFacts, parse_file};
@@ -435,14 +437,27 @@ pub fn analyze(
         0,
     );
     let okf = detect_okf(root, &scanned.files);
-    let insights = ark_patterns::analyze(&app, &okf);
+    let infra_text = read_infra(root, &scanned.files);
+    let infra: Vec<ark_patterns::InfraFile> = infra_text
+        .iter()
+        .map(|(path, text)| ark_patterns::InfraFile { path, text })
+        .collect();
+    let code: Vec<ark_patterns::CodeFile> = structure
+        .file_tiers
+        .iter()
+        .map(|(path, ft)| ark_patterns::CodeFile {
+            path,
+            tier: ft.tier,
+        })
+        .collect();
+    let insights = ark_patterns::analyze(&app, &okf, &infra, &code);
 
     let repo_name = fs::canonicalize(root)
         .ok()
         .and_then(|p| p.file_name().map(|n| n.to_string_lossy().into_owned()))
         .unwrap_or_else(|| "repository".to_owned());
 
-    let graph = SystemArchitectureGraph {
+    let mut graph = SystemArchitectureGraph {
         schema_version: SchemaVersion::V2,
         repo_name,
         root_path: ".".to_owned(),
@@ -467,7 +482,10 @@ pub fn analyze(
         ui_elements: ui,
         questions: structure.questions,
         insights,
+        example_runs: Vec::new(),
     };
+    graph.example_runs = story::example_runs(&graph);
+    story::system_headline(&mut graph);
     let stats = RunStats {
         files: scanned.files.len(),
         code_files: app.len() + tests.len(),
@@ -485,6 +503,21 @@ pub fn analyze(
         total,
     );
     Ok((graph, stats))
+}
+
+/// Texts of compose files, Dockerfiles and nginx configs (each capped at 512 KiB).
+fn read_infra(root: &Path, files: &[ark_scan::ScannedFile]) -> Vec<(String, String)> {
+    use ark_patterns::deployment::{is_compose, is_dockerfile, is_proxy_conf};
+    files
+        .iter()
+        .filter(|f| f.size < 512 * 1024)
+        .filter(|f| is_compose(&f.path) || is_dockerfile(&f.path) || is_proxy_conf(&f.path))
+        .filter_map(|f| {
+            fs::read_to_string(root.join(&f.path))
+                .ok()
+                .map(|t| (f.path.clone(), t))
+        })
+        .collect()
 }
 
 /// Open Knowledge Format bundles: markdown files whose YAML frontmatter has a `type:`

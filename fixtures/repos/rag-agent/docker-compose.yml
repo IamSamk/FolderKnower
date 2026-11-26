@@ -1,0 +1,69 @@
+# One `docker compose up` runs the whole system: UI, proxy, API + agent, model, vectors, cache.
+services:
+  web:
+    build: ./web
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://proxy:80/api
+    depends_on:
+      - proxy
+
+  proxy:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+
+  api:
+    build: .
+    command: uvicorn app.api:app --host 0.0.0.0 --port 8000
+    expose:
+      - "8000"
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      CHROMA_URL: http://chroma:8000
+      REDIS_URL: redis://cache:6379/0
+      MAX_TURNS: ${MAX_TURNS:-4}
+    depends_on:
+      - ollama
+      - chroma
+      - cache
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2"
+
+  ollama:
+    image: ollama/ollama:0.12.3
+    volumes:
+      - models:/root/.ollama
+    environment:
+      OLLAMA_KEEP_ALIVE: 10m
+      OLLAMA_NUM_PARALLEL: "4"
+    deploy:
+      resources:
+        limits:
+          memory: 12g
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  chroma:
+    image: chromadb/chroma:1.1.0
+    volumes:
+      - index:/data
+    mem_limit: 1g
+
+  cache:
+    image: redis:7.4-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    mem_limit: 300m
+
+volumes:
+  models:
+  index:

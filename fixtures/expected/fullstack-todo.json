@@ -2358,7 +2358,7 @@
   ],
   "questions": [],
   "insights": {
-    "rulesetVersion": "patterns 0.1.0 / catalog 0.1.0",
+    "rulesetVersion": "patterns 0.1.0 / catalog 0.1.0 / services 0.1.0",
     "dataStructures": [],
     "libraries": [
       {
@@ -2397,5 +2397,136 @@
       }
     ],
     "memoryTechniques": []
-  }
+  },
+  "exampleRuns": [
+    {
+      "id": "run:ui:web/src/components/LoginForm.tsx:14:4",
+      "title": "<form> → POST /auth/login",
+      "start": "ui:web/src/components/LoginForm.tsx:14:4",
+      "sampleInput": "Email",
+      "hops": [
+        {
+          "node": "ui:web/src/components/LoginForm.tsx:15:6",
+          "kind": "ui",
+          "label": "type “Email”",
+          "via": "start",
+          "proof": [
+            "web/src/components/LoginForm.tsx:15"
+          ],
+          "confidence": 1.0,
+          "explain": "The user types a question into the input on this screen."
+        },
+        {
+          "node": "ui:web/src/components/LoginForm.tsx:14:4",
+          "kind": "ui",
+          "label": "<form>",
+          "via": "handler",
+          "proof": [
+            "web/src/components/LoginForm.tsx:14"
+          ],
+          "confidence": 1.0,
+          "explain": "The user submits this form."
+        },
+        {
+          "node": "fn:web/src/components/LoginForm.tsx#submit",
+          "kind": "function",
+          "label": "submit()",
+          "via": "handler",
+          "proof": [
+            "web/src/components/LoginForm.tsx:8"
+          ],
+          "confidence": 1.0,
+          "explain": "Its onSubmit handler runs in the browser."
+        },
+        {
+          "node": "fn:web/src/lib/api.ts#login",
+          "kind": "function",
+          "label": "login()",
+          "via": "call",
+          "proof": [
+            "web/src/lib/api.ts:24"
+          ],
+          "confidence": 0.85,
+          "explain": "A resolved call on the way to the network request."
+        },
+        {
+          "node": "route:POST /auth/login#api/app/routers/auth.py",
+          "kind": "route",
+          "label": "POST /auth/login",
+          "via": "http",
+          "proof": [
+            "xedge:fn:web/src/lib/api.ts#login->fn:api/app/routers/auth.py#login",
+            "api/app/routers/auth.py:11"
+          ],
+          "confidence": 1.0,
+          "explain": "The browser sends http.POST :param/api/auth/login; the backend route POST /auth/login receives it and runs login()."
+        },
+        {
+          "node": "file:api/app/core/security.py",
+          "kind": "function",
+          "label": "create_access_token(), verify_password() in api/app/core/security.py",
+          "via": "call",
+          "proof": [
+            "api/app/core/security.py:19",
+            "api/app/core/security.py:15"
+          ],
+          "confidence": 0.85,
+          "explain": "login() calls create_access_token(), verify_password() in api/app/core/security.py."
+        }
+      ]
+    },
+    {
+      "id": "run:ui:web/src/components/TodoList.tsx:35:6",
+      "title": "Done → PATCH /todos/:param/complete",
+      "start": "ui:web/src/components/TodoList.tsx:35:6",
+      "sampleInput": "What needs doing?",
+      "hops": [
+        {
+          "node": "ui:web/src/components/TodoList.tsx:20:6",
+          "kind": "ui",
+          "label": "type “What needs doing?”",
+          "via": "start",
+          "proof": [
+            "web/src/components/TodoList.tsx:20"
+          ],
+          "confidence": 1.0,
+          "explain": "The user types a question into the input on this screen."
+        },
+        {
+          "node": "ui:web/src/components/TodoList.tsx:35:6",
+          "kind": "ui",
+          "label": "<button> “Done”",
+          "via": "handler",
+          "proof": [
+            "web/src/components/TodoList.tsx:35"
+          ],
+          "confidence": 1.0,
+          "explain": "The user clicks this button."
+        },
+        {
+          "node": "fn:web/src/lib/api.ts#completeTodo",
+          "kind": "function",
+          "label": "completeTodo()",
+          "via": "handler",
+          "proof": [
+            "web/src/lib/api.ts:19"
+          ],
+          "confidence": 1.0,
+          "explain": "Its onClick handler runs in the browser."
+        },
+        {
+          "node": "route:PATCH /todos/:param/complete#api/app/routers/todos.py",
+          "kind": "route",
+          "label": "PATCH /todos/:param/complete",
+          "via": "http",
+          "proof": [
+            "xedge:fn:web/src/lib/api.ts#completeTodo->fn:api/app/routers/todos.py#complete_todo",
+            "api/app/routers/todos.py:26"
+          ],
+          "confidence": 1.0,
+          "explain": "The browser sends http.PATCH :param/api/todos/:param/complete; the backend route PATCH /todos/:param/complete receives it and runs complete_todo()."
+        }
+      ]
+    }
+  ]
 }
