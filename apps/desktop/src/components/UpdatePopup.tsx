@@ -16,6 +16,8 @@ import {
 // Checked at launch; the later tries cover a network that was not up yet.
 const START_CHECKS_MS = [0, 8_000, 30_000];
 const RECHECK_MS = 6 * 60 * 60 * 1000;
+// Coming back to the window after a while checks again.
+const FOCUS_RECHECK_MS = 30 * 60_000;
 const SKIP_KEY = "ak.update.skip";
 const CHECK_EVENT = "ak:check-update";
 
@@ -73,6 +75,7 @@ export function UpdatePopup() {
 
   /** True once the feed answered, so the start-up retries can stop. */
   const lastError = useRef<string | null>(null);
+  const lastOk = useRef(0);
   const check = useCallback(async (manual: boolean): Promise<boolean> => {
     try {
       const info = await checkForUpdate();
@@ -83,6 +86,7 @@ export function UpdatePopup() {
         setToast("You have the latest version.");
       }
       lastError.current = null;
+      lastOk.current = Date.now();
       return true;
     } catch (e) {
       // offline or feed unreachable: the app keeps working, we try again later
@@ -107,8 +111,13 @@ export function UpdatePopup() {
     );
     const every = setInterval(() => check(false), RECHECK_MS);
     const manual = () => check(true);
+    const onFocus = () => {
+      if (Date.now() - lastOk.current > FOCUS_RECHECK_MS) check(false);
+    };
     window.addEventListener(CHECK_EVENT, manual);
+    window.addEventListener("focus", onFocus);
     return () => {
+      window.removeEventListener("focus", onFocus);
       for (const t of first) clearTimeout(t);
       clearInterval(every);
       window.removeEventListener(CHECK_EVENT, manual);
