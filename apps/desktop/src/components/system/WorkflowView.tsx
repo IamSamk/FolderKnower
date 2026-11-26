@@ -71,6 +71,16 @@ function firstSentence(t: string): string {
   return out.length > 140 ? `${out.slice(0, 137)}...` : out;
 }
 
+const LEGEND: [WNode["kind"], string][] = [
+  ["step", "step in the code"],
+  ["store", "data store or cache"],
+  ["model", "AI model"],
+  ["decision", "choice or branch"],
+  ["join", "merge of parallel paths"],
+  ["job", "background job"],
+  ["limit", "limit or budget"],
+];
+
 export function WorkflowView({ wf, depth }: { wf: Workflow; depth: Depth }) {
   const ix = useStore((s) => s.ix);
   const reveal = useStore((s) => s.reveal);
@@ -167,6 +177,17 @@ export function WorkflowView({ wf, depth }: { wf: Workflow; depth: Depth }) {
           ))}
         </section>
       ))}
+      <div className="ak-wf-legend">
+        <b>Key</b>
+        {LEGEND.map(([k, t]) => (
+          <span key={k}>
+            <i className={`ak-wf-node ${KIND_CLASS[k]}`} /> {t}
+          </span>
+        ))}
+        <span>
+          solid arrow: runs next · dashed: optional or async · every box links to its code
+        </span>
+      </div>
       <svg className="ak-wf-arrows" width={size.w} height={size.h} aria-hidden="true">
         <defs>
           <marker

@@ -2,6 +2,7 @@
 //! catalogue and the optional local-model layer to the UI.
 
 mod ai;
+mod run;
 mod slm;
 mod telemetry;
 
@@ -193,6 +194,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(ai::AiState::default())
         .manage(telemetry::TelemetryState::default())
+        .manage(run::RunState::default())
         .invoke_handler(tauri::generate_handler![
             analyze,
             read_source,
@@ -215,6 +217,12 @@ pub fn run() {
             telemetry::telemetry_process,
             telemetry::telemetry_find,
             telemetry::telemetry_runtimes,
+            run::run_detect,
+            run::run_start,
+            run::run_status,
+            run::run_stop,
+            run::run_ports,
+            run::run_containers,
         ])
         .build(tauri::generate_context!())
         .expect("error while building Architekton");

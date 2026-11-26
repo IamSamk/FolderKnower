@@ -1,7 +1,7 @@
 {
   "name": "@architekton/desktop",
   "private": true,
-  "version": "0.9.0",
+  "version": "0.10.0",
   "type": "module",
   "description": "Architekton desktop app (Tauri 2 + React).",
   "scripts": {

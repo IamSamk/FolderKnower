@@ -25,6 +25,7 @@ ark-telemetry = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 ureq = { version = "3.5.1", default-features = false, features = ["json", "rustls"] }
+listeners = "0.6"
 sha2 = "0.11.1"
 zip = { version = "9.8.1", default-features = false, features = ["deflate"] }
 flate2 = "1.1.11"

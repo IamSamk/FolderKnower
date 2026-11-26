@@ -2,6 +2,16 @@
 
 Notes for each version are shown in the in-app update pop-up and on the website's releases page.
 
+## [0.10.0] - 2026-11-26
+
+### Run your project
+- The Live tab can now launch your project: it finds start commands (docker compose, npm/pnpm/yarn scripts, cargo run, python), shows the exact command and folder, and runs it only after you confirm. It tails the log, measures the whole process tree and each docker container live, and has a Stop button.
+- Attach by port: lists what is listening on this computer and measures the process that owns the port.
+- Everything in this panel is measured on this computer, not estimated. The browser demo stays simulated and says so.
+
+### Diagrams
+- The Flow map has a key explaining box kinds and arrows. An architecture diagram checklist (C4, ISO 42010, UML, cloud styles) is in docs/.
+
 ## [0.9.0] - 2026-11-26
 
 ### Workflow diagrams

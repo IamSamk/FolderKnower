@@ -19,11 +19,20 @@ import {
   topProcesses,
 } from "../../lib/telemetry";
 import { KvCalculator } from "../insights/KvCache";
+import { RunPanel } from "./RunPanel";
 
 const HISTORY = 40;
 const INTERESTING = /python|node|ollama|llama|vllm|java|deno|bun|cargo|go$|uvicorn|gunicorn/i;
 
-function Spark({ v, max, color = "var(--accent)" }: { v: number[]; max?: number; color?: string }) {
+export function Spark({
+  v,
+  max,
+  color = "var(--accent)",
+}: {
+  v: number[];
+  max?: number;
+  color?: string;
+}) {
   if (v.length < 2) return <svg className="ak-spark" aria-hidden />;
   // Without a fixed scale, stretch the sample's own range so small changes show.
   const lo = max == null ? Math.min(...v) : 0;
@@ -405,6 +414,7 @@ export function LiveView() {
       )}
       <div className="ak-live-grid">
         <div className="space-y-4">
+          <RunPanel onInspect={setPid} />
           {sys && <SystemCard s={sys} memHist={memHist.current} />}
           <section className="ak-card">
             <div className="ak-live-title">
