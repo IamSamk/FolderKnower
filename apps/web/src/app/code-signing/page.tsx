@@ -13,7 +13,7 @@ const rows: [string, string][] = [
     "Windows installers",
     "Authenticode via SignPath Foundation (once the OSS application is approved)",
   ],
-  ["Linux AppImage", "Embedded GPG signature (key fingerprint below once published)"],
+  ["Linux AppImage", "Embedded GPG signature (public key and fingerprint below)"],
   [
     "Every file",
     "SHA256SUMS.txt (GPG-signed when the key is configured) + Sigstore build provenance",
@@ -57,6 +57,22 @@ export default function CodeSigningPage() {
               </tbody>
             </table>
           </div>
+
+          <h2 className="mt-10 text-xl font-extrabold text-[var(--ink)]">Linux signing key</h2>
+          <p className="mt-2">
+            The Linux AppImage and <code>SHA256SUMS.txt</code> are signed with this GPG key. Import
+            it, then check a download with{" "}
+            <code>gpg --verify SHA256SUMS.txt.asc SHA256SUMS.txt</code>.
+          </p>
+          <p className="mt-3 font-mono text-sm text-[var(--ink)]">
+            25D0 153E F05D 3609 0054 3DBF 0441 7AD3 82B1 0392
+          </p>
+          <p className="mt-2">
+            <a className="underline" href="/folderknower-release.asc">
+              Download the public key
+            </a>{" "}
+            (ed25519, expires 2028-11-25).
+          </p>
 
           <h2 className="mt-10 text-xl font-extrabold text-[var(--ink)]">How a release is made</h2>
           <p className="mt-2">
