@@ -2,6 +2,34 @@
 
 Notes for each version are shown in the in-app update pop-up and on the website's releases page.
 
+## [0.7.0] - 2026-11-26
+
+### Architekton explains itself
+- The main example on the welcome screen is now Architekton's own code: a Tauri desktop app whose React window calls 21 Rust commands. The other examples (web app, AI app, broken project) sit in a quiet row underneath.
+- The example is rebuilt from the repository at every release, and its sources open in the code view.
+
+### Desktop apps
+- Tauri `#[tauri::command]` functions and Electron `ipcMain.handle` channels are read as the app's native commands, and every `invoke("...")` / `ipcRenderer.invoke("...")` is linked from the window to the Rust or main-process code it runs.
+- A call to a command that does not exist is reported in Problems.
+- New project kind "Desktop app", with its own words in the System view: app window, native side, saved data, commands instead of routes.
+- Features for desktop apps come from command names: `ai_install`, `ai_status`, `ai_remove` become one "AI" feature; `check_update` and `install_update` become "Update".
+- Rust workspace crates resolve by their Cargo.toml name (`use ark_core::...`), so a Tauri app's crates land with its native side instead of in Shared.
+
+### Memory map for native code
+- GGUF model files kept on disk, model weights loaded by a local runtime process (RAM, or GPU memory when it offloads layers), the app data and cache folders, SQLite files (and in-memory SQLite), and state shared across commands.
+
+### Use models you already have
+- Each local AI part has "Use a file I have": point at a .gguf model or a llama-server program from LM Studio, Ollama, Hugging Face or your own llama.cpp build instead of downloading it.
+- "Look on this computer" searches the usual folders and PATH and lists what it finds.
+- Every file is checked first: it must be a GGUF model; the exact pinned model is confirmed by SHA-256 (Laya must be the exact file); embedding-only models are refused; llama-server must answer `--version`. A different chat model works for explanations and is labelled as not the tested one.
+- Your files are only read. "Stop using" forgets the link and never deletes the file. The setup screen shows where downloads are saved.
+
+### Fewer false alarms
+- Sample projects in `fixtures/`, `testdata/` and `__fixtures__/` folders are no longer mapped as part of the app.
+- Valid code the parser grammars miss (`export type * from`, a bare `&` in JSX text) is no longer reported as a syntax error.
+- Imports of CSS, JSON and other asset files that exist are no longer reported as missing.
+- Groups are named after their most specific folder (`ark-core`, not `crates`), and a large flat folder stays one group.
+
 ## [0.6.0] - 2026-11-26
 
 ### Depth toggle (System view)

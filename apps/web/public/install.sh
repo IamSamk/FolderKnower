@@ -35,7 +35,7 @@ esac
 # Get latest tag
 LATEST_TAG=$(curl -s "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 if [ -z "${LATEST_TAG}" ]; then
-  LATEST_TAG="v0.6.0"
+  LATEST_TAG="v0.7.0"
 fi
 
 URL="https://github.com/IamSamk/Architekton/releases/download/${LATEST_TAG}/architekton-cli-${LATEST_TAG}-${TARGET}.tar.gz"
