@@ -2,6 +2,17 @@
 
 Notes for each version are shown in the in-app update pop-up and on the website's releases page.
 
+## [Unreleased]
+
+### App
+- Update pop-up checks as soon as the app opens, retries if the network is not ready, and checks again when you return to the window.
+- Local AI settings show what the models need and compare it with this computer. Installed models get a "Change file" button.
+- "Explain" starts from a question about the selected item and its place in the code.
+
+### Detection
+- Vector search written as SQL (pgvector: `<=>`, HNSW indexes) and rank fusion (RRF) in code or config now appear in the AI pipeline next to the embedding model.
+- Postgres full-text search with a "BM25-style" comment is named Postgres full-text, not BM25.
+
 ## [0.13.0] - 2026-11-26
 
 ### New name: FolderKnower

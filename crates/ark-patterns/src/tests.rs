@@ -496,3 +496,24 @@ fn model_ids_and_fts_in_config_files() {
     }];
     assert!(crate::ai::analyze_texts(&[], &[], &only).ai.is_none());
 }
+
+#[test]
+fn recognizes_pgvector_sql_rrf_and_fts_with_bm25_comment() {
+    use crate::InfraFile;
+    let texts = [
+        InfraFile {
+            path: "corpus.yaml",
+            text: "embedding:\n  model: BAAI/bge-m3\n",
+        },
+        InfraFile {
+            path: "pg_store.py",
+            text: "# BM25-style idf weight\nq = \"SELECT ts_rank(tsv, plainto_tsquery('simple', %s))\"\nv = \"ORDER BY embedding <=> %s::vector\"\nrrf_k = 60\n",
+        },
+    ];
+    let ai = crate::ai::analyze_texts(&[], &[], &texts).ai.expect("ai");
+    let has = |r: ark_schema::AiRole, n: &str| ai.stages.iter().any(|s| s.role == r && s.name == n);
+    assert!(has(ark_schema::AiRole::VectorStore, "pgvector"));
+    assert!(has(ark_schema::AiRole::Fusion, "RRF"));
+    assert!(has(ark_schema::AiRole::KeywordIndex, "Postgres full-text"));
+    assert!(has(ark_schema::AiRole::Embedder, "BAAI/bge-m3"));
+}

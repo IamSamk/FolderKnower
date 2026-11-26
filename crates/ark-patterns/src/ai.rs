@@ -717,6 +717,14 @@ static KEYWORD_SQL: LazyLock<Regex> = LazyLock::new(|| {
         .expect("keyword regex")
 });
 
+static VECTOR_SQL: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)<=>|<->|<#>|\busing\s+(?:hnsw|ivfflat)\b|\bvector_(?:cosine|l2|ip)_ops\b|\bcreate\s+extension\b[^;\n]*\bvector\b|::vector\b|\bvector\s*\(\s*\d+\s*\)")
+        .expect("vector sql regex")
+});
+static FUSION_TEXT: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)\brrf(?:_[a-z]+)?\b|reciprocal[ _-]?rank").expect("fusion regex")
+});
+
 /// Model ids and SQL full-text calls that sit in config files, env files, compose
 /// commands and SQL strings, where no call is made that the parser could see.
 fn add_mentions(
@@ -727,6 +735,9 @@ fn add_mentions(
     let mut embed: BTreeMap<String, (u32, &str, u32)> = BTreeMap::new();
     let mut rerank: BTreeMap<String, (u32, &str, u32)> = BTreeMap::new();
     let mut keyword: Option<(bool, &str, u32)> = None;
+    let mut vector_sql: Option<(&str, u32)> = None;
+    let mut fts_sql = false;
+    let mut fusion: Option<(&str, u32)> = None;
     for t in texts {
         for (i, line) in t.text.lines().enumerate() {
             let ln = (i + 1) as u32;
@@ -745,14 +756,26 @@ fn add_mentions(
                     .or_insert((0, t.path, ln));
                 e.0 += 1;
             }
+            if vector_sql.is_none() && VECTOR_SQL.is_match(line) {
+                vector_sql = Some((t.path, ln));
+            }
+            if fusion.is_none() && FUSION_TEXT.is_match(line) {
+                fusion = Some((t.path, ln));
+            }
             if let Some(m) = KEYWORD_SQL.find(line) {
                 let bm = m.as_str().eq_ignore_ascii_case("bm25");
+                if !bm {
+                    fts_sql = true;
+                }
                 match &mut keyword {
                     Some((b, _, _)) => *b |= bm,
                     None => keyword = Some((bm, t.path, ln)),
                 }
             }
         }
+    }
+    fn embed_found(m: &BTreeMap<String, (u32, &str, u32)>) -> bool {
+        !m.is_empty()
     }
     let best = |m: &BTreeMap<String, (u32, &str, u32)>| {
         m.iter()
@@ -785,11 +808,37 @@ fn add_mentions(
             explain,
         );
     }
+    // Vector search written as SQL (pgvector), and rank fusion named in config or code.
+    if !stages.is_empty() || embed_found(&embed) {
+        if let Some((path, line)) = vector_sql {
+            put_mention(
+                stages,
+                frameworks,
+                (
+                    AiRole::VectorStore,
+                    "pgvector".to_owned(),
+                    "pgvector (Postgres)",
+                ),
+                (path, line),
+                role_explain(AiRole::VectorStore),
+            );
+        }
+        if let Some((path, line)) = fusion {
+            put_mention(
+                stages,
+                frameworks,
+                (AiRole::Fusion, "RRF".to_owned(), "reciprocal rank fusion"),
+                (path, line),
+                role_explain(AiRole::Fusion),
+            );
+        }
+    }
     // full-text SQL on its own is ordinary search; it only counts next to other AI stages
     if !stages.is_empty()
         && let Some((bm, path, line)) = keyword
     {
-        let (name, lib) = if bm {
+        // A comment saying "BM25-style" next to Postgres ts_rank is still Postgres full-text.
+        let (name, lib) = if bm && !fts_sql {
             ("BM25", "BM25")
         } else {
             ("Postgres full-text", "Postgres full-text")
