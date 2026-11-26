@@ -224,6 +224,9 @@
                   "calls": [],
                   "calledBy": []
                 }
+              ],
+              "packages": [
+                "react"
               ]
             }
           ]
@@ -439,6 +442,11 @@
                   "calls": [],
                   "calledBy": []
                 }
+              ],
+              "packages": [
+                "langchain_core",
+                "langchain_ollama",
+                "langgraph"
               ]
             },
             {
@@ -542,6 +550,10 @@
                     "fn:app/agent.py#search_book"
                   ]
                 }
+              ],
+              "packages": [
+                "langchain",
+                "sentence_transformers"
               ]
             }
           ]
@@ -798,6 +810,10 @@
                   ],
                   "calledBy": []
                 }
+              ],
+              "packages": [
+                "fastapi",
+                "pydantic"
               ]
             },
             {
@@ -901,6 +917,12 @@
                     "fn:app/api.py#ingest"
                   ]
                 }
+              ],
+              "packages": [
+                "langchain_chroma",
+                "langchain_community",
+                "langchain_huggingface",
+                "langchain_text_splitters"
               ]
             }
           ]
@@ -1224,6 +1246,9 @@
                     "fn:app/api.py#ask"
                   ]
                 }
+              ],
+              "packages": [
+                "redis"
               ]
             }
           ]
@@ -1747,6 +1772,9 @@
                   "calls": [],
                   "calledBy": []
                 }
+              ],
+              "packages": [
+                "torch"
               ]
             }
           ]
@@ -2349,6 +2377,9 @@
                   "calls": [],
                   "calledBy": []
                 }
+              ],
+              "packages": [
+                "vllm"
               ]
             }
           ]
@@ -4428,5 +4459,20 @@
       "explain": "Saved in the browser per site, up to about 5 MB; it stays after the tab closes until the user clears site data.",
       "source": "file:web/src/App.tsx"
     }
-  ]
+  ],
+  "health": {
+    "filesChecked": 9,
+    "filesWithErrors": 0,
+    "issues": [
+      {
+        "id": "health:0",
+        "kind": "noGpu",
+        "severity": "warning",
+        "fileId": "file:app/serve.py",
+        "line": 4,
+        "message": "Model weights (Qwen/Qwen3-4B) goes to GPU memory, but the `api` container reserves no GPU",
+        "fix": "Add a GPU reservation to `api` (deploy.resources.reservations.devices with capabilities: [gpu]) or move this code into a GPU service."
+      }
+    ]
+  }
 }

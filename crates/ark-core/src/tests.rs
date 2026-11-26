@@ -281,11 +281,17 @@ fn broken_code_is_reported_and_still_mapped() {
 }
 
 #[test]
-fn healthy_fixtures_have_no_issues() {
-    for name in ["fullstack-todo", "rag-agent"] {
-        let g = analyze_fixture(name);
-        assert!(g.health.is_none(), "{name}: {:#?}", g.health);
-    }
+fn healthy_fixtures_have_no_false_alarms() {
+    let g = analyze_fixture("fullstack-todo");
+    assert!(g.health.is_none(), "{:#?}", g.health);
+    // rag-agent runs vLLM inside the api container, which reserves no GPU: that one
+    // warning is real, and it is the only one.
+    let g = analyze_fixture("rag-agent");
+    let h = g.health.expect("one warning");
+    assert_eq!(h.issues.len(), 1, "{:#?}", h.issues);
+    let i = &h.issues[0];
+    assert_eq!(i.kind, ark_schema::HealthKind::NoGpu);
+    assert_eq!((i.file_id.as_str(), i.line), ("file:app/serve.py", 4));
 }
 
 #[test]

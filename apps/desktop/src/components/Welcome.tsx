@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   checkIsTauri,
   DEMO_AI_ROOT,
+  DEMO_BROKEN_ROOT,
   DEMO_ROOT,
   isTauri,
   onFolderDrop,
@@ -161,6 +162,9 @@ export function Welcome() {
           )}
           <button type="button" className="ak-btn" onClick={() => void start(DEMO_AI_ROOT)}>
             Try the AI demo: RAG + agent + tiny GPT
+          </button>
+          <button type="button" className="ak-btn" onClick={() => void start(DEMO_BROKEN_ROOT)}>
+            Try a broken project
           </button>
         </div>
       </div>

@@ -23,14 +23,22 @@ import {
   type Box,
   buildSystem,
   CARD_W,
+  type Depth,
   HEAD_H,
   hopAnchor,
   hopService,
   LANE_NAME,
+  LIFE_NAME,
+  linkLabel,
   linkPath,
   linkPorts,
   PAD,
+  PLACE_COLOR,
+  PLACE_NAME,
+  PLAIN_NAME,
+  PLAIN_WHAT,
   PREVIEW_H,
+  plainHeadline,
   proofTarget,
   ROW_H,
   SECTION_H,
@@ -38,6 +46,24 @@ import {
   type SystemModel,
 } from "../../lib/system";
 import { useStore } from "../../store";
+import { MemoryMap } from "./MemoryMap";
+
+function readPref<T extends string>(key: string, ok: readonly T[], fallback: T): T {
+  try {
+    const v = localStorage.getItem(key) as T | null;
+    return v && ok.includes(v) ? v : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writePref(key: string, v: string) {
+  try {
+    localStorage.setItem(key, v);
+  } catch {
+    // private window or blocked storage: the choice just is not remembered
+  }
+}
 
 const HOP_MS = 1900;
 const VIA_TEXT: Record<RunHop["via"], string> = {
@@ -144,53 +170,64 @@ function BoxCard({
   activeRow,
   run,
   step,
+  depth,
   onOpen,
+  onFeature,
 }: {
   b: Box;
   active: boolean;
   activeRow?: string;
   run?: ExampleRun;
   step: number;
+  depth: Depth;
   onOpen: () => void;
+  onFeature: (id: string) => void;
 }) {
   const reveal = useStore((s) => s.reveal);
   const s = b.svc;
   return (
     <motion.div
-      className={`ak-sys-box ${active ? "on" : ""}`}
+      className={`ak-sys-box ${active ? "on" : ""} ${b.dim ? "dim" : ""}`}
       style={{ left: b.x, top: b.y, width: b.w, height: b.h, ["--c" as string]: b.color }}
-      animate={{ scale: active ? 1.025 : 1 }}
+      animate={{ scale: active ? 1.025 : 1, opacity: b.dim ? 0.28 : 1 }}
       transition={{ type: "spring", stiffness: 300, damping: 26 }}
     >
-      <button type="button" className="ak-sys-head" onClick={onOpen} style={{ height: HEAD_H }}>
-        <div className="flex items-baseline gap-2">
-          <b className="text-[15.5px]">{s.name}</b>
-          <span className="ak-sys-kind">{SVC_LABEL[s.kind]}</span>
-        </div>
-        <div className="ak-mono ak-muted mt-0.5 truncate text-[11.5px]">
-          {s.image ?? (b.synthetic ? "code tier" : "built here")}
-          {s.ports.length > 0 && ` · :${s.ports.map((p) => p.split(":").pop()).join(", :")}`}
-        </div>
-        <div className="mt-1.5 flex flex-wrap gap-1">
-          {s.memoryLimit ? (
-            <span className="ak-chip">
-              <MemoryStick size={11} /> {fmtBytes(s.memoryLimit)}
-            </span>
-          ) : !b.synthetic ? (
-            <span className="ak-chip ak-chip-dim">no memory limit</span>
-          ) : null}
-          {s.gpu && (
-            <span className="ak-chip ak-chip-gpu">
-              <Cpu size={11} /> GPU
-            </span>
-          )}
-          {s.codeFiles > 0 && (
-            <span className="ak-chip">
-              {s.codeFiles} file{s.codeFiles > 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
-      </button>
+      {depth === "simple" ? (
+        <button type="button" className="ak-sys-head" onClick={onOpen} style={{ height: HEAD_H }}>
+          <b className="text-[16px]">{PLAIN_NAME[s.kind]}</b>
+          <div className="ak-sys-plain">{PLAIN_WHAT[s.kind]}</div>
+        </button>
+      ) : (
+        <button type="button" className="ak-sys-head" onClick={onOpen} style={{ height: HEAD_H }}>
+          <div className="flex items-baseline gap-2">
+            <b className="text-[15.5px]">{s.name}</b>
+            <span className="ak-sys-kind">{SVC_LABEL[s.kind]}</span>
+          </div>
+          <div className="ak-mono ak-muted mt-0.5 truncate text-[11.5px]">
+            {s.image ?? (b.synthetic ? "code tier" : "built here")}
+            {s.ports.length > 0 && ` · :${s.ports.map((p) => p.split(":").pop()).join(", :")}`}
+          </div>
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            {s.memoryLimit ? (
+              <span className="ak-chip">
+                <MemoryStick size={11} /> {fmtBytes(s.memoryLimit)}
+              </span>
+            ) : !b.synthetic ? (
+              <span className="ak-chip ak-chip-dim">no memory limit</span>
+            ) : null}
+            {s.gpu && (
+              <span className="ak-chip ak-chip-gpu">
+                <Cpu size={11} /> GPU
+              </span>
+            )}
+            {s.codeFiles > 0 && (
+              <span className="ak-chip">
+                {s.codeFiles} file{s.codeFiles > 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+        </button>
+      )}
       {b.preview && run && (
         <div style={{ height: PREVIEW_H }} className="ak-sys-preview-wrap">
           <Preview run={run} step={step} />
@@ -220,7 +257,7 @@ function BoxCard({
       ))}
       {b.pipeline.length > 0 && (
         <div className="ak-sys-section" style={{ height: SECTION_H }}>
-          {run ? "AI steps for this request" : "AI steps per request"}
+          {run ? "AI steps for this request" : b.dim ? "AI steps" : "AI steps here"}
         </div>
       )}
       {b.pipeline.map((r, i) => (
@@ -233,6 +270,55 @@ function BoxCard({
           <span className="truncate">{r.text}</span>
         </div>
       ))}
+      {depth === "simple" && b.features.length > 0 && (
+        <>
+          <div className="ak-sys-section" style={{ height: SECTION_H }}>
+            helps with
+          </div>
+          <div className="ak-sys-chips">
+            {b.features.map((f) => (
+              <button key={f.id} type="button" className="ak-chip" onClick={() => onFeature(f.id)}>
+                {f.name}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      {depth === "deep" && b.stack.length > 0 && (
+        <>
+          <div className="ak-sys-section" style={{ height: SECTION_H }}>
+            tech stack
+          </div>
+          <div className="ak-sys-chips">
+            {b.stack.map((p) => (
+              <span key={p} className="ak-chip ak-mono">
+                {p}
+              </span>
+            ))}
+          </div>
+        </>
+      )}
+      {depth === "deep" && b.places.length > 0 && (
+        <>
+          <div className="ak-sys-section" style={{ height: SECTION_H }}>
+            data kept here
+          </div>
+          {b.places.map((p) => (
+            <div
+              key={p.id}
+              className="ak-sys-row"
+              style={{ height: ROW_H }}
+              title={`${p.explain}${p.bound ? ` (${p.bound})` : ""}`}
+            >
+              <span className="ak-sys-badge" style={{ ["--b" as string]: PLACE_COLOR[p.place] }}>
+                {PLACE_NAME[p.place]}
+              </span>
+              <span className="truncate">{p.what}</span>
+              <span className="ak-muted ml-auto shrink-0 text-[11px]">{LIFE_NAME[p.lifetime]}</span>
+            </div>
+          ))}
+        </>
+      )}
     </motion.div>
   );
 }
@@ -375,17 +461,43 @@ function ServicePanel({ b, onClose }: { b: Box; onClose: () => void }) {
   );
 }
 
+const DEPTHS = ["simple", "standard", "deep"] as const;
+const DEPTH_HINT: Record<Depth, string> = {
+  simple: "Plain words: what each part is for, no code",
+  standard: "Containers, the code inside them and the AI steps",
+  deep: "Every file, the packages each part uses and the data it keeps",
+};
+const MAPS = ["services", "memory"] as const;
+type MapKind = (typeof MAPS)[number];
+
 export function SystemView() {
   const ix = useStore((s) => s.ix);
   const reveal = useStore((s) => s.reveal);
-  const runs = ix?.g.exampleRuns ?? [];
+  const features = ix?.g.features ?? [];
+  const [depth, setDepthRaw] = useState<Depth>(() => readPref("ak.sys.depth", DEPTHS, "standard"));
+  const [map, setMapRaw] = useState<MapKind>(() => readPref("ak.sys.map", MAPS, "services"));
+  const [featureId, setFeatureId] = useState<string>("");
+  const feature = features.find((f) => f.id === featureId);
+  const setDepth = (d: Depth) => {
+    setDepthRaw(d);
+    writePref("ak.sys.depth", d);
+  };
+  const setMap = (v: MapKind) => {
+    setMapRaw(v);
+    writePref("ak.sys.map", v);
+  };
+  const allRuns = ix?.g.exampleRuns ?? [];
+  const runs = feature ? allRuns.filter((r) => feature.ui.includes(r.start)) : allRuns;
   const systemRun = useStore((s) => s.systemRun);
   const [runId, setRunId] = useState(systemRun ?? runs[0]?.id);
-  const run = runs.find((r) => r.id === runId);
+  const run = runs.find((r) => r.id === runId) ?? (feature ? runs[0] : undefined);
   const [step, setStep] = useState(-1);
   const [playing, setPlaying] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
-  const m = useMemo(() => (ix ? buildSystem(ix, run) : null), [ix, run]);
+  const m = useMemo(
+    () => (ix ? buildSystem(ix, run, { depth, feature }) : null),
+    [ix, run, depth, feature],
+  );
   const vp = useRef<HTMLDivElement>(null);
   const size = useSize(vp);
   const hop = run && step >= 0 ? run.hops[step] : undefined;
@@ -405,6 +517,8 @@ export function SystemView() {
   useEffect(() => {
     if (!systemRun) return;
     setRunId(systemRun);
+    setFeatureId("");
+    setMapRaw("services");
     setStep(-1);
     setPlaying(true);
     useStore.setState({ systemRun: null });
@@ -459,7 +573,9 @@ export function SystemView() {
     <div className="ak-sys">
       <div className="ak-sys-top">
         <div className="min-w-0">
-          <div className="ak-sys-headline">{ix.g.summary.headline}</div>
+          <div className="ak-sys-headline">
+            {depth === "simple" ? plainHeadline(ix, m.boxes.length) : ix.g.summary.headline}
+          </div>
           {m.synthetic && (
             <div className="ak-muted text-[12px]">
               No docker-compose file found: boxes are code tiers. Add a compose file to see real
@@ -467,10 +583,59 @@ export function SystemView() {
             </div>
           )}
         </div>
-        <MemorySplit m={m} />
+        {depth !== "simple" && <MemorySplit m={m} />}
       </div>
       <div className="ak-sys-controls">
-        {runs.length > 1 && (
+        <div className="ak-seg" role="radiogroup" aria-label="Diagram">
+          {MAPS.map((k) => (
+            <button
+              key={k}
+              type="button"
+              role="radio"
+              aria-checked={map === k}
+              className={map === k ? "on" : ""}
+              onClick={() => setMap(k)}
+            >
+              {k === "services" ? "System" : "Memory"}
+            </button>
+          ))}
+        </div>
+        <div className="ak-seg" role="radiogroup" aria-label="Detail">
+          {DEPTHS.map((d) => (
+            <button
+              key={d}
+              type="button"
+              role="radio"
+              aria-checked={depth === d}
+              className={depth === d ? "on" : ""}
+              onClick={() => setDepth(d)}
+              title={DEPTH_HINT[d]}
+            >
+              {d[0].toUpperCase() + d.slice(1)}
+            </button>
+          ))}
+        </div>
+        {features.length > 1 && (
+          <select
+            className="ak-input"
+            value={featureId}
+            aria-label="Feature"
+            onChange={(e) => {
+              setFeatureId(e.target.value);
+              setStep(-1);
+              setPlaying(false);
+            }}
+          >
+            <option value="">All features</option>
+            {features.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name}
+              </option>
+            ))}
+          </select>
+        )}
+        <span className="ak-sys-sep" />
+        {map === "services" && runs.length > 1 && (
           <select
             className="ak-input"
             value={runId}
@@ -487,7 +652,7 @@ export function SystemView() {
             ))}
           </select>
         )}
-        {run ? (
+        {map === "memory" ? null : run ? (
           <>
             <button
               type="button"
@@ -527,140 +692,167 @@ export function SystemView() {
           </>
         ) : (
           <span className="ak-muted text-[12px]">
-            No UI element was traced to a backend route, so there is no example run yet.
+            {feature
+              ? "No screen of this feature was traced to a route, so it has no example run."
+              : "No UI element was traced to a backend route, so there is no example run yet."}
           </span>
         )}
       </div>
-      <div className="ak-sys-vp" ref={vp}>
-        <motion.div
-          className="ak-sys-canvas"
-          style={{ width: m.width, height: m.height, originX: 0, originY: 0 }}
-          animate={{ x: tx, y: ty, scale: zoom }}
-          transition={{ type: "spring", stiffness: 70, damping: 20, mass: 0.9 }}
-        >
-          {lanes.map((l) => {
-            const first = m.boxes.find((b) => b.lane === l);
-            return (
-              <div
-                key={l}
-                className="ak-sys-lane"
-                style={{ left: first?.x ?? 0, top: PAD - 6, width: CARD_W[l] }}
-              >
-                {LANE_NAME[l]}
-              </div>
-            );
-          })}
-          <svg className="ak-sys-links" width={m.width} height={m.height} aria-hidden="true">
-            <defs>
-              <marker
-                id="sysarrow"
-                viewBox="0 0 10 10"
-                refX="9"
-                refY="5"
-                markerWidth="7"
-                markerHeight="7"
-                orient="auto-start-reverse"
-              >
-                <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
-              </marker>
-            </defs>
-            {m.links.map((l) => {
-              const a = m.byId.get(l.from) as Box;
-              const b = m.byId.get(l.to) as Box;
-              const on =
-                !!activeSvc &&
-                !!prevSvc &&
-                prevSvc !== activeSvc &&
-                ((prevSvc === l.from && activeSvc === l.to) ||
-                  (prevSvc === l.to && activeSvc === l.from));
+      {feature && (
+        <div className="ak-sys-feature">
+          <b>{feature.name}</b>
+          <span className="ak-muted">{feature.explain}</span>
+          {depth !== "simple" &&
+            feature.stack.slice(0, 6).map((p) => (
+              <span key={p} className="ak-chip ak-mono">
+                {p}
+              </span>
+            ))}
+          <button type="button" className="ak-link-btn ml-auto" onClick={() => setFeatureId("")}>
+            show everything
+          </button>
+        </div>
+      )}
+      {map === "memory" ? (
+        <MemoryMap feature={feature} depth={depth} />
+      ) : (
+        <div className="ak-sys-vp" ref={vp}>
+          <motion.div
+            className="ak-sys-canvas"
+            style={{ width: m.width, height: m.height, originX: 0, originY: 0 }}
+            animate={{ x: tx, y: ty, scale: zoom }}
+            transition={{ type: "spring", stiffness: 70, damping: 20, mass: 0.9 }}
+          >
+            {lanes.map((l) => {
+              const first = m.boxes.find((b) => b.lane === l);
               return (
-                <g key={`${l.from}-${l.to}`} className={on ? "on" : ""}>
-                  <path
-                    id={`sl-${l.from}-${l.to}`}
-                    d={linkPath(a, b, ports.get(l))}
-                    markerEnd="url(#sysarrow)"
-                  />
-                  <text dy={-5}>
-                    <textPath href={`#sl-${l.from}-${l.to}`} startOffset="50%" textAnchor="middle">
-                      {l.via === "proxy" ? "proxy_pass" : l.detail.split(" -> ")[0]}
-                    </textPath>
-                  </text>
-                </g>
+                <div
+                  key={l}
+                  className="ak-sys-lane"
+                  style={{ left: first?.x ?? 0, top: PAD - 6, width: CARD_W[l] }}
+                >
+                  {LANE_NAME[l]}
+                </div>
               );
             })}
-          </svg>
-          {m.boxes.map((b) => (
-            <BoxCard
-              key={b.svc.id}
-              b={b}
-              active={activeSvc === b.svc.id}
-              activeRow={activeSvc === b.svc.id ? activeRow : undefined}
-              run={run}
-              step={step}
-              onOpen={() => setOpen(b.svc.id)}
-            />
-          ))}
-          {anchor && (
-            <motion.div
-              className={`ak-sys-packet ${hop?.kind === "response" ? "back" : ""}`}
-              initial={false}
-              animate={{
-                x: anchor.x - 9,
-                y: anchor.y - 9,
-                scale: travelling ? [1, 1.6, 1] : 1,
-              }}
-              transition={{ duration: travelling ? 0.9 : 0.45, ease: [0.65, 0, 0.35, 1] }}
-            />
-          )}
-        </motion.div>
-        <AnimatePresence>
-          {hop && run && (
-            <motion.div
-              key={step}
-              className="ak-sys-narrate ak-card"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-            >
-              <div className="flex items-baseline gap-2">
-                <span className="ak-sys-stepno">
-                  {step + 1}/{run.hops.length}
-                </span>
-                <b className="truncate text-[14.5px]">{hop.label}</b>
-                <span className="ak-chip ml-auto shrink-0">{VIA_TEXT[hop.via]}</span>
-              </div>
-              <p className="mt-1 text-[13px] leading-relaxed">{hop.explain}</p>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                <span className="ak-muted text-[11px]">proof</span>
-                {hop.proof.map((p) => {
-                  const t = proofTarget(ix, p);
-                  return t ? (
-                    <button
-                      key={p}
-                      type="button"
-                      className="ak-ev ak-mono ak-ev-link"
-                      onClick={() => reveal(t)}
-                    >
-                      {p}
-                    </button>
-                  ) : (
-                    <span key={p} className="ak-ev ak-mono">
-                      {p}
-                    </span>
-                  );
-                })}
-                <span className="ak-sys-conf" title="How sure the analysis is about this hop">
-                  <i style={{ width: `${hop.confidence * 100}%` }} />
-                </span>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <AnimatePresence>
-          {opened && <ServicePanel b={opened} onClose={() => setOpen(null)} />}
-        </AnimatePresence>
-      </div>
+            <svg className="ak-sys-links" width={m.width} height={m.height} aria-hidden="true">
+              <defs>
+                <marker
+                  id="sysarrow"
+                  viewBox="0 0 10 10"
+                  refX="9"
+                  refY="5"
+                  markerWidth="7"
+                  markerHeight="7"
+                  orient="auto-start-reverse"
+                >
+                  <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
+                </marker>
+              </defs>
+              {m.links.map((l) => {
+                const a = m.byId.get(l.from) as Box;
+                const b = m.byId.get(l.to) as Box;
+                const on =
+                  !!activeSvc &&
+                  !!prevSvc &&
+                  prevSvc !== activeSvc &&
+                  ((prevSvc === l.from && activeSvc === l.to) ||
+                    (prevSvc === l.to && activeSvc === l.from));
+                return (
+                  <g key={`${l.from}-${l.to}`} className={on ? "on" : a.dim || b.dim ? "dim" : ""}>
+                    <path
+                      id={`sl-${l.from}-${l.to}`}
+                      d={linkPath(a, b, ports.get(l))}
+                      markerEnd="url(#sysarrow)"
+                    />
+                    <text dy={-5}>
+                      <textPath
+                        href={`#sl-${l.from}-${l.to}`}
+                        startOffset="50%"
+                        textAnchor="middle"
+                      >
+                        {linkLabel(l, m)}
+                      </textPath>
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+            {m.boxes.map((b) => (
+              <BoxCard
+                key={b.svc.id}
+                b={b}
+                active={activeSvc === b.svc.id}
+                activeRow={activeSvc === b.svc.id ? activeRow : undefined}
+                run={run}
+                step={step}
+                depth={depth}
+                onOpen={() => setOpen(b.svc.id)}
+                onFeature={(id) => setFeatureId(id)}
+              />
+            ))}
+            {anchor && (
+              <motion.div
+                className={`ak-sys-packet ${hop?.kind === "response" ? "back" : ""}`}
+                initial={false}
+                animate={{
+                  x: anchor.x - 9,
+                  y: anchor.y - 9,
+                  scale: travelling ? [1, 1.6, 1] : 1,
+                }}
+                transition={{ duration: travelling ? 0.9 : 0.45, ease: [0.65, 0, 0.35, 1] }}
+              />
+            )}
+          </motion.div>
+          <AnimatePresence>
+            {hop && run && (
+              <motion.div
+                key={step}
+                className="ak-sys-narrate ak-card"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <div className="flex items-baseline gap-2">
+                  <span className="ak-sys-stepno">
+                    {step + 1}/{run.hops.length}
+                  </span>
+                  <b className="truncate text-[14.5px]">{hop.label}</b>
+                  <span className="ak-chip ml-auto shrink-0">{VIA_TEXT[hop.via]}</span>
+                </div>
+                <p className="mt-1 text-[13px] leading-relaxed">{hop.explain}</p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                  <span className="ak-muted text-[11px]">proof</span>
+                  {hop.proof.map((p) => {
+                    const t = proofTarget(ix, p);
+                    return t ? (
+                      <button
+                        key={p}
+                        type="button"
+                        className="ak-ev ak-mono ak-ev-link"
+                        onClick={() => reveal(t)}
+                      >
+                        {p}
+                      </button>
+                    ) : (
+                      <span key={p} className="ak-ev ak-mono">
+                        {p}
+                      </span>
+                    );
+                  })}
+                  <span className="ak-sys-conf" title="How sure the analysis is about this hop">
+                    <i style={{ width: `${hop.confidence * 100}%` }} />
+                  </span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {opened && <ServicePanel b={opened} onClose={() => setOpen(null)} />}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }

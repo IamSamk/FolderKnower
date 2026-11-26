@@ -56,6 +56,9 @@ interface State {
   toolsOpen: boolean;
   toggleTools: () => void;
   closeTools: () => void;
+  healthOpen: boolean;
+  toggleHealth: () => void;
+  closeHealth: () => void;
   /** Example run the System view should play next. */
   systemRun: string | null;
   playRun: (runId: string) => void;
@@ -108,8 +111,11 @@ export const useStore = create<State>((set, get) => ({
     set((s) => ({ workflowOpen: true, workflowFn: fnId === undefined ? s.workflowFn : fnId })),
   closeWorkflow: () => set({ workflowOpen: false }),
   toolsOpen: false,
-  toggleTools: () => set((s) => ({ toolsOpen: !s.toolsOpen })),
+  toggleTools: () => set((s) => ({ toolsOpen: !s.toolsOpen, healthOpen: false })),
   closeTools: () => set({ toolsOpen: false }),
+  healthOpen: false,
+  toggleHealth: () => set((s) => ({ healthOpen: !s.healthOpen, toolsOpen: false })),
+  closeHealth: () => set({ healthOpen: false }),
   systemRun: null,
   playRun: (runId) => set({ systemRun: runId, view: "system" }),
   go(origin, dir, change) {

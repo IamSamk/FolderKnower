@@ -2,6 +2,29 @@
 
 Notes for each version are shown in the in-app update pop-up and on the website's releases page.
 
+## [0.6.0] - 2026-11-26
+
+### Depth toggle (System view)
+- Simple: plain words for non-technical readers. Each box says what it is for ("Short-term memory: remembers recent things so repeats are instant") and which features it helps with. No code, ports or images.
+- Standard: containers, the code inside them and the AI steps, as before.
+- Deep: every file in each container, the packages that code imports, and the data each container keeps (GPU memory, RAM, disk) with how long it lives.
+
+### Features
+- The project is split into features by route family (`/todos/*`, `/auth/*`, `/ask`, `/ingest`). Each feature lists its routes, screens, own and shared files, tables, containers, AI steps and tech stack.
+- Pick a feature to get its own diagram: everything else fades, code rows and AI steps narrow to that feature, and the example runs follow.
+- Indexing and asking stay apart: an `/ingest` route gets the loader, splitter and embedder; `/ask` gets the agent, retriever and reranker it reaches through its imports.
+
+### Memory map (new diagram next to System)
+- Columns for GPU memory, RAM, disk, the user's browser and outside providers. Every entry shows who holds it (which container or process), how long it lives (per request, per session, until restart, kept) and what bounds it (maxmemory and eviction policy, TTL, list trim, keep_alive, gpu_memory_utilization, container limit).
+- Covers model weights and KV cache (Ollama, vLLM, llama.cpp, transformers), vector indexes in RAM and their collections on volumes, BM25 indexes, embedding and reranker models, Redis history and caches, conversation memory, database tables, prompt caching at the provider, and localStorage / sessionStorage / IndexedDB in the browser.
+- Each line links to the code or compose line it rests on.
+
+### Broken code
+- New Problems button lists what stops the code from running, found without running it: syntax errors with the line, relative imports of files that do not exist, packages imported but missing from requirements/pyproject/package.json, frontend calls to routes the backend never declares, compose start commands that name a missing file, and GPU code in a container with no GPU reserved.
+- Analysis keeps going on broken files: functions before a syntax error still show up in the map, and broken files are marked in the System view.
+- `architekton check <repo>` prints the same list and exits 1 when an error is found, for CI.
+- New "Try a broken project" demo.
+
 ## [0.5.0] - 2026-11-26
 
 ### System (new first tab)

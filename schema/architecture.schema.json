@@ -1163,13 +1163,22 @@
       ]
     },
     "HealthKind": {
-      "type": "string",
-      "enum": [
-        "syntaxError",
-        "unresolvedImport",
-        "missingPackage",
-        "deadRoute",
-        "missingEntry"
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "syntaxError",
+            "unresolvedImport",
+            "missingPackage",
+            "deadRoute",
+            "missingEntry"
+          ]
+        },
+        {
+          "description": "GPU code (vLLM, CUDA tensors) inside a container that reserves no GPU.",
+          "type": "string",
+          "const": "noGpu"
+        }
       ]
     },
     "InferredRole": {
@@ -2054,6 +2063,13 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0
+        },
+        "packages": {
+          "description": "Third-party packages this file imports (standard library left out), sorted.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "path": {
           "type": "string"

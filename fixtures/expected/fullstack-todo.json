@@ -285,6 +285,10 @@
                     "fn:web/src/components/TodoList.tsx#TodoList"
                   ]
                 }
+              ],
+              "packages": [
+                "@tanstack/react-query",
+                "react"
               ]
             },
             {
@@ -666,6 +670,9 @@
                   ],
                   "calledBy": []
                 }
+              ],
+              "packages": [
+                "react"
               ]
             },
             {
@@ -792,6 +799,9 @@
                   ],
                   "calledBy": []
                 }
+              ],
+              "packages": [
+                "react"
               ]
             }
           ]
@@ -1055,6 +1065,11 @@
                   "calls": [],
                   "calledBy": []
                 }
+              ],
+              "packages": [
+                "fastapi",
+                "jose",
+                "passlib"
               ]
             }
           ]
@@ -1156,6 +1171,9 @@
                   "calls": [],
                   "calledBy": []
                 }
+              ],
+              "packages": [
+                "fastapi"
               ]
             },
             {
@@ -1281,6 +1299,9 @@
                   ],
                   "calledBy": []
                 }
+              ],
+              "packages": [
+                "fastapi"
               ]
             },
             {
@@ -1611,6 +1632,9 @@
                   "calls": [],
                   "calledBy": []
                 }
+              ],
+              "packages": [
+                "fastapi"
               ]
             },
             {
@@ -1622,7 +1646,10 @@
               "tierConfidence": 0.73,
               "role": "schemas",
               "imports": [],
-              "functions": []
+              "functions": [],
+              "packages": [
+                "pydantic"
+              ]
             }
           ]
         }
@@ -1712,6 +1739,9 @@
                   "calls": [],
                   "calledBy": []
                 }
+              ],
+              "packages": [
+                "sqlalchemy"
               ]
             },
             {
@@ -1729,7 +1759,10 @@
                   "confidence": 0.95
                 }
               ],
-              "functions": []
+              "functions": [],
+              "packages": [
+                "sqlalchemy"
+              ]
             }
           ]
         }
@@ -1819,6 +1852,9 @@
                     "fn:api/app/routers/todos.py#create_todo"
                   ]
                 }
+              ],
+              "packages": [
+                "celery"
               ]
             }
           ]

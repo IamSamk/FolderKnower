@@ -190,6 +190,8 @@ pub enum HealthKind {
     MissingPackage,
     DeadRoute,
     MissingEntry,
+    /// GPU code (vLLM, CUDA tensors) inside a container that reserves no GPU.
+    NoGpu,
 }
 
 #[derive(
@@ -530,6 +532,10 @@ pub struct SourceFileNode {
     pub role: Option<String>,
     pub imports: Vec<Edge>,
     pub functions: Vec<FunctionNode>,
+    /// Third-party packages this file imports (standard library left out), sorted.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<String>>", optional)]
+    pub packages: Vec<String>,
 }
 
 /// A file that is not application code but relates to it.

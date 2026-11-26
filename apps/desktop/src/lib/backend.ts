@@ -1,6 +1,7 @@
 // Bridge to the Rust side. In a plain browser (vite dev without Tauri) the app runs
 // in demo mode on the bundled fixture so the UI can be developed and tried anywhere.
 
+import brokenDemoGraph from "../../../../fixtures/expected/broken-shop.json";
 import demoGraph from "../../../../fixtures/expected/fullstack-todo.json";
 import aiDemoGraph from "../../../../fixtures/expected/rag-agent.json";
 import type { SystemArchitectureGraph, TierLabel } from "../gen";
@@ -47,10 +48,23 @@ export interface Concept {
 export const DEMO_ROOT = "demo:fullstack-todo";
 /** A small RAG + agent project: shows the AI pipeline, DSA and memory views. */
 export const DEMO_AI_ROOT = "demo:rag-agent";
-export const isDemo = (root: string | null) => root === DEMO_ROOT || root === DEMO_AI_ROOT;
+/** A deliberately broken shop: shows the Problems drawer. */
+export const DEMO_BROKEN_ROOT = "demo:broken-shop";
+export const isDemo = (root: string | null) =>
+  root === DEMO_ROOT || root === DEMO_AI_ROOT || root === DEMO_BROKEN_ROOT;
+const DEMO_GRAPHS: Record<string, unknown> = {
+  [DEMO_ROOT]: demoGraph,
+  [DEMO_AI_ROOT]: aiDemoGraph,
+  [DEMO_BROKEN_ROOT]: brokenDemoGraph,
+};
 
 const demoSources = {
   ...import.meta.glob("../../../../fixtures/repos/fullstack-todo/**/*", {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }),
+  ...import.meta.glob("../../../../fixtures/repos/broken-shop/**/*", {
     query: "?raw",
     import: "default",
     eager: true,
@@ -75,8 +89,8 @@ export async function analyze(
   onProgress: (p: Progress) => void,
 ): Promise<AnalyzeResult> {
   if (isDemo(path) || !checkIsTauri()) {
-    const ai = path === DEMO_AI_ROOT;
-    const g = structuredClone(ai ? aiDemoGraph : demoGraph) as unknown as SystemArchitectureGraph;
+    const root = isDemo(path) ? path : DEMO_ROOT;
+    const g = structuredClone(DEMO_GRAPHS[root]) as unknown as SystemArchitectureGraph;
     const steps: Progress[] = [
       { stage: "scan", message: "Walking the repository", done: 0, total: 0 },
       {
@@ -118,7 +132,7 @@ export async function analyze(
         cached: 0,
         millis: 75,
       },
-      root: ai ? DEMO_AI_ROOT : DEMO_ROOT,
+      root,
     };
   }
   const { listen } = await import("@tauri-apps/api/event");
@@ -132,7 +146,7 @@ export async function analyze(
 
 export async function readSource(root: string, path: string): Promise<string> {
   if (isDemo(root) || !checkIsTauri()) {
-    const repo = root === DEMO_AI_ROOT ? "rag-agent" : "fullstack-todo";
+    const repo = isDemo(root) ? root.replace("demo:", "") : "fullstack-todo";
     const key = Object.keys(demoSources).find((k) => k.endsWith(`/${repo}/${path}`));
     return key ? demoSources[key] : `// source not bundled in demo: ${path}`;
   }

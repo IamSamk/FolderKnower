@@ -361,6 +361,14 @@ pub fn analyze(
             role: ft.role.clone(),
             imports: linked.file_imports.get(path).cloned().unwrap_or_default(),
             functions,
+            packages: linked
+                .externals
+                .get(path)
+                .into_iter()
+                .flatten()
+                .filter(|p| !health::is_stdlib(p))
+                .cloned()
+                .collect(),
         }
     };
     let tiers: Vec<TierNode> = structure
@@ -500,7 +508,14 @@ pub fn analyze(
         .map(|d| d.services.clone())
         .unwrap_or_default();
     let checked: Vec<&ParsedFile> = app.iter().chain(tests.iter()).collect();
-    graph.health = health::check(root, &scanned.files, &checked, &linked, &services);
+    graph.health = health::check(
+        root,
+        &scanned.files,
+        &checked,
+        &linked,
+        &services,
+        &graph.memory_map,
+    );
     story::system_headline(&mut graph);
     let stats = RunStats {
         files: scanned.files.len(),

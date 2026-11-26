@@ -115,6 +115,9 @@
                   ],
                   "calledBy": []
                 }
+              ],
+              "packages": [
+                "react"
               ]
             },
             {
@@ -279,6 +282,9 @@
                   "calls": [],
                   "calledBy": []
                 }
+              ],
+              "packages": [
+                "date-fns"
               ]
             }
           ]
@@ -441,6 +447,10 @@
                   ],
                   "calledBy": []
                 }
+              ],
+              "packages": [
+                "fastapi",
+                "stripe"
               ]
             },
             {

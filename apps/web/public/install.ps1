@@ -11,7 +11,7 @@ try {
     $Release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest"
     $Tag = $Release.tag_name
 } catch {
-    $Tag = "v0.5.0"
+    $Tag = "v0.6.0"
 }
 
 $Target = "x86_64-pc-windows-msvc"

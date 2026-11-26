@@ -10,7 +10,9 @@ use std::path::Path;
 
 use ark_link::{Linked, ParsedFile, file_id};
 use ark_scan::{Language, ScannedFile};
-use ark_schema::{CodeHealth, HealthIssue, HealthKind, Service, Severity};
+use ark_schema::{
+    CodeHealth, HealthIssue, HealthKind, MemoryPlace, MemoryPlacement, Service, Severity,
+};
 
 const PY_STDLIB: &str = "__future__ abc antigravity argparse array ast asyncio atexit base64 bdb binascii bisect builtins bz2 cProfile calendar cmath cmd code codecs codeop collections colorsys compileall concurrent configparser contextlib contextvars copy copyreg csv ctypes curses dataclasses datetime dbm decimal difflib dis doctest email encodings ensurepip enum errno faulthandler fcntl filecmp fileinput fnmatch fractions ftplib functools gc genericpath getopt getpass gettext glob graphlib grp gzip hashlib heapq hmac html http idlelib imaplib importlib inspect io ipaddress itertools json keyword linecache locale logging lzma mailbox marshal math mimetypes mmap modulefinder msvcrt multiprocessing netrc nt ntpath nturl2path numbers opcode operator optparse os pathlib pdb pickle pickletools pkgutil platform plistlib poplib posix posixpath pprint profile pstats pty pwd py_compile pyclbr pydoc pydoc_data pyexpat queue quopri random re readline reprlib resource rlcompleter runpy sched secrets select selectors shelve shlex shutil signal site smtplib socket socketserver sqlite3 sre_compile sre_constants sre_parse ssl stat statistics string stringprep struct subprocess symtable sys sysconfig syslog tabnanny tarfile tempfile termios textwrap this threading time timeit tkinter token tokenize tomllib trace traceback tracemalloc tty turtle turtledemo types typing unicodedata unittest urllib uuid venv warnings wave weakref webbrowser winreg winsound wsgiref xml xmlrpc zipapp zipfile zipimport zlib zoneinfo";
 
@@ -299,6 +301,7 @@ pub fn check(
     files: &[&ParsedFile],
     linked: &Linked,
     services: &[Service],
+    memory: &[MemoryPlacement],
 ) -> Option<CodeHealth> {
     let mut issues: Vec<HealthIssue> = Vec::new();
     let mut push =
@@ -492,6 +495,42 @@ pub fn check(
                 in_ctx(&target[0])
             ),
             "Fix the module path in the start command, or add the file it names.".into(),
+        );
+    }
+
+    // GPU memory claimed by code in a container without a GPU reservation.
+    let mut flagged: BTreeSet<&str> = BTreeSet::new();
+    let mut vram: Vec<&MemoryPlacement> = memory
+        .iter()
+        .filter(|p| p.place == MemoryPlace::Vram)
+        .collect();
+    vram.sort_by_key(|p| !p.what.starts_with("Model weights"));
+    for p in vram {
+        let Some(s) = services.iter().find(|s| s.id == p.holder) else {
+            continue;
+        };
+        if s.gpu || p.source == s.id || !flagged.insert(s.id.as_str()) {
+            continue;
+        }
+        let Some((path, line)) = p.proof.iter().find_map(|x| {
+            x.rsplit_once(':')
+                .and_then(|(f, l)| l.parse::<u32>().ok().map(|l| (f, l)))
+        }) else {
+            continue;
+        };
+        push(
+            HealthKind::NoGpu,
+            Severity::Warning,
+            path,
+            line,
+            format!(
+                "{} goes to GPU memory, but the `{}` container reserves no GPU",
+                p.what, s.name
+            ),
+            format!(
+                "Add a GPU reservation to `{}` (deploy.resources.reservations.devices with capabilities: [gpu]) or move this code into a GPU service.",
+                s.name
+            ),
         );
     }
 

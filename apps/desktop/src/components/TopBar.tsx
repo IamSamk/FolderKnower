@@ -14,6 +14,7 @@ import {
   Search,
   Sparkles,
   Sun,
+  TriangleAlert,
   Wrench,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -89,6 +90,10 @@ export function TopBar() {
   const closeWorkflow = useStore((s) => s.closeWorkflow);
   const toolsOpen = useStore((s) => s.toolsOpen);
   const toggleTools = useStore((s) => s.toggleTools);
+  const toggleHealth = useStore((s) => s.toggleHealth);
+  const healthOpen = useStore((s) => s.healthOpen);
+  const health = useStore((s) => s.ix?.g.health);
+  const errors = health?.issues.filter((i) => i.severity === "error").length ?? 0;
   if (!ix) return null;
   const top = stack[stack.length - 1];
   const views: { k: View; label: string; icon: React.ReactNode }[] = [
@@ -162,6 +167,18 @@ export function TopBar() {
         </nav>
       )}
       <div className="ml-auto flex items-center gap-2">
+        {health && (
+          <button
+            type="button"
+            className={`ak-tool ak-tool-label ak-problems ${errors ? "err" : "warn"} ${healthOpen ? "on" : ""}`}
+            aria-pressed={healthOpen}
+            onClick={toggleHealth}
+            title="Problems found without running the code: syntax errors, missing files and packages, dead routes"
+          >
+            <TriangleAlert size={15} strokeWidth={2.3} />
+            {health.issues.length} problem{health.issues.length === 1 ? "" : "s"}
+          </button>
+        )}
         <button
           type="button"
           className={`ak-tool ak-tool-label ${toolsOpen ? "on" : ""}`}

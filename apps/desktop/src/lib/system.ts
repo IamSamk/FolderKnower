@@ -6,6 +6,8 @@
 import type {
   AiStage,
   ExampleRun,
+  Feature,
+  MemoryPlacement,
   MemoryTechnique,
   RunHop,
   Service,
@@ -67,6 +69,84 @@ const LANE: Record<ServiceKind, number> = {
 };
 export const LANE_NAME = ["In the browser", "At the edge", "Your code", "What it leans on"];
 
+/** How much the diagram says: plain words, the usual boxes, or every file and package. */
+export type Depth = "simple" | "standard" | "deep";
+
+/** Non-technical names for the simple diagram. */
+export const PLAIN_NAME: Record<ServiceKind, string> = {
+  frontend: "Website",
+  proxy: "Front door",
+  api: "Server",
+  worker: "Background worker",
+  agent: "AI agent",
+  modelServer: "AI model",
+  vectorStore: "Knowledge index",
+  searchEngine: "Search index",
+  database: "Database",
+  cache: "Short-term memory",
+  broker: "Job queue",
+  objectStore: "File storage",
+  observability: "Monitoring",
+  other: "Helper service",
+};
+
+export const PLAIN_WHAT: Record<ServiceKind, string> = {
+  frontend: "The pages people see and click in their browser.",
+  proxy: "Takes every request first and passes it to the right place.",
+  api: "Runs the app's rules: checks input, does the work, sends the answer back.",
+  worker: "Does slow jobs in the background so nobody waits.",
+  agent: "Decides which tool to use next, step by step.",
+  modelServer: "The AI model that reads text and writes the answer.",
+  vectorStore: "Finds the passages that mean the same as a question.",
+  searchEngine: "Finds documents by the words they contain.",
+  database: "Keeps the app's records safe, even after a restart.",
+  cache: "Remembers recent things for a short time so repeats are instant.",
+  broker: "Holds jobs in line until a worker picks them up.",
+  objectStore: "Keeps uploaded files and images.",
+  observability: "Collects logs and numbers about how the system is doing.",
+  other: "A supporting program the system needs.",
+};
+
+const PLAIN_VERB: Partial<Record<ServiceKind, string>> = {
+  api: "asks",
+  database: "saves & reads",
+  cache: "remembers",
+  vectorStore: "looks up",
+  searchEngine: "searches",
+  modelServer: "asks the AI",
+  broker: "hands jobs to",
+  objectStore: "stores files in",
+  worker: "hands work to",
+};
+
+export const PLACE_NAME: Record<MemoryPlacement["place"], string> = {
+  vram: "GPU memory",
+  ram: "RAM",
+  disk: "Disk",
+  browser: "Browser",
+  remote: "Provider",
+};
+
+export const PLACE_COLOR: Record<MemoryPlacement["place"], string> = {
+  vram: "#ff8a5c",
+  ram: "#5ec8ff",
+  disk: "#6be3d6",
+  browser: "#ffd36b",
+  remote: "#c9b6ff",
+};
+
+export const LIFE_NAME: Record<MemoryPlacement["lifetime"], string> = {
+  request: "per request",
+  session: "per session",
+  process: "until restart",
+  persistent: "kept",
+};
+
+export interface BuildOpts {
+  depth?: Depth;
+  feature?: Feature;
+}
+
 export const CARD_W = [300, 230, 330, 250];
 export const HEAD_H = 92;
 export const ROW_H = 26;
@@ -99,6 +179,16 @@ export interface Box {
   pipeline: Row[];
   preview: boolean;
   memory: MemoryTechnique[];
+  /** Outside the selected feature: drawn faded. */
+  dim: boolean;
+  /** Packages used by the code in this box (deep), most used first. */
+  stack: string[];
+  /** Features this box serves. */
+  features: Feature[];
+  /** Where data sits in this box (deep). */
+  places: MemoryPlacement[];
+  /** Heights of the extra sections, for layout and rendering. */
+  extraH: number;
 }
 
 export interface SystemModel {
@@ -109,6 +199,57 @@ export interface SystemModel {
   height: number;
   synthetic: boolean;
   totalLimit: number;
+  depth: Depth;
+}
+
+/** Box ids a feature touches: its services, or the tiers of its files without compose. */
+export function featureBoxes(ix: Indexed, f: Feature, synthetic: boolean): Set<string> {
+  const out = new Set<string>(synthetic ? [] : f.services);
+  const files = [...f.files, ...f.sharedFiles];
+  const services = ix.g.insights?.deployment?.services ?? [];
+  for (const id of files) {
+    if (synthetic) {
+      const t = ix.tierOf(id);
+      if (t) out.add(`tier:${t.toLowerCase()}`);
+    } else {
+      const s = serviceOfFile(services, id.replace(/^file:/, ""));
+      if (s) out.add(s.id);
+    }
+  }
+  if (synthetic && f.tables.length) out.add("tier:storage");
+  if (synthetic && f.ui.length) out.add("tier:frontend");
+  return out;
+}
+
+/** Plain or technical label for a link. */
+export function linkLabel(l: ServiceLink, m: SystemModel): string {
+  if (m.depth === "simple") {
+    const to = m.byId.get(l.to);
+    if (l.via === "proxy") return "forwards to";
+    return (to && PLAIN_VERB[to.svc.kind]) ?? "uses";
+  }
+  if (l.via === "proxy") return "proxy_pass";
+  return m.depth === "deep" ? l.detail : l.detail.split(" -> ")[0];
+}
+
+export const STACK_LINE = 22;
+
+/** Height of a wrapped row of chips (section title included), estimated from text width. */
+function chipBlockH(labels: string[], boxW: number, mono = false): number {
+  if (!labels.length) return 0;
+  const avail = boxW - 24;
+  const ch = mono ? 6.9 : 6.2;
+  let lines = 1;
+  let x = 0;
+  for (const l of labels) {
+    const w = Math.min(avail, l.length * ch + 20);
+    if (x > 0 && x + w > avail) {
+      lines += 1;
+      x = 0;
+    }
+    x += w + 4;
+  }
+  return SECTION_H + lines * STACK_LINE + 6;
 }
 
 const ONLINE_ORDER: AiStage["role"][] = [
@@ -198,7 +339,18 @@ export function hopService(ix: Indexed, h: RunHop, synthetic: boolean): string |
   return t ? `tier:${t.toLowerCase()}` : undefined;
 }
 
-export function buildSystem(ix: Indexed, run?: ExampleRun): SystemModel | null {
+export function buildSystem(
+  ix: Indexed,
+  run?: ExampleRun,
+  opts: BuildOpts = {},
+): SystemModel | null {
+  const depth = opts.depth ?? "standard";
+  const feature = opts.feature;
+  const features = ix.g.features ?? [];
+  const placements = ix.g.memoryMap ?? [];
+  const pretty = new Map<string, string>();
+  for (const lib of ix.g.insights?.libraries ?? [])
+    for (const ev of lib.evidence) pretty.set(ev.split(/[./]/)[0].replace(/-/g, "_"), lib.name);
   const dep = ix.g.insights?.deployment;
   const synthetic = !dep || dep.services.length === 0;
   const { services, links } = synthetic
@@ -222,14 +374,23 @@ export function buildSystem(ix: Indexed, run?: ExampleRun): SystemModel | null {
       .map((f) => f.file.id);
   };
 
+  const broken = new Set(
+    (ix.g.health?.issues ?? []).filter((i) => i.severity === "error").map((i) => i.fileId),
+  );
+  const fFiles = feature ? new Set([...feature.files, ...feature.sharedFiles]) : undefined;
+  const fStages = feature ? new Set(feature.aiStages) : undefined;
+  const fBoxes = feature ? featureBoxes(ix, feature, synthetic) : undefined;
   const boxes: Box[] = services.map((svc) => {
     const lane = LANE[svc.kind];
-    const files = new Set(filesOf(svc));
+    const allFiles = new Set(filesOf(svc));
+    const files = fFiles ? new Set([...allFiles].filter((f) => fFiles.has(f))) : allFiles;
     const code: Row[] = [];
+    const cap = depth === "deep" ? 16 : 9;
     const add = (ref: string, text: string, badge?: string, color?: string) => {
-      if (code.some((r) => r.ref === ref) || code.length >= 9) return;
+      if (depth === "simple" || code.some((r) => r.ref === ref) || code.length >= cap) return;
       code.push({ key: `c:${ref}`, ref, text, badge, color, y: 0 });
     };
+    for (const f of broken) if (files.has(f)) add(f, pathOf(ix, f), "broken", "#ff6b6b");
     if (svc.entryFile && files.has(svc.entryFile))
       add(svc.entryFile, pathOf(ix, svc.entryFile), "starts here", "#7cf0a6");
     for (const m of mem)
@@ -246,18 +407,31 @@ export function buildSystem(ix: Indexed, run?: ExampleRun): SystemModel | null {
       const f = ix.fileOf(h.node) ?? (h.node.startsWith("file:") ? h.node : undefined);
       if (f && files.has(f)) add(f, pathOf(ix, f));
     }
+    if (depth === "deep")
+      for (const f of [...files].sort()) {
+        const fe = ix.files.get(f);
+        add(f, pathOf(ix, f), fe?.file.role ?? undefined, "#9ad0ff");
+      }
     const pipeline: Row[] = [];
     const inRun = (run?.hops ?? []).filter(
       (h) => h.kind === "stage" && hopService(ix, h, synthetic) === svc.id,
     );
-    if (inRun.length) {
+    if (depth === "simple") {
+      // no rows: the simple diagram is boxes and plain sentences only
+    } else if (inRun.length) {
       for (const h of inRun)
         pipeline.push({ key: `p:${h.node}`, ref: h.node, text: h.label, y: 0 });
     } else {
       const here = (ai?.stages ?? [])
-        .filter((st) => files.has(st.fileId) && ONLINE_ORDER.includes(st.role))
+        .filter(
+          (st) =>
+            files.has(st.fileId) && (fStages ? fStages.has(st.id) : ONLINE_ORDER.includes(st.role)),
+        )
         .sort(
-          (a, b) => ONLINE_ORDER.indexOf(a.role) - ONLINE_ORDER.indexOf(b.role) || a.line - b.line,
+          (a, b) =>
+            (fStages ? 0 : ONLINE_ORDER.indexOf(a.role) - ONLINE_ORDER.indexOf(b.role)) ||
+            a.fileId.localeCompare(b.fileId) ||
+            a.line - b.line,
         );
       for (const st of here.slice(0, 10))
         pipeline.push({ key: `p:${st.id}`, ref: st.id, text: st.name, y: 0 });
@@ -278,6 +452,39 @@ export function buildSystem(ix: Indexed, run?: ExampleRun): SystemModel | null {
         y += ROW_H;
       }
     }
+    const served = features.filter((f) => featureBoxes(ix, f, synthetic).has(svc.id));
+    const counts = new Map<string, number>();
+    if (depth === "deep")
+      for (const f of files)
+        for (const p of ix.files.get(f)?.file.packages ?? []) {
+          const name = pretty.get(p.split(/[./]/)[0].replace(/-/g, "_")) ?? p.replace(/_/g, "-");
+          counts.set(name, (counts.get(name) ?? 0) + 1);
+        }
+    const stack = [...counts]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map((x) => x[0])
+      .slice(0, 10);
+    const places =
+      depth === "deep"
+        ? placements.filter(
+            (p) =>
+              p.holder === svc.id &&
+              (!feature ||
+                fStages?.has(p.source) ||
+                p.proof.some((x) => fFiles?.has(`file:${x.replace(/:\d+$/, "")}`))),
+          )
+        : [];
+    const w = CARD_W[lane];
+    let extraH = 0;
+    if (depth === "simple")
+      extraH += chipBlockH(
+        served.map((f) => f.name),
+        w,
+      );
+    if (depth === "deep")
+      extraH +=
+        chipBlockH(stack, w, true) + (places.length ? SECTION_H + places.length * ROW_H : 0);
+    y += extraH;
     return {
       svc,
       synthetic,
@@ -290,7 +497,12 @@ export function buildSystem(ix: Indexed, run?: ExampleRun): SystemModel | null {
       code,
       pipeline,
       preview,
-      memory: mem.filter((m) => files.has(m.fileId)),
+      memory: mem.filter((m) => allFiles.has(m.fileId)),
+      dim: !!fBoxes && !fBoxes.has(svc.id),
+      stack,
+      features: served,
+      places,
+      extraH,
     };
   });
 
@@ -323,6 +535,7 @@ export function buildSystem(ix: Indexed, run?: ExampleRun): SystemModel | null {
     height: height + PAD * 2 + 30,
     synthetic,
     totalLimit: services.reduce((a, s) => a + (s.memoryLimit ?? 0), 0),
+    depth,
   };
 }
 
@@ -409,4 +622,28 @@ export function proofTarget(ix: Indexed, p: string): string | undefined {
   const line = Number(m[2]);
   const fn = fe.file.functions.find((f) => f.lineRange[0] <= line && line <= f.lineRange[1]);
   return fn?.id ?? fileId;
+}
+
+/** One plain sentence about the whole system, for the simple diagram. */
+export function plainHeadline(ix: Indexed, parts: number): string {
+  const kind = ix.g.summary.kind;
+  const what = ix.g.insights?.ai
+    ? "An AI app"
+    : kind === "full-stack"
+      ? "A website with its own server"
+      : kind === "frontend"
+        ? "A website"
+        : kind === "backend"
+          ? "A server program"
+          : kind === "cli"
+            ? "A command-line tool"
+            : kind === "worker"
+              ? "A background program"
+              : kind === "library"
+                ? "A code library"
+                : "A program";
+  const names = (ix.g.features ?? []).map((f) => f.name);
+  const list =
+    names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0];
+  return `${what} made of ${parts} part${parts === 1 ? "" : "s"}${list ? `. It helps people with ${list}.` : "."}`;
 }

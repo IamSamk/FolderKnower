@@ -17,4 +17,8 @@ tierConfidence: number,
 /**
  * Short role guess, e.g. `component`, `route-handler`, `orm-models`.
  */
-role?: string, imports: Array<Edge>, functions: Array<FunctionNode>, };
+role?: string, imports: Array<Edge>, functions: Array<FunctionNode>, 
+/**
+ * Third-party packages this file imports (standard library left out), sorted.
+ */
+packages?: Array<string>, };
