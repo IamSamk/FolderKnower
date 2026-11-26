@@ -307,6 +307,17 @@ export async function slmExplain(req: {
   return invoke("slm_explain", { req });
 }
 
+/** One step of looking around: the model picks a move from the list, or null to stop. */
+export async function slmChoose(req: {
+  baseUrl: string;
+  model: string;
+  question: string;
+  seen: string[];
+  moves: string[];
+}): Promise<string | null> {
+  return invoke<string | null>("slm_choose", { req });
+}
+
 export async function slmClassify(req: {
   baseUrl: string;
   model: string;
@@ -330,6 +341,8 @@ export interface AiComponent {
   size: number;
   installed: boolean;
   supported: boolean;
+  /** A file the user pointed to that is no longer there. */
+  missingPath?: string;
   /** The user's own file, used instead of a download. */
   linked?: { path: string; check: "exact" | "compatible"; modelName?: string };
 }
@@ -392,8 +405,24 @@ export async function aiLink(
   }
 }
 
-export async function aiFind(): Promise<AiFound[]> {
-  return invoke<AiFound[]>("ai_find");
+/** Look in the usual model folders, or only in `folder` when given. */
+export async function aiFind(folder?: string): Promise<AiFound[]> {
+  return invoke<AiFound[]>("ai_find", { folder: folder ?? null });
+}
+
+export interface AiRequirements {
+  rows: {
+    what: string;
+    minimum: string;
+    recommended: string;
+    yours: string;
+    verdict: "good" | "ok" | "low";
+  }[];
+  suggestion: string;
+}
+
+export async function aiRequirements(): Promise<AiRequirements> {
+  return invoke<AiRequirements>("ai_requirements");
 }
 
 /** Ask for a file: a .gguf model, or the llama-server program. */

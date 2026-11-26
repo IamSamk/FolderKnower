@@ -1,11 +1,11 @@
-// In-app update pop-up. Checks the signed GitHub Releases feed shortly after launch
-// and every six hours, then shows a modal with the release notes and a real download
+// In-app update pop-up. Checks the signed GitHub Releases feed as soon as the app
+// starts and every six hours, then shows a modal with the release notes and a real download
 // progress bar. Signature verification happens in the Rust updater plugin; a tampered
 // or unsigned package is rejected before install.
 
 import { Download, Sparkles, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   checkForUpdate,
   installUpdate,
@@ -13,10 +13,8 @@ import {
   type UpdateProgress,
 } from "../lib/backend";
 
-const FIRST_CHECK_MS = 1_500;
-// Offline at launch? Try again soon instead of waiting six hours.
-const RETRY_MS = [20_000, 90_000, 5 * 60_000];
-const FOCUS_RECHECK_MS = 30 * 60_000;
+// Checked at launch; the later tries cover a network that was not up yet.
+const START_CHECKS_MS = [0, 8_000, 30_000];
 const RECHECK_MS = 6 * 60 * 60 * 1000;
 const SKIP_KEY = "ak.update.skip";
 const CHECK_EVENT = "ak:check-update";
@@ -73,7 +71,7 @@ export function UpdatePopup() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
-  const lastOk = useRef(0);
+  /** True once the feed answered, so the start-up retries can stop. */
   const check = useCallback(async (manual: boolean): Promise<boolean> => {
     try {
       const info = await checkForUpdate();
@@ -83,7 +81,6 @@ export function UpdatePopup() {
       } else if (manual) {
         setToast("You have the latest version.");
       }
-      lastOk.current = Date.now();
       return true;
     } catch (e) {
       // offline or feed unreachable: the app keeps working, we try again later
@@ -93,23 +90,18 @@ export function UpdatePopup() {
   }, []);
 
   useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    const attempt = async (n: number) => {
-      const ok = await check(false);
-      if (!ok && n < RETRY_MS.length) timers.push(setTimeout(() => attempt(n + 1), RETRY_MS[n]));
-    };
-    timers.push(setTimeout(() => attempt(0), FIRST_CHECK_MS));
+    let answered = false;
+    const first = START_CHECKS_MS.map((ms) =>
+      setTimeout(async () => {
+        if (!answered) answered = (await check(false)) || answered;
+      }, ms),
+    );
     const every = setInterval(() => check(false), RECHECK_MS);
-    const onFocus = () => {
-      if (Date.now() - lastOk.current > FOCUS_RECHECK_MS) check(false);
-    };
-    window.addEventListener("focus", onFocus);
     const manual = () => check(true);
     window.addEventListener(CHECK_EVENT, manual);
     return () => {
-      for (const t of timers) clearTimeout(t);
+      for (const t of first) clearTimeout(t);
       clearInterval(every);
-      window.removeEventListener("focus", onFocus);
       window.removeEventListener(CHECK_EVENT, manual);
     };
   }, [check]);

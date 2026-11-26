@@ -200,6 +200,9 @@ pub fn analyze_with(
 
     for pf in files {
         let path = pf.scan.path.as_str();
+        if is_experiment(path) {
+            continue;
+        }
         let imports: Vec<String> = pf.facts.imports.iter().map(|i| i.source.clone()).collect();
         let mut sites: Vec<Site> = Vec::new();
         for f in &pf.facts.functions {
@@ -242,6 +245,8 @@ pub fn analyze_with(
                 .first_string
                 .as_deref()
                 .filter(|u| u.contains("://") || u.starts_with('/') || u.contains("localhost"))
+                // A browser calling its own `/api/...` is not calling a model server.
+                .filter(|u| !(u.starts_with("/api/") && is_web_source(path)))
                 .map(|u| format!("url:{u}"));
             if let Some(comp) = cat.components.iter().find(|c| {
                 c.patterns
@@ -422,7 +427,7 @@ pub fn analyze_with(
         }
     }
 
-    add_mentions(&mut stages, &mut frameworks, texts);
+    add_mentions(&mut stages, &mut frameworks, texts, files);
 
     // Attach LangGraph node names to the graph router.
     if !graph_nodes.is_empty() {
@@ -717,13 +722,92 @@ static KEYWORD_SQL: LazyLock<Regex> = LazyLock::new(|| {
         .expect("keyword regex")
 });
 
-static VECTOR_SQL: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?i)<=>|<->|<#>|\busing\s+(?:hnsw|ivfflat)\b|\bvector_(?:cosine|l2|ip)_ops\b|\bcreate\s+extension\b[^;\n]*\bvector\b|::vector\b|\bvector\s*\(\s*\d+\s*\)")
-        .expect("vector sql regex")
+/// A pgvector nearest-neighbour query (`<=>` on a `::vector`) written inside a SQL string.
+static VECTOR_QUERY: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)<=>[^<>]{0,40}::\s*(?:half)?vec(?:tor)?\b|::\s*(?:half)?vec(?:tor)?\b[^<>]{0,40}<=>|\bembedding\s*<=>")
+        .expect("vector query regex")
 });
-static FUSION_TEXT: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?i)\brrf(?:_[a-z]+)?\b|reciprocal[ _-]?rank").expect("fusion regex")
+static VECTOR_INDEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)\bvector_(?:cosine|l2|ip)_ops\b").expect("vector index regex")
 });
+/// An embeddings endpoint called over HTTP, with no SDK for the parser to recognise.
+static EMBED_HTTP: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"/v1/embeddings\b|["'`]/embeddings\b"#).expect("embed endpoint regex")
+});
+/// A hand-written Reciprocal Rank Fusion function.
+static FUSION_DEF: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)\b(?:def|fn|func|function)\s+(\w*(?:rrf|reciprocal_?rank)\w*)")
+        .expect("fusion regex")
+});
+
+fn is_comment(line: &str) -> bool {
+    let l = line.trim_start();
+    ["#", "//", "--", "/*", "* ", "<!--"]
+        .iter()
+        .any(|p| l.starts_with(p))
+}
+
+/// Keeps the most telling hit: one inside a function beats a docstring or schema line,
+/// and a function that works on the corpus beats a side use such as chat memory.
+fn keep_best<'a>(
+    slot: &mut Option<(u8, &'a str, u32)>,
+    files: &[ParsedFile],
+    path: &'a str,
+    line: u32,
+) {
+    let rank = match function_at(files, path, line) {
+        None => 0,
+        Some(f) => {
+            let name = f
+                .rsplit('#')
+                .next()
+                .unwrap_or_default()
+                .to_ascii_lowercase();
+            if name.contains("memory") {
+                1
+            } else if name
+                .rsplit('.')
+                .next()
+                .is_some_and(|n| n.starts_with("search"))
+            {
+                4
+            } else if ["chunk", "corpus", "doc"].iter().any(|w| name.contains(w)) {
+                3
+            } else {
+                2
+            }
+        }
+    };
+    if slot.is_none_or(|(r, _, _)| rank > r) {
+        *slot = Some((rank, path, line));
+    }
+}
+
+fn is_web_source(path: &str) -> bool {
+    [".js", ".jsx", ".ts", ".tsx", ".vue", ".svelte"]
+        .iter()
+        .any(|e| path.ends_with(e))
+}
+
+/// Throwaway code: what it loads is not part of the running system.
+fn is_experiment(path: &str) -> bool {
+    path.split('/').any(|p| {
+        ["experiments", "benchmarks", "bench"]
+            .iter()
+            .any(|d| p.eq_ignore_ascii_case(d))
+    })
+}
+
+/// The innermost parsed function around a line, so a text hit still links to code.
+fn function_at(files: &[ParsedFile], path: &str, line: u32) -> Option<String> {
+    let pf = files.iter().find(|p| p.scan.path == path)?;
+    pf.facts
+        .functions
+        .iter()
+        .filter(|f| f.line_start <= line && line <= f.line_end)
+        .min_by_key(|f| f.line_end - f.line_start)
+        .map(|f| fn_id(path, &f.qualname))
+}
 
 /// Model ids and SQL full-text calls that sit in config files, env files, compose
 /// commands and SQL strings, where no call is made that the parser could see.
@@ -731,16 +815,38 @@ fn add_mentions(
     stages: &mut BTreeMap<(AiRole, String), AiStage>,
     frameworks: &mut BTreeSet<String>,
     texts: &[InfraFile],
+    files: &[ParsedFile],
 ) {
+    // (path, line) of the code that does each step, when it is written by hand.
+    let mut vector_query: Option<(u8, &str, u32)> = None;
+    let mut vector_index: Option<(&str, u32)> = None;
+    let mut embed_http: Option<(u8, &str, u32)> = None;
+    let mut fusion: Option<(String, &str, u32)> = None;
     let mut embed: BTreeMap<String, (u32, &str, u32)> = BTreeMap::new();
     let mut rerank: BTreeMap<String, (u32, &str, u32)> = BTreeMap::new();
     let mut keyword: Option<(bool, &str, u32)> = None;
-    let mut vector_sql: Option<(&str, u32)> = None;
-    let mut fts_sql = false;
-    let mut fusion: Option<(&str, u32)> = None;
+    let mut keyword_sql: Option<(u8, &str, u32)> = None;
     for t in texts {
         for (i, line) in t.text.lines().enumerate() {
             let ln = (i + 1) as u32;
+            // A model or method named only in a comment is not something the code does.
+            if is_comment(line) {
+                continue;
+            }
+            if VECTOR_QUERY.is_match(line) {
+                keep_best(&mut vector_query, files, t.path, ln);
+            }
+            if vector_index.is_none() && VECTOR_INDEX.is_match(line) {
+                vector_index = Some((t.path, ln));
+            }
+            if EMBED_HTTP.is_match(line) {
+                keep_best(&mut embed_http, files, t.path, ln);
+            }
+            if fusion.is_none()
+                && let Some(c) = FUSION_DEF.captures(line)
+            {
+                fusion = Some((c[1].to_owned(), t.path, ln));
+            }
             for m in RERANK_MODEL.find_iter(line) {
                 let e = rerank
                     .entry(m.as_str().to_owned())
@@ -756,26 +862,16 @@ fn add_mentions(
                     .or_insert((0, t.path, ln));
                 e.0 += 1;
             }
-            if vector_sql.is_none() && VECTOR_SQL.is_match(line) {
-                vector_sql = Some((t.path, ln));
-            }
-            if fusion.is_none() && FUSION_TEXT.is_match(line) {
-                fusion = Some((t.path, ln));
-            }
             if let Some(m) = KEYWORD_SQL.find(line) {
                 let bm = m.as_str().eq_ignore_ascii_case("bm25");
-                if !bm {
-                    fts_sql = true;
-                }
-                match &mut keyword {
-                    Some((b, _, _)) => *b |= bm,
-                    None => keyword = Some((bm, t.path, ln)),
+                // A real full-text call outranks the word "BM25" in a docstring.
+                if bm {
+                    keyword.get_or_insert((true, t.path, ln));
+                } else {
+                    keep_best(&mut keyword_sql, files, t.path, ln);
                 }
             }
         }
-    }
-    fn embed_found(m: &BTreeMap<String, (u32, &str, u32)>) -> bool {
-        !m.is_empty()
     }
     let best = |m: &BTreeMap<String, (u32, &str, u32)>| {
         m.iter()
@@ -783,6 +879,8 @@ fn add_mentions(
             .map(|(k, v)| (k.clone(), v.1.to_owned(), v.2))
     };
     if let Some((model, path, line)) = best(&embed) {
+        // Point at the code that calls the embeddings server rather than a config line.
+        let (path, line) = embed_http.map_or((path, line), |(_, p, l)| (p.to_owned(), l));
         let explain = if model.to_ascii_lowercase().contains("bge-m3") {
             "BGE-M3 embedding model. One pass gives a dense vector (meaning), a sparse word-weight vector (keywords) and multi-vector scores, so it can drive both vector and keyword-style search."
         } else {
@@ -808,37 +906,50 @@ fn add_mentions(
             explain,
         );
     }
-    // Vector search written as SQL (pgvector), and rank fusion named in config or code.
-    if !stages.is_empty() || embed_found(&embed) {
-        if let Some((path, line)) = vector_sql {
-            put_mention(
-                stages,
-                frameworks,
-                (
-                    AiRole::VectorStore,
-                    "pgvector".to_owned(),
-                    "pgvector (Postgres)",
-                ),
-                (path, line),
-                role_explain(AiRole::VectorStore),
-            );
-        }
-        if let Some((path, line)) = fusion {
-            put_mention(
-                stages,
-                frameworks,
-                (AiRole::Fusion, "RRF".to_owned(), "reciprocal rank fusion"),
-                (path, line),
-                role_explain(AiRole::Fusion),
-            );
-        }
+    if embed.is_empty()
+        && let Some((_, p, l)) = embed_http
+    {
+        put_mention(
+            stages,
+            frameworks,
+            (
+                AiRole::Embedder,
+                "embeddings server".to_owned(),
+                "HTTP embeddings",
+            ),
+            (p, l),
+            role_explain(AiRole::Embedder),
+        );
+    }
+    // pgvector written as plain SQL; an index definition alone is the fallback location
+    if let Some(at) = vector_query.map(|(_, p, l)| (p, l)).or(vector_index) {
+        put_mention(
+            stages,
+            frameworks,
+            (AiRole::VectorStore, "pgvector".to_owned(), "pgvector"),
+            at,
+            role_explain(AiRole::VectorStore),
+        );
+    }
+    if !stages.is_empty()
+        && let Some((name, path, line)) = fusion
+    {
+        put_mention(
+            stages,
+            frameworks,
+            (AiRole::Fusion, name, "Reciprocal Rank Fusion"),
+            (path, line),
+            role_explain(AiRole::Fusion),
+        );
+    }
+    if let Some((_, p, l)) = keyword_sql {
+        keyword = Some((false, p, l));
     }
     // full-text SQL on its own is ordinary search; it only counts next to other AI stages
     if !stages.is_empty()
         && let Some((bm, path, line)) = keyword
     {
-        // A comment saying "BM25-style" next to Postgres ts_rank is still Postgres full-text.
-        let (name, lib) = if bm && !fts_sql {
+        let (name, lib) = if bm {
             ("BM25", "BM25")
         } else {
             ("Postgres full-text", "Postgres full-text")
@@ -851,6 +962,10 @@ fn add_mentions(
             (path, line),
             explain,
         );
+    }
+    for s in stages.values_mut().filter(|s| s.rule_id == "ai.mention") {
+        let path = s.file_id.strip_prefix("file:").unwrap_or(&s.file_id);
+        s.function_id = function_at(files, path, s.line);
     }
 }
 

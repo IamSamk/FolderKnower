@@ -4,17 +4,19 @@ import { useEffect, useState } from "react";
 import {
   type AiFound,
   type AiProgress,
+  type AiRequirements,
   type AiStatus,
   aiFind,
   aiInstall,
   aiLink,
   aiRemove,
+  aiRequirements,
   aiStatus,
   checkIsTauri,
   isTauri,
+  pickFolder,
   pickModelFile,
 } from "../lib/backend";
-import { type SystemSnapshot, systemSnapshot } from "../lib/telemetry";
 import { useStore } from "../store";
 
 const TERMS_VERSION = "2";
@@ -74,53 +76,46 @@ function Privacy() {
   );
 }
 
-const GB = 1_073_741_824;
+const VERDICT = { good: "Good", ok: "Enough", low: "Too low" } as const;
 
-/** What the optional models need, judged against this computer's real memory and cores. */
-function DeviceCheck() {
-  const [sys, setSys] = useState<SystemSnapshot | null>(null);
+function Requirements() {
+  const [req, setReq] = useState<AiRequirements | null>(null);
   useEffect(() => {
-    void systemSnapshot()
-      .then(setSys)
-      .catch(() => setSys(null));
+    aiRequirements().then(setReq, () => setReq(null));
   }, []);
-  const total = sys ? sys.totalMemory / GB : 0;
-  const free = sys ? sys.availableMemory / GB : 0;
-  const cores = sys ? (sys.physicalCores ?? sys.cpus.length) : 0;
-  let verdict = "";
-  let tone: "ok" | "warn" = "ok";
-  if (sys) {
-    if (free < 1.5) {
-      tone = "warn";
-      verdict = `Only ${free.toFixed(1)} GB is free right now. Close a few programs first, or skip the models: everything else works without them.`;
-    } else if (total < 8) {
-      tone = "warn";
-      verdict = `${total.toFixed(0)} GB of memory is enough for one model at a time. Install the narrator or Laya, not both, and expect slower answers.`;
-    } else if (cores < 4) {
-      verdict = "Memory is fine. With fewer than 4 cores, answers take a few seconds longer.";
-    } else {
-      verdict = "Your computer meets the recommended setup for both models.";
-    }
-  }
+  if (!req) return null;
   return (
-    <div className="ak-device">
-      <b>What it needs</b>
-      <ul>
-        <li>
-          Minimum: 4 GB of memory with 1.5 GB free, 2 CPU cores, about 1 GB of disk. No graphics
-          card needed.
-        </li>
-        <li>
-          Recommended: 8 GB or more of memory and 4 or more cores, so both models run smoothly.
-        </li>
-      </ul>
-      {sys && (
-        <p className={`ak-device-now ${tone}`}>
-          <b>This computer:</b> {total.toFixed(1)} GB memory ({free.toFixed(1)} GB free), {cores}{" "}
-          cores. {verdict}
-        </p>
-      )}
-    </div>
+    <section className="ak-req">
+      <h3>What the local models need</h3>
+      <table>
+        <thead>
+          <tr>
+            <th />
+            <th>Minimum</th>
+            <th>Recommended</th>
+            <th>This computer</th>
+          </tr>
+        </thead>
+        <tbody>
+          {req.rows.map((r) => (
+            <tr key={r.what}>
+              <th scope="row">{r.what}</th>
+              <td>{r.minimum}</td>
+              <td>{r.recommended}</td>
+              <td>
+                {r.yours} <span className={`ak-tag ${r.verdict}`}>{VERDICT[r.verdict]}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p>
+        <b>Suggested for you:</b> {req.suggestion}
+      </p>
+      <p className="ak-dim">
+        Estimates for a 64-bit computer, running on the CPU. No graphics card is needed.
+      </p>
+    </section>
   );
 }
 
@@ -184,11 +179,12 @@ function LocalAi() {
       setProg(null);
     }
   };
-  const look = async () => {
+  const look = async (folder?: string) => {
     setErr(null);
     setBusy("find");
     try {
-      setFound(await aiFind());
+      setSt(await aiStatus());
+      setFound(await aiFind(folder));
     } catch (e) {
       setErr(String(e));
     } finally {
@@ -197,24 +193,41 @@ function LocalAi() {
   };
   const nameOf = (id: string) => st.components.find((c) => c.id === id)?.name ?? id;
   const missing = st.components.filter((c) => !c.installed).map((c) => c.id);
-  const usable = (found ?? []).filter((f) => missing.includes(f.id));
+  const usable = (found ?? []).filter((f) => st.components.some((c) => c.id === f.id));
   return (
     <div className="ak-legal">
-      {missing.length > 0 && (
-        <div className="ak-ai-have">
-          <span>
-            Already have llama.cpp or these models from LM Studio, Ollama or Hugging Face?
-          </span>
-          <button type="button" className="ak-btn ghost" disabled={!!busy} onClick={look}>
-            <FileSearch size={14} /> {busy === "find" ? "Looking…" : "Look on this computer"}
-          </button>
-        </div>
-      )}
+      <Requirements />
+      <div className="ak-ai-have">
+        <span>
+          {missing.length > 0
+            ? "Already have llama.cpp or these models, or moved them?"
+            : "Moved your model files, or want to use different ones?"}
+        </span>
+        <button
+          type="button"
+          className="ak-btn ghost"
+          disabled={!!busy}
+          onClick={() => void look()}
+        >
+          <FileSearch size={14} /> {busy === "find" ? "Looking…" : "Look on this computer"}
+        </button>
+        <button
+          type="button"
+          className="ak-btn ghost"
+          disabled={!!busy}
+          onClick={async () => {
+            const dir = await pickFolder();
+            if (dir) await look(dir);
+          }}
+        >
+          <FolderOpen size={14} /> Search a folder
+        </button>
+      </div>
       {found && (
         <ul className="ak-ai-found">
           {usable.length === 0 && (
             <li className="ak-dim">
-              Nothing usable found in the usual folders. Use "Use a file I have" below to pick one.
+              Nothing usable found there. Use "Use a file I have" below to pick the file itself.
             </li>
           )}
           {usable.map((f) => (
@@ -243,7 +256,6 @@ function LocalAi() {
           ))}
         </ul>
       )}
-      <DeviceCheck />
       <p>
         Everything in FolderKnower works without these. Add them for a second opinion when the rules
         are unsure, and for plain-language explanations that cite the graph. They run on your CPU,
@@ -258,6 +270,13 @@ function LocalAi() {
               <span className="ak-dim ml-auto">{mb(c.size)}</span>
             </div>
             <p className="ak-dim">{c.purpose}</p>
+            {c.missingPath && (
+              <p className="ak-err">
+                Your file was not found: <span className="ak-mono">{c.missingPath}</span>. If you
+                moved it, choose it again with "Use a file I have"
+                {c.installed ? " (a downloaded copy is being used meanwhile)." : "."}
+              </p>
+            )}
             {c.linked && (
               <p className="ak-comp-linked">
                 <span className={`ak-tag ${c.linked.check === "exact" ? "ok" : ""}`}>
@@ -283,7 +302,6 @@ function LocalAi() {
                     className="ak-btn ghost"
                     disabled={!!busy}
                     onClick={async () => link(c.id, await pickModelFile(c.id))}
-                    title="Point to a different file, for example if you moved it"
                   >
                     <FolderOpen size={14} /> Change file
                   </button>
@@ -291,7 +309,12 @@ function LocalAi() {
                     type="button"
                     className="ak-btn ghost"
                     disabled={!!busy}
-                    onClick={() => void aiRemove(c.id).then(setSt)}
+                    onClick={() =>
+                      void aiRemove(c.id).then((s) => {
+                        setSt(s);
+                        void useStore.getState().refreshSlm();
+                      })
+                    }
                     title={c.linked ? "Forget this file. It is not deleted." : undefined}
                   >
                     <Trash2 size={14} /> {c.linked ? "Stop using" : "Remove"}
@@ -390,7 +413,7 @@ export function Setup() {
             transition={{ type: "spring", stiffness: 320, damping: 26 }}
           >
             <div className="ak-modal-head">
-              <h2 id="setup-title">{firstRun ? "Before you start" : "Local AI"}</h2>
+              <h2 id="setup-title">{firstRun ? "Before you start" : "Local AI settings"}</h2>
               {accepted() && (
                 <button type="button" className="ak-iconbtn" aria-label="Close" onClick={close}>
                   <X size={16} strokeWidth={2.6} />

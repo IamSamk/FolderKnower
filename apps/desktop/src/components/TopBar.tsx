@@ -231,7 +231,7 @@ export function TopBar() {
         <button
           type="button"
           className="ak-tool"
-          title="Settings: local AI models, device check and file locations"
+          title="Settings: local AI models"
           onClick={() => useStore.setState({ setupOpen: true })}
         >
           <Sparkles size={15} strokeWidth={2.4} />
