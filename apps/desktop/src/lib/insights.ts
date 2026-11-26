@@ -8,7 +8,7 @@ export const ROLE_LABEL: Record<AiRole, string> = {
   splitter: "Chunk",
   embedder: "Embed",
   vectorStore: "Vector store",
-  keywordIndex: "Keyword index (BM25)",
+  keywordIndex: "Keyword search",
   retriever: "Retrieve top-k",
   fusion: "Fuse rankings",
   reranker: "Rerank",

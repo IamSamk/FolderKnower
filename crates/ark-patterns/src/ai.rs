@@ -361,6 +361,7 @@ pub fn analyze_with(
                     || d.ends_with(".tool")
                     || d.ends_with(".tool()")
                     || d.starts_with("function_tool")
+                    || REGISTERED_TOOL.is_match(d)
             }) {
                 let sk = (AiRole::Tool, f.name.clone());
                 *uses.entry(sk.clone()).or_default() += 1;
@@ -587,7 +588,7 @@ fn assemble(stages: Vec<AiStage>, frameworks: BTreeSet<String>) -> Option<AiArch
         ingest_end.clone(),
         ids(&role_is(AiRole::Embedder)),
         ids(&role_is(AiRole::VectorStore)),
-        ids(&|s| s.role == AiRole::Retriever && lane_of(s) != Some("lexical")),
+        ids(&|s| s.role == AiRole::Retriever && !matches!(lane_of(s), Some("lexical" | "graph"))),
     ];
     let lexical = vec![
         ingest_end.clone(),
@@ -651,6 +652,28 @@ fn assemble(stages: Vec<AiStage>, frameworks: BTreeSet<String>) -> Option<AiArch
                 Some(st.clone()),
                 "not enough: retrieve more",
                 true,
+                &mut edges,
+            );
+        }
+    }
+    for s in stages.iter().filter(|s| {
+        matches!(
+            s.role,
+            AiRole::VectorStore | AiRole::KeywordIndex | AiRole::Retriever
+        )
+    }) {
+        let label = match s.role {
+            AiRole::VectorStore => "nearest-neighbour search",
+            AiRole::KeywordIndex => "keyword hits",
+            _ => "ranked hits",
+        };
+        // A search that already leads somewhere (graph expansion, say) keeps that path.
+        if !edges.iter().any(|e| e.from == s.id) {
+            add(
+                Some(s.id.clone()),
+                first(AiRole::Fusion),
+                label,
+                false,
                 &mut edges,
             );
         }
@@ -853,6 +876,22 @@ static VECTOR_INDEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"(?i)\bvector_(?:cosine|l2|ip)_ops\b").expect("vector index regex")
 });
 /// An embeddings endpoint called over HTTP, with no SDK for the parser to recognise.
+static GRAPH_QUERY: LazyLock<Regex> = LazyLock::new(|| {
+    // Cypher: MATCH (e:Entity) ...
+    Regex::new(r"\bMATCH\s*\(\s*\w*\s*:\s*[A-Z]\w*").expect("graph query regex")
+});
+static AGENT_DEF: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)\b(?:def|fn|func|function)\s+(run_agent\w*|\w*agent_loop\w*|\w*react_loop\w*)")
+        .expect("agent loop regex")
+});
+static FUSION_NAMED: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)\brrf_k\b|reciprocal[ _-]?rank").expect("fusion setting regex")
+});
+/// `@register("search_text", "What it does", {...})`: a home-made tool registry.
+static REGISTERED_TOOL: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"^@?register(?:_tool)?\(\s*["']([A-Za-z_]\w*)["']\s*,\s*["']"#)
+        .expect("tool registry regex")
+});
 static EMBED_HTTP: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"/v1/embeddings\b|["'`]/embeddings\b"#).expect("embed endpoint regex")
 });
@@ -869,7 +908,7 @@ static LLM_MODEL: LazyLock<Regex> = LazyLock::new(|| {
 });
 /// A chat or completion endpoint called over HTTP (llama.cpp, vLLM, Ollama, OpenAI-style).
 static CHAT_HTTP: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"/v1/chat/completions\b|/v1/completions\b|/api/chat\b|/api/generate\b|["'`/]completion["'`]"#)
+    Regex::new(r#"\}/chat/completions\b|/v1/chat/completions\b|/v1/completions\b|/api/chat\b|/api/generate\b|["'`/]completion["'`]"#)
         .expect("chat endpoint regex")
 });
 /// Retrieval that walks an entity graph: a hand-written expansion function, or SQL over
@@ -910,7 +949,7 @@ struct Steps<'a> {
 }
 
 fn scan_steps<'a>(line: &str, path: &'a str, ln: u32, files: &[ParsedFile], st: &mut Steps<'a>) {
-    if CHAT_HTTP.is_match(line) {
+    if CHAT_HTTP.is_match(line) && !is_side_code(path) {
         keep_best(&mut st.chat_http, files, path, ln);
     }
     // The function that expands outranks the SQL it runs.
@@ -977,6 +1016,75 @@ fn is_comment(line: &str) -> bool {
     ["#", "//", "--", "/*", "* ", "<!--"]
         .iter()
         .any(|p| l.starts_with(p))
+}
+
+/// One search of its own: the function that runs the query, keyed by its id.
+type Legs<'a> = BTreeMap<String, (&'a str, u32)>;
+
+/// Records the hit when it sits in a function that searches. Indexing and chat-memory
+/// functions run similar queries but are not a way of answering a question.
+fn add_leg<'a>(legs: &mut Legs<'a>, files: &[ParsedFile], path: &'a str, line: u32) {
+    if is_side_code(path) {
+        return;
+    }
+    let Some(f) = function_at(files, path, line) else {
+        return;
+    };
+    let name = f.rsplit('#').next().unwrap_or_default();
+    let name = name.rsplit('.').next().unwrap_or(name).to_ascii_lowercase();
+    let searches = ["search", "retriev", "nearest", "similar", "lookup", "find"]
+        .iter()
+        .any(|w| name.contains(w));
+    if searches && !name.contains("memor") {
+        legs.entry(f).or_insert((path, line));
+    }
+}
+
+/// Scripts and browser code: used only when the application itself has no such step.
+fn is_side_code(path: &str) -> bool {
+    is_web_source(path) || path.split('/').any(|p| p.eq_ignore_ascii_case("scripts"))
+}
+
+/// Adds one stage per leg. With several legs each is named after its function.
+fn put_legs(
+    stages: &mut BTreeMap<(AiRole, String), AiStage>,
+    frameworks: &mut BTreeSet<String>,
+    role: AiRole,
+    label: &str,
+    legs: &Legs,
+    explain: &str,
+) {
+    // A search library the parser already recognised describes this role better.
+    if stages
+        .values()
+        .any(|s| s.role == role && s.rule_id != "ai.mention")
+    {
+        return;
+    }
+    for (function, (path, line)) in legs {
+        let fn_name = function.rsplit(['#', '.']).next().unwrap_or(function);
+        let name = if legs.len() == 1 {
+            label.to_owned()
+        } else {
+            format!("{label}: {fn_name}")
+        };
+        frameworks.insert(label.to_owned());
+        stages.insert(
+            (role, name.clone()),
+            AiStage {
+                id: format!("ai:{}:{name}", role_slug(role)),
+                role,
+                name,
+                library: label.to_owned(),
+                file_id: file_id(path),
+                function_id: Some(function.clone()),
+                line: *line,
+                params: BTreeMap::new(),
+                rule_id: "ai.mention".to_owned(),
+                explain: explain.to_owned(),
+            },
+        );
+    }
 }
 
 /// Keeps the most telling hit: one inside a function beats a docstring or schema line,
@@ -1050,6 +1158,11 @@ fn add_mentions(
     files: &[ParsedFile],
 ) {
     // (path, line) of the code that does each step, when it is written by hand.
+    let mut vector_legs = Legs::new();
+    let mut word_legs = Legs::new();
+    let mut graph_legs = Legs::new();
+    let mut agent: Option<(String, &str, u32)> = None;
+    let mut fusion_setting: Option<(&str, u32)> = None;
     let mut vector_query: Option<(u8, &str, u32)> = None;
     let mut vector_index: Option<(&str, u32)> = None;
     let mut embed_http: Option<(u8, &str, u32)> = None;
@@ -1068,6 +1181,28 @@ fn add_mentions(
             if is_comment(line) || is_pattern_source(line) {
                 continue;
             }
+            // Searches and the agent loop are recognised by the function they sit in, so
+            // any source file counts.
+            if !web {
+                if VECTOR_QUERY.is_match(line) {
+                    add_leg(&mut vector_legs, files, t.path, ln);
+                }
+                if GRAPH_QUERY.is_match(line) {
+                    add_leg(&mut graph_legs, files, t.path, ln);
+                }
+                if KEYWORD_SQL
+                    .find(line)
+                    .is_some_and(|m| !m.as_str().eq_ignore_ascii_case("bm25"))
+                {
+                    add_leg(&mut word_legs, files, t.path, ln);
+                }
+                if agent.is_none()
+                    && !is_side_code(t.path)
+                    && let Some(c) = AGENT_DEF.captures(line)
+                {
+                    agent = Some((c[1].to_owned(), t.path, ln));
+                }
+            }
             // Model ids and SQL count in files whose name says they hold them; the
             // hand-written pipeline steps below count in any source file.
             if !holds_settings(t.path) {
@@ -1078,6 +1213,9 @@ fn add_mentions(
             }
             if VECTOR_QUERY.is_match(line) {
                 keep_best(&mut vector_query, files, t.path, ln);
+            }
+            if fusion_setting.is_none() && FUSION_NAMED.is_match(line) {
+                fusion_setting = Some((t.path, ln));
             }
             if vector_index.is_none() && VECTOR_INDEX.is_match(line) {
                 vector_index = Some((t.path, ln));
@@ -1136,7 +1274,7 @@ fn add_mentions(
         // Point at the code that calls the embeddings server rather than a config line.
         let (path, line) = embed_http.map_or((path, line), |(_, p, l)| (p.to_owned(), l));
         let explain = if model.to_ascii_lowercase().contains("bge-m3") {
-            "BGE-M3 embedding model. One pass gives a dense vector (meaning), a sparse word-weight vector (keywords) and multi-vector scores, so it can drive both vector and keyword-style search."
+            "BGE-M3 embedding model. The model can produce dense, sparse and multi-vector outputs; which of them this app uses depends on what its code stores and searches."
         } else {
             role_explain(AiRole::Embedder)
         };
@@ -1175,6 +1313,14 @@ fn add_mentions(
             role_explain(AiRole::Embedder),
         );
     }
+    put_legs(
+        stages,
+        frameworks,
+        AiRole::VectorStore,
+        "pgvector",
+        &vector_legs,
+        role_explain(AiRole::VectorStore),
+    );
     // pgvector written as plain SQL; an index definition alone is the fallback location
     if let Some(at) = vector_query.map(|(_, p, l)| (p, l)).or(vector_index) {
         put_mention(
@@ -1199,6 +1345,49 @@ fn add_mentions(
     if let Some((_, p, l)) = keyword_sql {
         keyword = Some((false, p, l));
     }
+    if !stages.is_empty() {
+        put_legs(
+            stages,
+            frameworks,
+            AiRole::KeywordIndex,
+            "Postgres full-text",
+            &word_legs,
+            FULL_TEXT,
+        );
+        put_legs(
+            stages,
+            frameworks,
+            AiRole::Retriever,
+            "Knowledge graph",
+            &graph_legs,
+            "Graph search. Follows stored links between entities and pages, so it can reach evidence that shares no words with the question.",
+        );
+        if let Some((name, p, l)) = agent
+            && !stages.values().any(|s| s.role == AiRole::Agent)
+        {
+            put_leg_free(
+                stages,
+                frameworks,
+                AiRole::Agent,
+                &name,
+                "agent loop",
+                (p, l),
+            );
+        }
+        if let Some(at) = fusion_setting
+            && !stages.values().any(|s| s.role == AiRole::Fusion)
+        {
+            put_leg_free(
+                stages,
+                frameworks,
+                AiRole::Fusion,
+                "RRF",
+                "Reciprocal Rank Fusion",
+                at,
+            );
+        }
+    }
+    const FULL_TEXT: &str = "Postgres full-text search. Matches the question's words with a text index and orders hits by ts_rank (not BM25). Catches exact names and ids that embeddings blur.";
     // full-text SQL on its own is ordinary search; it only counts next to other AI stages
     if !stages.is_empty()
         && let Some((bm, path, line)) = keyword
@@ -1208,7 +1397,11 @@ fn add_mentions(
         } else {
             ("Postgres full-text", "Postgres full-text")
         };
-        let explain = role_explain(AiRole::KeywordIndex);
+        let explain = if bm {
+            role_explain(AiRole::KeywordIndex)
+        } else {
+            FULL_TEXT
+        };
         put_mention(
             stages,
             frameworks,
@@ -1280,7 +1473,12 @@ fn add_mentions(
         {
             s.params.entry("chunk_size".to_owned()).or_insert(size);
         }
-        let model = best(&llm);
+        let own: BTreeMap<String, (u32, &str, u32)> = llm
+            .iter()
+            .filter(|(_, v)| !is_side_code(v.1))
+            .map(|(k, v)| (k.clone(), *v))
+            .collect();
+        let model = best(if own.is_empty() { &llm } else { &own });
         let at = chat_http
             .map(|(_, p, l)| (p.to_owned(), l))
             .or_else(|| model.as_ref().map(|(_, p, l)| (p.clone(), *l)));
@@ -1297,10 +1495,49 @@ fn add_mentions(
             );
         }
     }
+    // Model calls from scripts or the browser give way to the application's own.
+    let own = |s: &AiStage| !is_side_code(s.file_id.trim_start_matches("file:"));
+    if stages.values().any(|s| s.role == AiRole::Llm && own(s)) {
+        stages.retain(|_, s| s.role != AiRole::Llm || own(s));
+    }
+    for s in stages
+        .values_mut()
+        .filter(|s| s.role == AiRole::Retriever && s.library == "Knowledge graph")
+    {
+        // Its own lane into fusion: it is not a step after the vector search.
+        s.params.insert("lane".to_owned(), "graph".to_owned());
+    }
     for s in stages.values_mut().filter(|s| s.rule_id == "ai.mention") {
         let path = s.file_id.strip_prefix("file:").unwrap_or(&s.file_id);
         s.function_id = function_at(files, path, s.line);
     }
+}
+
+/// A stage found in text for a role the code has no stage of yet.
+fn put_leg_free(
+    stages: &mut BTreeMap<(AiRole, String), AiStage>,
+    frameworks: &mut BTreeSet<String>,
+    role: AiRole,
+    name: &str,
+    library: &str,
+    (path, line): (&str, u32),
+) {
+    frameworks.insert(library.to_owned());
+    stages.insert(
+        (role, name.to_owned()),
+        AiStage {
+            id: format!("ai:{}:{name}", role_slug(role)),
+            role,
+            name: name.to_owned(),
+            library: library.to_owned(),
+            file_id: file_id(path),
+            function_id: None,
+            line,
+            params: BTreeMap::new(),
+            rule_id: "ai.mention".to_owned(),
+            explain: role_explain(role).to_owned(),
+        },
+    );
 }
 
 /// Adds a stage found in text, or only names the model on a stage of that role that the

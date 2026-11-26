@@ -106,7 +106,10 @@ export function WorkflowView({ wf, depth }: { wf: Workflow; depth: Depth }) {
         const a = all.get(e.from);
         const b = all.get(e.to);
         if (!a || !b) continue;
-        const others = [...all].filter(([id]) => id !== e.from && id !== e.to).map(([, r]) => r);
+        // A group's frame is not an obstacle: the boxes inside it already are.
+        const others = [...all]
+          .filter(([id]) => id !== e.from && id !== e.to && !id.startsWith("group:"))
+          .map(([, r]) => r);
         out.push({ d: route(a, b, others, lane % 4, e.loop), e });
         if (e.loop || b.t < a.b) lane++;
       }
@@ -169,6 +172,11 @@ export function WorkflowView({ wf, depth }: { wf: Workflow; depth: Depth }) {
             <div
               // biome-ignore lint/suspicious/noArrayIndexKey: rows are positional
               key={i}
+              ref={(el) => {
+                if (!r.id) return;
+                if (el) refs.current.set(r.id, el);
+                else refs.current.delete(r.id);
+              }}
               className={`ak-wf-row ${r.group ? "grouped" : ""}`}
             >
               {r.group && <div className="ak-wf-group">{r.group}</div>}

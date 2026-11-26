@@ -1583,7 +1583,7 @@
             "model": "bge-m3-Q8"
           },
           "ruleId": "ai.mention",
-          "explain": "BGE-M3 embedding model. One pass gives a dense vector (meaning), a sparse word-weight vector (keywords) and multi-vector scores, so it can drive both vector and keyword-style search."
+          "explain": "BGE-M3 embedding model. The model can produce dense, sparse and multi-vector outputs; which of them this app uses depends on what its code stores and searches."
         },
         {
           "id": "ai:vectorStore:pgvector",
@@ -2010,7 +2010,7 @@
             "ai.mention"
           ],
           "confidence": 0.9,
-          "explain": "vectors: BGE-M3 embedding model. One pass gives a dense vector (meaning), a sparse word-weight vector (keywords) and multi-vector scores, so it can drive both vector and keyword-style search. Settings in the code: model=bge-m3-Q8."
+          "explain": "vectors: BGE-M3 embedding model. The model can produce dense, sparse and multi-vector outputs; which of them this app uses depends on what its code stores and searches. Settings in the code: model=bge-m3-Q8."
         },
         {
           "node": "ai:vectorStore:pgvector",

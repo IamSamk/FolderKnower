@@ -4,6 +4,11 @@ Notes for each version are shown in the in-app update pop-up and on the website'
 
 ## [Unreleased]
 
+### Every search path is shown
+- A system with several searches now shows each one: vector search, each keyword search, and graph search, all feeding the fusion step. Nothing is picked over another.
+- Explain asks about the selection by name. A 32 GB computer is offered the 7B suggestion.
+- Hand-made agent loops, tool registries and `/chat/completions` clients are recognised, and the application's own model client wins over scripts and browser code.
+
 ## [0.14.0] - 2026-11-27
 
 ### AI pipelines
