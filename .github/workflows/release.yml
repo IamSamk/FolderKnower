@@ -154,6 +154,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
 
+      # The welcome screen's example is Architekton reading its own code at this commit.
+      - name: Refresh the built-in example
+        shell: bash
+        run: cargo run -q --release -p ark-cli -- index . -o apps/desktop/src/examples/architekton.json
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
