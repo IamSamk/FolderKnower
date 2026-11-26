@@ -4460,6 +4460,38 @@
       "source": "file:web/src/App.tsx"
     }
   ],
+  "rules": [
+    {
+      "name": "CHUNK_SIZE",
+      "value": "800",
+      "meaning": "chunk size",
+      "proof": "app/ingest.py:8"
+    },
+    {
+      "name": "CHUNK_OVERLAP",
+      "value": "120",
+      "meaning": "chunk overlap",
+      "proof": "app/ingest.py:9"
+    },
+    {
+      "name": "HISTORY_TURNS",
+      "value": "6",
+      "meaning": "history turns",
+      "proof": "app/memory.py:10"
+    },
+    {
+      "name": "ANSWER_TTL",
+      "value": "3600",
+      "meaning": "answer ttl",
+      "proof": "app/memory.py:11"
+    },
+    {
+      "name": "TOP_K",
+      "value": "8",
+      "meaning": "top k",
+      "proof": "app/retrieve.py:5"
+    }
+  ],
   "health": {
     "filesChecked": 9,
     "filesWithErrors": 0,

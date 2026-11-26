@@ -95,6 +95,13 @@
         "$ref": "#/$defs/RouteNode"
       }
     },
+    "rules": {
+      "description": "Limits and thresholds written as named constants in the code (`MAX_CHARS = 2000`),\neach with the line that defines it.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/CodeRule"
+      }
+    },
     "schemaVersion": {
       "$ref": "#/$defs/SchemaVersion"
     },
@@ -409,6 +416,35 @@
         "filesChecked",
         "filesWithErrors",
         "issues"
+      ]
+    },
+    "CodeRule": {
+      "description": "A named number in the code that bounds behaviour: a size, count, limit or timeout.",
+      "type": "object",
+      "properties": {
+        "meaning": {
+          "description": "The name in words, e.g. `max summary chars`.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The constant's name as written, e.g. `MAX_SUMMARY_CHARS`.",
+          "type": "string"
+        },
+        "proof": {
+          "description": "`path:line` of the definition.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value as written, e.g. `2000`.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "value",
+        "meaning",
+        "proof"
       ]
     },
     "Complexity": {

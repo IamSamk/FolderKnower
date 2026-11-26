@@ -371,6 +371,23 @@ export function contextWorkflow(ix: Indexed): Workflow | null {
     if (limit)
       for (const c of uniq.slice(0, 8)) edges.push({ from: limit.id, to: c.id, dashed: true });
   }
+  const rules = (ix.g.rules ?? []).slice(0, 8);
+  if (rules.length) {
+    phases.push({
+      id: "rules",
+      title: "4. Limits written in the code",
+      rows: chunk(
+        rules.map((r) => ({
+          id: `rule:${r.proof}`,
+          title: `${r.name} = ${r.value}`,
+          sub: r.meaning,
+          kind: "limit" as WKind,
+          proof: [r.proof],
+        })),
+        4,
+      ).map((nodes) => ({ nodes })),
+    });
+  }
   return { id: "context", kind: "context", title: "Memory and context", phases, edges };
 }
 

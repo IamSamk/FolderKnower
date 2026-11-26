@@ -4059,7 +4059,9 @@ button.ak-sys-row:hover {
 }
 .ak-wf-legend i.ak-wf-node {
   display: inline-block;
-  width: 14px;
+  width: 14px !important;
+  min-width: 0;
+  flex: none;
   height: 10px;
   padding: 0;
   vertical-align: middle;

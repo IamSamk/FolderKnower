@@ -14,6 +14,7 @@ use std::{
 mod features;
 mod health;
 mod memory;
+mod rules;
 mod story;
 
 use ark_link::{LinkInputs, ParsedFile, file_id, fn_id, link};
@@ -518,11 +519,13 @@ pub fn analyze(
         example_runs: Vec::new(),
         features: Vec::new(),
         memory_map: Vec::new(),
+        rules: Vec::new(),
         health: None,
     };
     graph.example_runs = story::example_runs(&graph);
     graph.features = features::build(&graph, &linked.externals, &app);
     graph.memory_map = memory::build(&graph, &app);
+    graph.rules = rules::extract(root, &scanned.files);
     let services = graph
         .insights
         .as_ref()

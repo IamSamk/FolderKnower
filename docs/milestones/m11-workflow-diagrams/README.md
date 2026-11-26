@@ -27,7 +27,7 @@ request flow to one feature.
 
 ## Not yet
 
-- Business rules that live in plain code (fold validators, summary-of-summary limits) need
+- Named limits are now read (`NAME = 2000`). Rules that are only inside a function body (fold validators) still need
   constant extraction (`NAME = 2000` next to the function that uses it) or the optional
   narrator model reading the function. Both are planned, with proof lines.
 - Diagram playback (zoom through the boxes like the example run).

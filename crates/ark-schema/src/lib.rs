@@ -67,12 +67,31 @@ pub struct SystemArchitectureGraph {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[ts(as = "Option<Vec<MemoryPlacement>>", optional)]
     pub memory_map: Vec<MemoryPlacement>,
+    /// Limits and thresholds written as named constants in the code (`MAX_CHARS = 2000`),
+    /// each with the line that defines it.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<CodeRule>>", optional)]
+    pub rules: Vec<CodeRule>,
     /// Problems that stop the code from running as written: syntax errors, imports
     /// that point nowhere, packages missing from the manifest, calls to routes that
     /// do not exist. The rest of the analysis still runs on broken code.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub health: Option<CodeHealth>,
+}
+
+/// A named number in the code that bounds behaviour: a size, count, limit or timeout.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct CodeRule {
+    /// The constant's name as written, e.g. `MAX_SUMMARY_CHARS`.
+    pub name: String,
+    /// The value as written, e.g. `2000`.
+    pub value: String,
+    /// The name in words, e.g. `max summary chars`.
+    pub meaning: String,
+    /// `path:line` of the definition.
+    pub proof: String,
 }
 
 /// One thing the project does for its users, e.g. "Todos" or "Sign in".

@@ -2,6 +2,12 @@
 
 Notes for each version are shown in the in-app update pop-up and on the website's releases page.
 
+## [0.12.0] - 2026-11-26
+
+### Limits from the code
+- Named numbers in your code that bound behaviour (`CHUNK_SIZE = 800`, `HISTORY_TURNS = 6`, `ANSWER_TTL = 3600`) are read with the line that defines them, and shown in the Memory and context flow under "Limits written in the code".
+- The Flow map key now draws small swatches instead of long bars.
+
 ## [0.11.0] - 2026-11-26
 
 ### Live shows only your project

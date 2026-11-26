@@ -8,6 +8,7 @@ export type * from "./BigO";
 export type * from "./ClusterAlgo";
 export type * from "./ClusterMethod";
 export type * from "./CodeHealth";
+export type * from "./CodeRule";
 export type * from "./Complexity";
 export type * from "./CrossTierEdge";
 export type * from "./DataField";
