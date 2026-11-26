@@ -10,6 +10,7 @@ import { Setup } from "./components/Setup";
 import { Sidebar } from "./components/Sidebar";
 import { SystemView } from "./components/system/SystemView";
 import { TopBar } from "./components/TopBar";
+import { ToolsDrawer } from "./components/tools/ToolsDrawer";
 import { UiMap } from "./components/UiMap";
 import { UpdatePopup } from "./components/UpdatePopup";
 import { ArchitectureView, ErView } from "./components/Views";
@@ -34,6 +35,7 @@ function Workspace() {
           </PortalScene>
           <Lens />
           <WorkflowDrawer />
+          <ToolsDrawer />
         </main>
         {view !== "live" && view !== "insights" && view !== "system" && <Inspector />}
       </div>

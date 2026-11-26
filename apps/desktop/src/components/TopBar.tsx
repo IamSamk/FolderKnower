@@ -14,6 +14,7 @@ import {
   Search,
   Sparkles,
   Sun,
+  Wrench,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { exportJson } from "../lib/backend";
@@ -86,6 +87,8 @@ export function TopBar() {
   const workflowOpen = useStore((s) => s.workflowOpen);
   const openWorkflow = useStore((s) => s.openWorkflow);
   const closeWorkflow = useStore((s) => s.closeWorkflow);
+  const toolsOpen = useStore((s) => s.toolsOpen);
+  const toggleTools = useStore((s) => s.toggleTools);
   if (!ix) return null;
   const top = stack[stack.length - 1];
   const views: { k: View; label: string; icon: React.ReactNode }[] = [
@@ -159,6 +162,16 @@ export function TopBar() {
         </nav>
       )}
       <div className="ml-auto flex items-center gap-2">
+        <button
+          type="button"
+          className={`ak-tool ak-tool-label ${toolsOpen ? "on" : ""}`}
+          aria-pressed={toolsOpen}
+          onClick={toggleTools}
+          title="DSA tools: structures in your code, hidden in your tools, and real-life problems"
+        >
+          <Wrench size={15} strokeWidth={2.2} />
+          DSA tools
+        </button>
         {view !== "live" && view !== "system" && (
           <button
             type="button"

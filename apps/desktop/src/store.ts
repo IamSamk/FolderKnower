@@ -53,6 +53,9 @@ interface State {
   workflowFn: string | null;
   openWorkflow: (fnId?: string | null) => void;
   closeWorkflow: () => void;
+  toolsOpen: boolean;
+  toggleTools: () => void;
+  closeTools: () => void;
   /** Example run the System view should play next. */
   systemRun: string | null;
   playRun: (runId: string) => void;
@@ -104,6 +107,9 @@ export const useStore = create<State>((set, get) => ({
   openWorkflow: (fnId) =>
     set((s) => ({ workflowOpen: true, workflowFn: fnId === undefined ? s.workflowFn : fnId })),
   closeWorkflow: () => set({ workflowOpen: false }),
+  toolsOpen: false,
+  toggleTools: () => set((s) => ({ toolsOpen: !s.toolsOpen })),
+  closeTools: () => set({ toolsOpen: false }),
   systemRun: null,
   playRun: (runId) => set({ systemRun: runId, view: "system" }),
   go(origin, dir, change) {

@@ -3393,3 +3393,108 @@ button.ak-sys-row:hover {
   box-shadow: var(--sh);
   transform: translate(-2px, -2px);
 }
+
+/* ---------------- M7: DSA tools drawer ---------------- */
+.ak-tools {
+  position: absolute;
+  right: 16px;
+  top: 12px;
+  bottom: 16px;
+  width: min(460px, calc(100% - 32px));
+  display: flex;
+  flex-direction: column;
+  border: var(--b) solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--sh-lg);
+  z-index: 26;
+  overflow: hidden;
+}
+.ak-tools-top {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px 8px;
+}
+.ak-tools-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 12px 10px;
+  border-bottom: var(--b) solid color-mix(in srgb, var(--line) 15%, transparent);
+}
+.ak-tools-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+}
+.ak-tools-tabs button.on {
+  border-color: var(--line);
+  background: var(--mark);
+  color: #1f1d36;
+  box-shadow: var(--sh-sm);
+}
+.ak-tools-body {
+  flex: 1;
+  overflow: auto;
+  padding: 12px 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ak-tool-card {
+  border: var(--b) solid var(--line);
+  border-radius: var(--r);
+  padding: 10px 12px;
+  background: var(--surface-2);
+}
+.ak-tool-card p {
+  margin: 4px 0;
+  font-size: 12.5px;
+}
+.ak-tool-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 6px;
+  margin-top: 3px;
+  border-radius: 7px;
+  font-size: 12px;
+  text-align: left;
+}
+.ak-tool-row:hover {
+  background: color-mix(in srgb, var(--accent) 15%, var(--surface));
+}
+.ak-tool-row .ak-chip {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.ak-chip-yes {
+  background: #7cf0a6 !important;
+  color: #1f1d36 !important;
+}
+.ak-tool-problems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.ak-tool-problems button {
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 650;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+.ak-tool-problems button.on {
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: var(--sh-sm);
+}

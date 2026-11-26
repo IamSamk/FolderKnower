@@ -2,6 +2,26 @@
 
 Notes for each version are shown in the in-app update pop-up and on the website's releases page.
 
+## [0.5.0] - 2026-11-26
+
+### System (new first tab)
+- Reads docker-compose files, Dockerfiles and nginx configs. Each container is a box with its image, ports, memory limit and GPU, and your code sits inside the container that builds it. The links between boxes come from env URLs, depends_on or proxy_pass.
+- Memory split: how the compose limits divide your RAM, plus Redis maxmemory, Ollama keep-alive and parallelism, and vLLM GPU share.
+- Example run: press Play, the screen preview types a question and presses the button, and the camera follows it through the proxy, the route, your memory/cache code, the tables, the AI pipeline and the containers it calls, then back. Each step shows the line that proves it.
+- Without a compose file, the boxes are your code tiers.
+
+### Grounded AI tool
+- `architekton run <repo>` returns the same example run as JSON (or `--text`) so a model can narrate it using only proven hops.
+
+### UI map
+- Screens on the left, where each element goes on the right (backend route with its tables and container, browser-only, or not wired), joined by wires. "Play run" jumps to the System view.
+
+### DSA tools (new sidebar)
+- Structures in your code, structures hidden inside your tools (vector index graph, inverted index, top-k heap, agent state graph, ring buffer, LRU, KV block table, route trie, B-tree), real-life problems mapped to structures and to functions in your project, and slow spots.
+
+### Recognition
+- Hybrid search: sparse vectors (SPLADE, fastembed), Qdrant prefetch + RRF, Weaviate hybrid, Postgres full-text. Redis capped history and TTL caches.
+
 ## [0.4.0] - 2026-11-26
 
 ### How it works (new tab)
