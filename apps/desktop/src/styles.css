@@ -955,11 +955,7 @@ a {
   inset: 0;
   border-radius: 999px;
   border: 7px solid var(--line);
-  background: radial-gradient(
-    circle at 35% 30%,
-    rgba(255, 255, 255, 0.85),
-    color-mix(in srgb, var(--lc) 70%, white) 60%
-  );
+  background: color-mix(in oklch, var(--lc) 70%, white);
   box-shadow: 7px 7px 0 var(--shade);
   display: grid;
   place-items: center;
@@ -2853,7 +2849,7 @@ a {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to top in oklch, var(--accent), #67e8f9);
+  background: var(--accent);
 }
 .ak-proc {
   display: flex;
