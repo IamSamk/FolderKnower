@@ -1,6 +1,6 @@
 [package]
 name = "ark-scan"
-description = "Architekton ark-scan"
+description = "FolderKnower ark-scan"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

@@ -1,4 +1,4 @@
-# Container images Architekton recognizes in docker-compose files and Dockerfiles.
+# Container images FolderKnower recognizes in docker-compose files and Dockerfiles.
 # `match` is a regex over the image name without registry prefix and tag
 # (e.g. `qdrant/qdrant`, `postgres`, `ollama/ollama`). First match wins.
 version: "services 0.1.0"

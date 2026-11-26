@@ -136,8 +136,8 @@ const SIM: Omit<ProcessRow, "memory" | "cpu" | "diskRead" | "diskWritten">[] = [
   {
     pid: 5002,
     parent: 1,
-    name: "architekton",
-    cmd: "architekton",
+    name: "fknow",
+    cmd: "fknow",
     virtualMemory: 2.2 * GB,
     threads: 14,
     runTime: 60,

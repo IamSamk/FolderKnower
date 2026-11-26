@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
-# Architekton CLI Installer for Linux and macOS
-REPO="IamSamk/Architekton"
+# FolderKnower CLI Installer for Linux and macOS
+REPO="IamSamk/FolderKnower"
 INSTALL_DIR="${HOME}/.local/bin"
 
-echo "Installing Architekton CLI..."
+echo "Installing FolderKnower CLI..."
 
 # Detect OS and Architecture
 OS="$(uname -s)"
@@ -38,7 +38,7 @@ if [ -z "${LATEST_TAG}" ]; then
   LATEST_TAG="v0.7.0"
 fi
 
-URL="https://github.com/IamSamk/Architekton/releases/download/${LATEST_TAG}/architekton-cli-${LATEST_TAG}-${TARGET}.tar.gz"
+URL="https://github.com/IamSamk/FolderKnower/releases/download/${LATEST_TAG}/fknow-cli-${LATEST_TAG}-${TARGET}.tar.gz"
 
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "${TMP_DIR}"' EXIT
@@ -49,11 +49,11 @@ curl -fsSL "${URL}" -o "${TMP_DIR}/archive.tar.gz"
 tar -xzf "${TMP_DIR}/archive.tar.gz" -C "${TMP_DIR}"
 
 mkdir -p "${INSTALL_DIR}"
-cp "${TMP_DIR}/"architekton-cli-*/architekton "${INSTALL_DIR}/architekton"
-chmod +x "${INSTALL_DIR}/architekton"
+cp "${TMP_DIR}/"fknow-cli-*/fknow "${INSTALL_DIR}/fknow"
+chmod +x "${INSTALL_DIR}/fknow"
 
 echo ""
-echo "Successfully installed Architekton CLI to ${INSTALL_DIR}/architekton"
+echo "Successfully installed FolderKnower CLI to ${INSTALL_DIR}/fknow"
 echo ""
 
 # Check if INSTALL_DIR is in PATH
@@ -65,4 +65,4 @@ case ":${PATH}:" in
     ;;
 esac
 
-echo "Run 'architekton --help' to get started."
+echo "Run 'fknow --help' to get started."

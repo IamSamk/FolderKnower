@@ -21,7 +21,7 @@ export function Hero() {
           </h1>
 
           <p className="text-lg sm:text-xl text-[var(--ink-2)] font-medium leading-relaxed mb-8 max-w-xl">
-            Drop in a local repository. Architekton walks it in seconds — completely offline — and
+            Drop in a local repository. FolderKnower walks it in seconds — completely offline — and
             draws the full architecture: system tiers, subsystems, API routes, call flows, and
             database schemas. Every edge backed by static evidence.
           </p>

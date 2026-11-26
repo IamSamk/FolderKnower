@@ -154,7 +154,7 @@ export function RunPanel({ onInspect }: { onInspect: (pid: number) => void }) {
           <div className="ak-muted ak-mono">in {pick.cwd}</div>
           <div className="ak-muted text-[12px]">
             It runs your project's own code with your user rights, the same as typing it in a
-            terminal. Architekton does not change your files. {pick.why}.
+            terminal. FolderKnower does not change your files. {pick.why}.
           </div>
           <div className="flex gap-2">
             <button type="button" className="ak-btn primary" onClick={() => void start()}>

@@ -1,6 +1,6 @@
 [package]
 name = "ark-cli"
-description = "Architekton command-line indexer"
+description = "FolderKnower command-line indexer"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,7 +9,7 @@ repository.workspace = true
 publish = false
 
 [[bin]]
-name = "architekton"
+name = "fknow"
 path = "src/main.rs"
 
 [dependencies]

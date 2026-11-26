@@ -1,10 +1,10 @@
-# Architekton CLI Installer for Windows
+# FolderKnower CLI Installer for Windows
 $ErrorActionPreference = "Stop"
 
-$Repo = "IamSamk/Architekton"
-$InstallDir = "$env:LOCALAPPDATA\Architekton\bin"
+$Repo = "IamSamk/FolderKnower"
+$InstallDir = "$env:LOCALAPPDATA\FolderKnower\bin"
 
-Write-Host "Installing Architekton CLI for Windows..." -ForegroundColor Cyan
+Write-Host "Installing FolderKnower CLI for Windows..." -ForegroundColor Cyan
 
 # Fetch latest release tag
 try {
@@ -15,7 +15,7 @@ try {
 }
 
 $Target = "x86_64-pc-windows-msvc"
-$Url = "https://github.com/IamSamk/Architekton/releases/download/$Tag/architekton-cli-$Tag-$Target.zip"
+$Url = "https://github.com/IamSamk/FolderKnower/releases/download/$Tag/fknow-cli-$Tag-$Target.zip"
 
 $TempZip = [System.IO.Path]::GetTempFileName() + ".zip"
 $TempExtract = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.Guid]::NewGuid().ToString())
@@ -29,9 +29,9 @@ if (-not (Test-Path $InstallDir)) {
     New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
 }
 
-$Exe = Get-ChildItem -Path $TempExtract -Recurse -Filter "architekton.exe" | Select-Object -First 1
+$Exe = Get-ChildItem -Path $TempExtract -Recurse -Filter "fknow.exe" | Select-Object -First 1
 if ($Exe) {
-    Copy-Item -Path $Exe.FullName -Destination "$InstallDir\architekton.exe" -Force
+    Copy-Item -Path $Exe.FullName -Destination "$InstallDir\fknow.exe" -Force
 }
 
 # Cleanup
@@ -47,5 +47,5 @@ if ($UserPath -notlike "*$InstallDir*") {
 }
 
 Write-Host ""
-Write-Host "Successfully installed Architekton CLI to $InstallDir\architekton.exe" -ForegroundColor Green
-Write-Host "Open a new terminal and run: architekton --help" -ForegroundColor Yellow
+Write-Host "Successfully installed FolderKnower CLI to $InstallDir\fknow.exe" -ForegroundColor Green
+Write-Host "Open a new terminal and run: fknow --help" -ForegroundColor Yellow

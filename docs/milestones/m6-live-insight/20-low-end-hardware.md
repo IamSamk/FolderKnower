@@ -22,5 +22,5 @@ Reference machine: 4 cores, 8 GB RAM, integrated GPU, SATA SSD (a school lab PC)
 
 ## Measuring
 
-A planned `architekton bench <repo>` command will print stage timings and peak RSS from `ark-telemetry`
+A planned `folderknower bench <repo>` command will print stage timings and peak RSS from `ark-telemetry`
 on itself; CI will run it on two fixture repos and fail on a regression over 20%.

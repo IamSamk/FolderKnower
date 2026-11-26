@@ -30,7 +30,7 @@ export function Features() {
     {
       icon: <Terminal size={24} className="text-[#2dd4bf]" />,
       title: "Deterministic CLI Export",
-      desc: "Run `architekton index . --out architecture.json` in CI or terminals. Same input repository always yields identical JSON.",
+      desc: "Run `fknow index . --out architecture.json` in CI or terminals. Same input repository always yields identical JSON.",
     },
   ];
 
@@ -48,7 +48,7 @@ export function Features() {
             Built for Architects & Engineers
           </h2>
           <p className="text-[var(--ink-2)] text-base font-medium mt-3">
-            Traditional tools guess architectures with flaky AI prompts. Architekton analyzes real
+            Traditional tools guess architectures with flaky AI prompts. FolderKnower analyzes real
             AST code links.
           </p>
         </div>

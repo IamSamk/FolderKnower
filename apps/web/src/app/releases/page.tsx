@@ -4,8 +4,8 @@ import { Header } from "@/components/Header";
 import { fmtDate, fmtSize, getReleases, noteLines } from "@/lib/releases";
 
 export const metadata: Metadata = {
-  title: "Releases · Architekton",
-  description: "Every Architekton release with notes, downloads and checksums.",
+  title: "Releases · FolderKnower",
+  description: "Every FolderKnower release with notes, downloads and checksums.",
 };
 
 export const revalidate = 600;
@@ -30,7 +30,7 @@ export default async function ReleasesPage() {
           {releases.length === 0 && (
             <p className="mt-10 text-[var(--ink-3)]">
               Could not reach GitHub right now.{" "}
-              <a className="underline" href="https://github.com/IamSamk/Architekton/releases">
+              <a className="underline" href="https://github.com/IamSamk/FolderKnower/releases">
                 See releases on GitHub
               </a>
               .
@@ -85,7 +85,7 @@ export default async function ReleasesPage() {
                           href={a.url}
                           className="ak-badge bg-[var(--surface-2)] text-[11px] font-mono hover:bg-[var(--mark)] hover:text-[#1f1d36]"
                         >
-                          {a.name.replace(/^Architekton[_-]/, "")} · {fmtSize(a.size)}
+                          {a.name.replace(/^FolderKnower[_-]/, "")} · {fmtSize(a.size)}
                         </a>
                       ))}
                     </div>

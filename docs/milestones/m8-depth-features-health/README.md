@@ -13,7 +13,7 @@ of code that does not run yet.
 | Memory map | `crates/ark-core/src/memory.rs` | `memoryMap`: one placement per kind of runtime data with place (VRAM, RAM, disk, browser, remote), holder (container, code tier, browser, provider), lifetime, bound and proof. |
 | Code health | `crates/ark-core/src/health.rs`, `ark-parse` (syntax error locations), `ark-link` (unresolved imports, dead calls) | `health`: syntax errors, relative imports to nowhere, packages missing from manifests, same-origin calls to undeclared routes, start commands naming missing files, GPU code without a GPU. |
 | Per-file packages | `SourceFileNode.packages` | Third-party imports per file (stdlib left out), used for each box's tech stack. |
-| CLI | `architekton check <repo> [--json]` | Prints the problems with a fix each; exits 1 on any error. |
+| CLI | `fknow check <repo> [--json]` | Prints the problems with a fix each; exits 1 on any error. |
 | Depth toggle | `components/system/SystemView.tsx`, `lib/system.ts` | Simple / Standard / Deep, remembered per machine. |
 | Feature filter | same | Fades boxes and links outside the feature, narrows code rows, AI steps, memory rows and example runs. |
 | Memory diagram | `components/system/MemoryMap.tsx` | Columns per place, grouped by holder, with limits, GPU flag, lifetime pills and proof links. |

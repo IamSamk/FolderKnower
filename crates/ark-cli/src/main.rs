@@ -1,4 +1,4 @@
-//! `architekton` command-line indexer.
+//! `fknow` command-line indexer.
 
 use std::{collections::BTreeMap, path::PathBuf, process::ExitCode};
 
@@ -7,7 +7,7 @@ use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(
-    name = "architekton",
+    name = "fknow",
     version,
     about = "Offline, deterministic codebase architecture indexer"
 )]

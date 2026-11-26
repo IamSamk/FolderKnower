@@ -23,7 +23,7 @@ Living document. Dates are targets, not promises.
 - [ ] Level-at-a-time graph paging from SQLite; virtualization everywhere
 - [ ] LOD and flatbush culling; WebGL renderer above 5k nodes
 - [ ] Lockfile-first dependency view; native binary view (object/goblin)
-- [ ] `architekton bench` and CI budgets on the reference machine
+- [ ] `folderknower bench` and CI budgets on the reference machine
 
 ## M7: Networks pack (~4 weeks)
 

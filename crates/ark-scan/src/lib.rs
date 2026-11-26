@@ -36,7 +36,7 @@ pub const DENY_DIRS: &[&str] = &[
     ".vscode",
     "vendor",
     "coverage",
-    ".architekton",
+    ".folderknower",
     "Pods",
     ".gradle",
     // Test inputs: sample projects and recorded data used by tests, not part of the app.

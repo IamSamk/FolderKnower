@@ -1,6 +1,6 @@
 [package]
 name = "ark-patterns"
-description = "Architekton ark-patterns: data-structure, AI/ML pipeline, library and memory-technique recognition"
+description = "FolderKnower ark-patterns: data-structure, AI/ML pipeline, library and memory-technique recognition"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

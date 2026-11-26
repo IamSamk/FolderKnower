@@ -122,7 +122,7 @@ export function Welcome() {
       </div>
       <div className="relative z-10 flex flex-col items-center px-6">
         <Stack />
-        <h1 className="ak-hero">Architekton</h1>
+        <h1 className="ak-hero">FolderKnower</h1>
         <p className="ak-hero-sub mt-4">
           Drop in a repository and see how it is really built: what is frontend, what is backend,
           which button calls which API, and which table it ends up in.
@@ -142,7 +142,7 @@ export function Welcome() {
               ? "Let go to open it"
               : inTauri
                 ? "Drop a folder here, or click to choose one"
-                : "Open the example: Architekton itself"}
+                : "Open the example: FolderKnower itself"}
           </div>
           <div className="ak-muted mt-1 text-[13.5px]">
             Read on this computer. Nothing is uploaded.
@@ -158,7 +158,7 @@ export function Welcome() {
         <div className="mt-6 flex flex-col items-center gap-2.5">
           {inTauri && (
             <button type="button" className="ak-btn" onClick={() => void start(DEMO_SELF_ROOT)}>
-              <Sparkles size={15} /> See how Architekton itself is built
+              <Sparkles size={15} /> See how FolderKnower itself is built
             </button>
           )}
           <div className="ak-more-examples">

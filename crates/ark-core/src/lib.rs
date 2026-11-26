@@ -85,7 +85,7 @@ pub fn default_cache_path(root: &Path) -> PathBuf {
     let key = blake3::hash(canon.to_string_lossy().as_bytes()).to_hex();
     dirs::cache_dir()
         .unwrap_or_else(std::env::temp_dir)
-        .join("architekton")
+        .join("folderknower")
         .join(&key[..16])
         .join("index.sqlite")
 }

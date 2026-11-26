@@ -1,6 +1,6 @@
 # Phase 1 Execution Checklist: Static Ingestion & Systems Ontology
 
-**Target.** `architekton index <repo> --out architecture.json` for TS/JS, Python, Rust and Go. It must be deterministic (byte-identical across runs) and incremental (a re-run after a one-file edit re-parses one file). There is no UI in Phase 1; the Tauri app is only a scaffold.
+**Target.** `fknow index <repo> --out architecture.json` for TS/JS, Python, Rust and Go. It must be deterministic (byte-identical across runs) and incremental (a re-run after a one-file edit re-parses one file). There is no UI in Phase 1; the Tauri app is only a scaffold.
 
 Versions were verified on crates.io and npm on 2026-11-21 (see [`research/synthesis.md`](research/synthesis.md)).
 
@@ -20,7 +20,7 @@ Versions were verified on crates.io and npm on 2026-11-21 (see [`research/synthe
 ## 2. Folder structure
 
 ```
-Architekton/
+FolderKnower/
 ├── Cargo.toml                    # [workspace] resolver = "3"; members = crates/* except ark-probe*
 ├── rust-toolchain.toml
 ├── deny.toml                     # cargo-deny licenses + advisories
@@ -40,7 +40,7 @@ Architekton/
 │   ├── ark-ontology/             # YAML rule loader + ast-grep matcher
 │   ├── ark-structure/            # tier heuristics + guided seeded Leiden + consistency check
 │   ├── ark-core/                 # pipeline orchestration (pure, sync, rayon)
-│   ├── ark-cli/                  # `architekton` binary (clap)
+│   ├── ark-cli/                  # `folderknower` binary (clap)
 │   ├── ark-telemetry/            # Phase 4: trait + sysinfo baseline (stub in Phase 1)
 │   └── ark-probe/                # Phase 4: privileged helper (NOT a workspace default member)
 ├── ontology/

@@ -1,7 +1,7 @@
 // Live release data from GitHub, cached by Next (ISR) so the site always shows the
 // newest version without a redeploy and without hitting the GitHub rate limit.
 
-export const REPO = "IamSamk/Architekton";
+export const REPO = "IamSamk/FolderKnower";
 const API = `https://api.github.com/repos/${REPO}/releases`;
 const REVALIDATE_SECONDS = 600;
 

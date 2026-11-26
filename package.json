@@ -1,9 +1,9 @@
 {
-  "name": "architekton",
+  "name": "folderknower",
   "private": true,
   "packageManager": "pnpm@12.21.0",
   "scripts": {
-    "build": "pnpm --filter @architekton/web build",
+    "build": "pnpm --filter @folderknower/web build",
     "lint": "biome ci .",
     "format": "biome format --write ."
   },

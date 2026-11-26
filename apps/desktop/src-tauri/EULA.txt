@@ -1,10 +1,10 @@
-ARCHITEKTON — LICENSE, PRIVACY AND THIRD-PARTY NOTICES
+FOLDERKNOWER — LICENSE, PRIVACY AND THIRD-PARTY NOTICES
 
 1. License
 
-Architekton is free and open-source software, licensed under your choice of the
+FolderKnower is free and open-source software, licensed under your choice of the
 MIT License or the Apache License, Version 2.0. The full texts are in the files
-LICENSE-MIT and LICENSE-APACHE at https://github.com/IamSamk/Architekton.
+LICENSE-MIT and LICENSE-APACHE at https://github.com/IamSamk/FolderKnower.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
@@ -12,13 +12,13 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
 
-Architekton is a tool that explains code. Its diagrams, complexity estimates and
+FolderKnower is a tool that explains code. Its diagrams, complexity estimates and
 model explanations can be incomplete or wrong; check important conclusions
 against the source code.
 
 2. Privacy
 
-Architekton runs entirely on your computer. It does not upload, share or send
+FolderKnower runs entirely on your computer. It does not upload, share or send
 your code, file names, analysis results or usage data anywhere. There is no
 account, no analytics and no telemetry.
 
@@ -28,7 +28,7 @@ runs. You can delete that folder at any time.
 3. Optional local AI components
 
 The AI features are optional and are not installed by this installer. If you
-turn them on in the app, Architekton downloads these files once, verifies their
+turn them on in the app, FolderKnower downloads these files once, verifies their
 SHA-256 checksums, and runs them on 127.0.0.1 (this computer only):
 
 - llama.cpp (llama-server), MIT License,
@@ -40,9 +40,9 @@ SHA-256 checksums, and runs them on 127.0.0.1 (this computer only):
 
 Each component is subject to its own license, linked above.
 
-4. Open-source software included in Architekton
+4. Open-source software included in FolderKnower
 
-Architekton is built with open-source components including Tauri (MIT/Apache-2.0),
+FolderKnower is built with open-source components including Tauri (MIT/Apache-2.0),
 tree-sitter and its grammars (MIT), SQLite (public domain), React (MIT),
 React Flow (MIT), elkjs (EPL-2.0), Motion (MIT), highlight.js (BSD-3-Clause),
 Lucide icons (ISC), Bricolage Grotesque and JetBrains Mono fonts (SIL Open Font

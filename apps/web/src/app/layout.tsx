@@ -15,14 +15,14 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Architekton — See How Any Codebase Is Built",
+  title: "FolderKnower — See How Any Codebase Is Built",
   description:
     "Offline codebase architecture explorer. Drop a repository and explore its system tiers, subsystems, API flows, call graphs, and database schemas with static evidence.",
   openGraph: {
-    title: "Architekton",
+    title: "FolderKnower",
     description: "Offline codebase architecture explorer with soft neo-brutalist design.",
-    url: "https://architekton.dev",
-    siteName: "Architekton",
+    url: "https://folderknower.vercel.app",
+    siteName: "FolderKnower",
     locale: "en_US",
     type: "website",
   },

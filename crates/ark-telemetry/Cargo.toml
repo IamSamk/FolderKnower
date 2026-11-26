@@ -1,6 +1,6 @@
 [package]
 name = "ark-telemetry"
-description = "Architekton ark-telemetry: unprivileged live process, memory, thread and model-runtime telemetry"
+description = "FolderKnower ark-telemetry: unprivileged live process, memory, thread and model-runtime telemetry"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

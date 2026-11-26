@@ -2,6 +2,13 @@
 
 Notes for each version are shown in the in-app update pop-up and on the website's releases page.
 
+## [0.13.0] - 2026-11-26
+
+### New name: FolderKnower
+- Architekton is now **FolderKnower**. The app, installer, website and docs use the new name. The command line tool is now `fknow`.
+- Quick install: `curl -fsSL folderknower.vercel.app/i | sh`, or on Windows `irm folderknower.vercel.app/i.ps1 | iex`.
+- Updates now come from github.com/IamSamk/FolderKnower. Your settings and cache stay.
+
 ## [0.12.0] - 2026-11-26
 
 ### Limits from the code
@@ -50,8 +57,8 @@ Notes for each version are shown in the in-app update pop-up and on the website'
 
 ## [0.7.0] - 2026-11-26
 
-### Architekton explains itself
-- The main example on the welcome screen is now Architekton's own code: a Tauri desktop app whose React window calls 21 Rust commands. The other examples (web app, AI app, broken project) sit in a quiet row underneath.
+### FolderKnower explains itself
+- The main example on the welcome screen is now FolderKnower's own code: a Tauri desktop app whose React window calls 21 Rust commands. The other examples (web app, AI app, broken project) sit in a quiet row underneath.
 - The example is rebuilt from the repository at every release, and its sources open in the code view.
 
 ### Desktop apps
@@ -96,7 +103,7 @@ Notes for each version are shown in the in-app update pop-up and on the website'
 ### Broken code
 - New Problems button lists what stops the code from running, found without running it: syntax errors with the line, relative imports of files that do not exist, packages imported but missing from requirements/pyproject/package.json, frontend calls to routes the backend never declares, compose start commands that name a missing file, and GPU code in a container with no GPU reserved.
 - Analysis keeps going on broken files: functions before a syntax error still show up in the map, and broken files are marked in the System view.
-- `architekton check <repo>` prints the same list and exits 1 when an error is found, for CI.
+- `fknow check <repo>` prints the same list and exits 1 when an error is found, for CI.
 - New "Try a broken project" demo.
 
 ## [0.5.0] - 2026-11-26
@@ -108,7 +115,7 @@ Notes for each version are shown in the in-app update pop-up and on the website'
 - Without a compose file, the boxes are your code tiers.
 
 ### Grounded AI tool
-- `architekton run <repo>` returns the same example run as JSON (or `--text`) so a model can narrate it using only proven hops.
+- `fknow run <repo>` returns the same example run as JSON (or `--text`) so a model can narrate it using only proven hops.
 
 ### UI map
 - Screens on the left, where each element goes on the right (backend route with its tables and container, browser-only, or not wired), joined by wires. "Play run" jumps to the System view.

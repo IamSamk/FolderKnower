@@ -1,8 +1,8 @@
-# M9: Architekton reads itself, desktop apps, models you already have
+# M9: FolderKnower reads itself, desktop apps, models you already have
 
 ## Why
 
-- The best example of what Architekton shows is Architekton. Running it on its own
+- The best example of what FolderKnower shows is FolderKnower. Running it on its own
   repository also exposed what it misread: a Tauri app came out as "Frontend app with
   93 components", its Rust crates landed in Shared, its test fixtures were mapped as
   part of the app, and valid TypeScript was reported as broken.
@@ -53,6 +53,6 @@ A linked file is only read. Removing it forgets the link.
 
 ## Self example
 
-`pnpm example:self` (in `apps/desktop`) writes `src/examples/architekton.json`; the release
+`pnpm example:self` (in `apps/desktop`) writes `src/examples/folderknower.json`; the release
 workflow regenerates it at the release commit. The welcome screen loads it, and this
 repository's sources, only when opened.

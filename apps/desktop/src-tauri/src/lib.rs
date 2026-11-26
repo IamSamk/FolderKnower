@@ -225,7 +225,7 @@ pub fn run() {
             run::run_containers,
         ])
         .build(tauri::generate_context!())
-        .expect("error while building Architekton");
+        .expect("error while building FolderKnower");
     app.run(|handle, event| {
         if let tauri::RunEvent::Exit = event {
             handle.state::<ai::AiState>().shutdown();

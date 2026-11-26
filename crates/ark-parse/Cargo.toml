@@ -1,6 +1,6 @@
 [package]
 name = "ark-parse"
-description = "Architekton ark-parse"
+description = "FolderKnower ark-parse"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

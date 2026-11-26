@@ -32,7 +32,7 @@ export function Header() {
           <span className="w-8 h-8 rounded-lg bg-[var(--mark)] border-2 border-[var(--line)] flex items-center justify-center font-black text-sm shadow-[2px_2px_0_var(--shade)]">
             <Layers size={18} strokeWidth={2.5} className="text-[#1f1d36]" />
           </span>
-          <span>Architekton</span>
+          <span>FolderKnower</span>
         </a>
 
         <nav className="hidden md:flex items-center gap-7 font-bold text-sm text-[var(--ink-2)]">
@@ -49,7 +49,7 @@ export function Header() {
             Releases
           </a>
           <a
-            href="https://github.com/IamSamk/Architekton"
+            href="https://github.com/IamSamk/FolderKnower"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 hover:text-[var(--ink)] transition-colors"

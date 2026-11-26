@@ -3,8 +3,8 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 
 export const metadata: Metadata = {
-  title: "Code signing policy · Architekton",
-  description: "How Architekton releases are built, signed and verified.",
+  title: "Code signing policy · FolderKnower",
+  description: "How FolderKnower releases are built, signed and verified.",
 };
 
 const rows: [string, string][] = [
@@ -87,10 +87,10 @@ export default function CodeSigningPage() {
 sha256sum -c SHA256SUMS.txt --ignore-missing
 
 # built by this repo's CI (Sigstore)
-gh attestation verify Architekton_*_amd64.AppImage -R IamSamk/Architekton
+gh attestation verify FolderKnower_*_amd64.AppImage -R IamSamk/FolderKnower
 
 # Windows signature
-Get-AuthenticodeSignature .\\Architekton_*_x64-setup.exe`}
+Get-AuthenticodeSignature .\\FolderKnower_*_x64-setup.exe`}
           </pre>
 
           <h2 className="mt-8 text-xl font-extrabold text-[var(--ink)]">Privacy</h2>
@@ -99,7 +99,7 @@ Get-AuthenticodeSignature .\\Architekton_*_x64-setup.exe`}
             model downloads you start yourself. See{" "}
             <a
               className="underline"
-              href="https://github.com/IamSamk/Architekton/blob/main/PRIVACY.md"
+              href="https://github.com/IamSamk/FolderKnower/blob/main/PRIVACY.md"
             >
               PRIVACY.md
             </a>

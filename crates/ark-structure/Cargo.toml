@@ -1,6 +1,6 @@
 [package]
 name = "ark-structure"
-description = "Architekton ark-structure"
+description = "FolderKnower ark-structure"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

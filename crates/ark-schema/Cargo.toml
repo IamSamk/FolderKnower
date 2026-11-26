@@ -1,6 +1,6 @@
 [package]
 name = "ark-schema"
-description = "Architekton ark-schema"
+description = "FolderKnower ark-schema"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

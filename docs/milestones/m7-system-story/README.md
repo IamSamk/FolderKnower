@@ -14,7 +14,7 @@ hybrid search, a React frontend, a `memory.py`), the Architecture view read like
 | Hybrid search rules | `ontology/ai-catalog.yaml` | Sparse vectors (fastembed `SparseTextEmbedding`, SPLADE, Qdrant `SparseVectorParams`), Qdrant `Prefetch` + `FusionQuery(RRF)`, Weaviate `.hybrid(alpha=)`, Postgres `to_tsvector`/`ts_rank`. |
 | Cache rules | same | Redis capped lists (`ltrim`), TTL caches (`setex`, `expire`), `functools.lru_cache`. |
 | Example runs | `crates/ark-core/src/story.rs` | For every UI element whose handler reaches a backend route: screen → handler → proxy → route → helper files (memory.py) → tables → AI pipeline → backing containers → response. |
-| Grounded tool | `architekton run <repo or architecture.json> [--from <ui id or label>] [--list] [--text]` | The same hops as JSON for an AI narrator. |
+| Grounded tool | `fknow run <repo or architecture.json> [--from <ui id or label>] [--list] [--text]` | The same hops as JSON for an AI narrator. |
 | System view | `apps/desktop/src/components/system/SystemView.tsx`, `lib/system.ts` | Containers in four lanes (browser, edge, your code, what it leans on), code inside each, memory split bar, camera-follow example run with a rendered screen preview. Falls back to code tiers without compose. |
 | UI map | `apps/desktop/src/components/UiMap.tsx` | Screens on the left, "where it goes" on the right, a wire per element; hover lights the wire, "play run" opens the System view on it. |
 | DSA tools | `apps/desktop/src/components/tools/ToolsDrawer.tsx`, `lib/dsaTools.ts` | Structures in your code; structures hidden inside your tools (HNSW, inverted index, top-k heap, agent state graph, ring buffer, LRU, KV block table, route trie, B-tree); real-life problems mapped to structures and to functions here; slow spots. |
@@ -53,7 +53,7 @@ If the chain breaks, the run stops. A model narrating a run gets only these hops
 }
 ```
 
-Back it with `architekton run <architecture.json> --from "<from>"`. The output's JSON Schema is
+Back it with `fknow run <architecture.json> --from "<from>"`. The output's JSON Schema is
 `ExampleRun` in `schema/architecture.schema.json`.
 
 ## Research behind it

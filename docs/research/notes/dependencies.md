@@ -1,4 +1,4 @@
-# Architekton Dependencies: Versions, Licenses, Caveats (fetched 2026-11-21)
+# FolderKnower Dependencies: Versions, Licenses, Caveats (fetched 2026-11-21)
 
 Fetch method and date: all registry values below were fetched on **2026-11-21** from the crates.io API (`https://crates.io/api/v1/crates/<name>`), the npm registry (`https://registry.npmjs.org/<pkg>`), the Go module proxy (`proxy.golang.org`), Maven Central (`repo1.maven.org`) and PyPI (`pypi.org/pypi/<pkg>/json`). **The `gh api` calls failed** (HTTP 403, "GitHub access to this repository is not enabled for this session"), and so did direct `curl` to api.github.com and github.com (HTTP 403). GitHub data below comes from WebFetch of the github.com HTML pages. Those pages may be cached or stale, and they sometimes disagree with the registries (noted where it happens). Release dates are the publish dates of the listed version on its registry.
 
@@ -246,7 +246,7 @@ Yes. As of 2026-11-21, pnpm's latest is **12.21.0** (major 12, out since 2026-08
 - `@typescript/native-preview` last published 7.0.0-dev.20260707.2 and is replaced by `typescript@next` — [npm](https://registry.npmjs.org/@typescript/native-preview), [TS blog](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/)
 
 ### Inferences
-- Architekton should target `typescript@^7.0` for type checking and keep `@typescript/typescript6` only if typescript-eslint is used. Biome avoids that need.
+- FolderKnower should target `typescript@^7.0` for type checking and keep `@typescript/typescript6` only if typescript-eslint is used. Biome avoids that need.
 - Use `pnpm@12` through the `packageManager` field with Corepack or the pnpm self-installer.
 
 ### Gaps

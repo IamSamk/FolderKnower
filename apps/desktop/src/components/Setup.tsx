@@ -35,7 +35,7 @@ function Terms() {
   return (
     <div className="ak-legal">
       <p>
-        Architekton is free, open-source software under your choice of the <b>MIT</b> or{" "}
+        FolderKnower is free, open-source software under your choice of the <b>MIT</b> or{" "}
         <b>Apache 2.0</b> license. You can use it for personal and commercial work, change it and
         share it.
       </p>
@@ -56,8 +56,8 @@ function Privacy() {
   return (
     <div className="ak-legal">
       <p>
-        <b>Your code never leaves this computer.</b> Architekton has no account, no analytics and no
-        telemetry. It does not upload, share or keep copies of your code anywhere else.
+        <b>Your code never leaves this computer.</b> FolderKnower has no account, no analytics and
+        no telemetry. It does not upload, share or keep copies of your code anywhere else.
       </p>
       <p>
         To make the next run faster it caches parsed results in your user cache folder. Delete that
@@ -193,7 +193,7 @@ function LocalAi() {
         </ul>
       )}
       <p>
-        Everything in Architekton works without these. Add them for a second opinion when the rules
+        Everything in FolderKnower works without these. Add them for a second opinion when the rules
         are unsure, and for plain-language explanations that cite the graph. They run on your CPU,
         here.
       </p>

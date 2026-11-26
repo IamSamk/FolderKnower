@@ -154,10 +154,10 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
 
-      # The welcome screen's example is Architekton reading its own code at this commit.
+      # The welcome screen's example is FolderKnower reading its own code at this commit.
       - name: Refresh the built-in example
         shell: bash
-        run: cargo run -q --release -p ark-cli -- index . -o apps/desktop/src/examples/architekton.json
+        run: cargo run -q --release -p ark-cli -- index . -o apps/desktop/src/examples/folderknower.json
 
       - uses: tauri-apps/tauri-action@v0
         env:
@@ -169,20 +169,20 @@ jobs:
           tauriScript: pnpm tauri
           tagName: ${{ env.TAG }}
           releaseCommitish: ${{ github.event.inputs.commit || github.sha }}
-          releaseName: Architekton ${{ env.TAG }}
+          releaseName: FolderKnower ${{ env.TAG }}
           includeUpdaterJson: true
           releaseBody: |
             ${{ needs.preflight.outputs.notes }}
 
             ## Install
-            - Windows: `Architekton_*_x64-setup.exe` (or the `.msi`).
-            - macOS (Apple Silicon + Intel): `Architekton_*_universal.dmg`. Not notarized: right-click and choose Open the first time, or run `xattr -cr /Applications/Architekton.app`.
+            - Windows: `FolderKnower_*_x64-setup.exe` (or the `.msi`).
+            - macOS (Apple Silicon + Intel): `FolderKnower_*_universal.dmg`. Not notarized: right-click and choose Open the first time, or run `xattr -cr /Applications/FolderKnower.app`.
             - Linux: `.AppImage` (chmod +x and run), `.deb` or `.rpm`.
             - Already installed? The app updates itself: you will get a pop-up.
 
             ## Verify
-            - `SHA256SUMS.txt` lists every file. `gh attestation verify <file> -R IamSamk/Architekton` proves it was built by this repo's CI.
-            - Code signing policy: https://github.com/IamSamk/Architekton/blob/main/docs/release/signing.md
+            - `SHA256SUMS.txt` lists every file. `gh attestation verify <file> -R IamSamk/FolderKnower` proves it was built by this repo's CI.
+            - Code signing policy: https://github.com/IamSamk/FolderKnower/blob/main/docs/release/signing.md
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
@@ -196,13 +196,13 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            exe: architekton.exe
+            exe: fknow.exe
           - os: macos-latest
             target: aarch64-apple-darwin
-            exe: architekton
+            exe: fknow
           - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
-            exe: architekton
+            exe: fknow
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -216,7 +216,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          name="architekton-cli-${TAG}-${{ matrix.target }}"
+          name="fknow-cli-${TAG}-${{ matrix.target }}"
           mkdir "$name"
           cp "target/release/${{ matrix.exe }}" README.md "$name/"
           if [ "${{ runner.os }}" = "Windows" ]; then

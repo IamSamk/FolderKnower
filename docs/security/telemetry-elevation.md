@@ -22,8 +22,8 @@ Status: design, written ahead of Phase 4. Sources are in [`../research/notes/tel
 | | Linux | Windows | macOS |
 |---|---|---|---|
 | Install | Package postinst or a one-time `pkexec` to install a systemd unit | MSI installs a service | Deferred (ES entitlement is Apple-restricted; `task_for_pid` is debugger-only) |
-| Privilege | `AmbientCapabilities=CAP_BPF CAP_PERFMON`, `CapabilityBoundingSet` the same, `NoNewPrivileges=yes`, `ProtectSystem=strict`, `ProtectHome=read-only`, `PrivateTmp=yes`, `RestrictAddressFamilies=AF_UNIX`, `DynamicUser` + group `architekton` | LocalSystem or a virtual service account with only the ETW privileges it needs; app manifest `asInvoker` | n/a |
-| IPC authn | Unix socket `/run/architekton/probe.sock`, mode 0660, group `architekton`; `SO_PEERCRED` uid | Named pipe with a DACL for Interactive Users; identify the client by impersonating it and reading its token **SID**, not by PID | (future) XPC with `xpc_connection_set_peer_code_signing_requirement` (Team ID + bundle id) |
+| Privilege | `AmbientCapabilities=CAP_BPF CAP_PERFMON`, `CapabilityBoundingSet` the same, `NoNewPrivileges=yes`, `ProtectSystem=strict`, `ProtectHome=read-only`, `PrivateTmp=yes`, `RestrictAddressFamilies=AF_UNIX`, `DynamicUser` + group `folderknower` | LocalSystem or a virtual service account with only the ETW privileges it needs; app manifest `asInvoker` | n/a |
+| IPC authn | Unix socket `/run/folderknower/probe.sock`, mode 0660, group `folderknower`; `SO_PEERCRED` uid | Named pipe with a DACL for Interactive Users; identify the client by impersonating it and reading its token **SID**, not by PID | (future) XPC with `xpc_connection_set_peer_code_signing_requirement` (Team ID + bundle id) |
 | Authz | target PID's uid == peer uid | target process token user == client SID | same-user |
 
 ## Probe API (complete list)
@@ -41,7 +41,7 @@ There is nothing else. The API has no "load program", no path arguments and no s
 7. The Linux helper is root-equivalent for confidentiality (BPF can read kernel memory). Treat any helper bug as a local privilege-escalation or information-disclosure risk.
 
 ## Tauri app hardening
-- A capability per window. `fs` is read-only and scoped to the chosen repo root plus `$APPDATA/architekton`. `shell` may run only the declared sidecars with argument validators. No `http` plugin.
+- A capability per window. `fs` is read-only and scoped to the chosen repo root plus `$APPDATA/folderknower`. `shell` may run only the declared sidecars with argument validators. No `http` plugin.
 - CSP: `default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'` (rough SVG inline styles), and no remote origins.
 - Every command canonicalizes paths and rejects anything outside the repo root.
 - The repository is untrusted input: no code execution, no build scripts, no symlink escapes, and size and time caps per file.

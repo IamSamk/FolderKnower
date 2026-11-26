@@ -24,7 +24,7 @@ RAG**: the model decides when to retrieve, so retrieval sits inside the loop.
 ## Small decision models
 
 The "decision model" in the loop can be small. Qwen3-0.6B, or a fine-tuned classifier,
-can route between "answer", "retrieve" and "tool X". Doc 21 covers how Architekton
+can route between "answer", "retrieve" and "tool X". Doc 21 covers how FolderKnower
 itself uses small models, and how the view will label a router model by size when the
 code names one.
 

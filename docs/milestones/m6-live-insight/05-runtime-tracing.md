@@ -8,7 +8,7 @@ called it 3 times, kept 3 of 16 documents, and spent 41 ms there".
 1. **Sampling, no code changes.** py-spy (`--pid`, JSON output), or Python 3.15
    `profiling.sampling`. Stacks are joined to `FunctionNode` ids by file path and line
    range. Works for Python today; `perf` maps for Node with `--perf-basic-prof`.
-2. **PEP 669 `sys.monitoring`.** A tiny bootstrap (`architekton-trace`) registers
+2. **PEP 669 `sys.monitoring`.** A tiny bootstrap (`folderknower-trace`) registers
    `PY_START`, `PY_RETURN`, `RAISE` and `BRANCH` events for the files in the repo
    only. The output:
    - call counts per function;

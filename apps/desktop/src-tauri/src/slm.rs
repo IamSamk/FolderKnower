@@ -1,6 +1,6 @@
 //! Optional local small-language-model layer.
 //!
-//! Architekton never needs a model: static analysis owns every edge. When a local
+//! FolderKnower never needs a model: static analysis owns every edge. When a local
 //! OpenAI-compatible server is running (Ollama on :11434 or llama.cpp `llama-server`
 //! on :8080), the app can use it to
 //!   1. narrate a selected subgraph in plain language, and

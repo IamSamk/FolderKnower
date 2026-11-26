@@ -104,10 +104,10 @@ export function ArchitectureExplorer() {
               Live Architecture Inspection
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[var(--ink)]">
-              How Architekton Connects Your Code
+              How FolderKnower Connects Your Code
             </h2>
             <p className="text-[var(--ink-2)] text-base font-medium mt-2 max-w-2xl">
-              Traditional diagrams are hand-drawn guesses. Architekton traverses the real Abstract
+              Traditional diagrams are hand-drawn guesses. FolderKnower traverses the real Abstract
               Syntax Tree (AST) to prove exactly which button calls which route and writes to which
               table.
             </p>

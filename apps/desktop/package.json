@@ -1,16 +1,16 @@
 {
-  "name": "@architekton/desktop",
+  "name": "@folderknower/desktop",
   "private": true,
-  "version": "0.12.0",
+  "version": "0.13.0",
   "type": "module",
-  "description": "Architekton desktop app (Tauri 2 + React).",
+  "description": "FolderKnower desktop app (Tauri 2 + React).",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "tauri": "tauri",
     "typecheck": "tsc --noEmit",
-    "example:self": "cargo run -q --release -p ark-cli -- index ../.. -o src/examples/architekton.json"
+    "example:self": "cargo run -q --release -p ark-cli -- index ../.. -o src/examples/folderknower.json"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "5.3.0",

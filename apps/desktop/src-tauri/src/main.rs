@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    architekton_desktop_lib::run();
+    folderknower_desktop_lib::run();
 }

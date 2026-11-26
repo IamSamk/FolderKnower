@@ -1,6 +1,6 @@
 [package]
-name = "architekton-desktop"
-description = "Architekton desktop app"
+name = "folderknower-desktop"
+description = "FolderKnower desktop app"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,7 +9,7 @@ repository.workspace = true
 publish = false
 
 [lib]
-name = "architekton_desktop_lib"
+name = "folderknower_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

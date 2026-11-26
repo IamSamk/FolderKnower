@@ -133,7 +133,7 @@ export function ErView() {
       <div className="ak-empty">
         <h2>No data models found</h2>
         <p>
-          Architekton reads SQLAlchemy, Django, SQLModel, Pydantic, Prisma, SQL DDL, TypeORM,
+          FolderKnower reads SQLAlchemy, Django, SQLModel, Pydantic, Prisma, SQL DDL, TypeORM,
           Sequelize, zod, sqlx, Diesel and GORM models. Open a repository that uses one of them.
         </p>
       </div>

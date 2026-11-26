@@ -10,14 +10,14 @@ git tag vX.Y.Z && git push --tags
   desktop     Windows / macOS universal / Linux via tauri-action -> DRAFT release
               + *.sig updater signatures + latest.json (signed feed)
               + Linux AppImage GPG-signed (if GPG_PRIVATE_KEY set)
-  cli         architekton-cli-* archives
+  cli         fknow-cli-* archives
   sign-windows (only if SignPath configured) Authenticode-sign .exe/.msi,
               re-create their updater .sig, patch latest.json
   publish     SHA256SUMS.txt (+ .asc), Sigstore build-provenance attestations,
               draft -> published + marked latest
 ```
 
-Installed apps read `https://github.com/IamSamk/Architekton/releases/latest/download/latest.json`
+Installed apps read `https://github.com/IamSamk/FolderKnower/releases/latest/download/latest.json`
 4 s after launch and every 6 h, show the pop-up with the CHANGELOG notes, download with a
 progress bar, verify the minisign signature against the pubkey in `tauri.conf.json`, install
 and relaunch. A draft is invisible to `/releases/latest`, so users never see a half-built release.
@@ -61,9 +61,9 @@ an apt/dnf repo (to-do below).
    The release workflow fails in `preflight` with a clear message when this is missing.
 2. **GPG key (optional, 5 min).**
    ```
-   gpg --quick-gen-key "Architekton Releases <your-email>" ed25519 sign 2y
+   gpg --quick-gen-key "FolderKnower Releases <your-email>" ed25519 sign 2y
    gpg --armor --export-secret-keys <KEYID>   # -> secret GPG_PRIVATE_KEY
-   gpg --armor --export <KEYID> > docs/release/architekton-release.asc   # commit this
+   gpg --armor --export <KEYID> > docs/release/folderknower-release.asc   # commit this
    ```
    Add `GPG_PASSPHRASE` too. Publish the fingerprint on the website's code-signing page.
 3. **SignPath Foundation (optional, days of waiting).**
@@ -84,9 +84,9 @@ an apt/dnf repo (to-do below).
 ```
 sha256sum -c SHA256SUMS.txt --ignore-missing
 gpg --verify SHA256SUMS.txt.asc SHA256SUMS.txt
-gh attestation verify Architekton_0.3.2_amd64.AppImage -R IamSamk/Architekton
-./Architekton_0.3.2_amd64.AppImage --appimage-signature
-Get-AuthenticodeSignature .\Architekton_0.3.2_x64-setup.exe
+gh attestation verify FolderKnower_0.3.2_amd64.AppImage -R IamSamk/FolderKnower
+./FolderKnower_0.3.2_amd64.AppImage --appimage-signature
+Get-AuthenticodeSignature .\FolderKnower_0.3.2_x64-setup.exe
 ```
 
 ## Sources

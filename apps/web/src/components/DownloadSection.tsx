@@ -56,7 +56,7 @@ export async function DownloadSection() {
             Releases & Installers
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[var(--ink)]">
-            Get Architekton Desktop
+            Get FolderKnower Desktop
           </h2>
           <p className="text-[var(--ink-2)] text-base font-medium mt-3">
             Native desktop app that updates itself with a pop-up, plus a standalone Rust CLI.
@@ -127,13 +127,13 @@ export async function DownloadSection() {
                 Prefer the Command Line?
               </h4>
               <p className="text-xs sm:text-sm text-[var(--ink-2)] font-medium mt-0.5">
-                Run the indexer directly in CI/CD or your favorite terminal.
+                Run the indexer as <code>fknow</code> in CI or any terminal. On Windows: <code>irm folderknower.vercel.app/i.ps1 | iex</code>
               </p>
             </div>
           </div>
 
           <div className="bg-[var(--code-bg)] border-2 border-[var(--line)] rounded-lg px-4 py-2.5 font-mono text-xs sm:text-sm text-[var(--ink)] font-bold shadow-[2px_2px_0_var(--shade)]">
-            cargo install ark-cli
+            curl -fsSL folderknower.vercel.app/i | sh
           </div>
         </div>
       </div>

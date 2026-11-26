@@ -1,6 +1,6 @@
 [package]
 name = "ark-metrics"
-description = "Architekton ark-metrics"
+description = "FolderKnower ark-metrics"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

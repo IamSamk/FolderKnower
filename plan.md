@@ -1,4 +1,4 @@
-# Architekton: Project Specification & Living Implementation Plan
+# FolderKnower: Project Specification & Living Implementation Plan
 
 > **Living document (2025–2026+).** Contributors and AI collaborators research current papers, benchmarks and open-source releases on repo-scale code search, hierarchical AST/file indexing, static + dynamic telemetry fusion and graph-grounded small models, and update this plan before implementing the affected phase.
 >
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-**Architekton** is an offline-first, deterministic system-design teacher and codebase visualizer, packaged as a cross-platform desktop app with [Tauri 2](https://github.com/tauri-apps/tauri). It turns any local repository into an interactive, hand-drawn whiteboard in the style of Excalidraw.
+**FolderKnower** is an offline-first, deterministic system-design teacher and codebase visualizer, packaged as a cross-platform desktop app with [Tauri 2](https://github.com/tauri-apps/tauri). It turns any local repository into an interactive, hand-drawn whiteboard in the style of Excalidraw.
 
 Every edge it draws comes from static analysis or observed runtime facts, never from an LLM. The engine is:
 
@@ -19,13 +19,13 @@ Every edge it draws comes from static analysis or observed runtime facts, never 
 - a neuro-symbolic Systems Ontology;
 - optional small local models that can only *explain* verified subgraphs and must cite node ids.
 
-**Determinism contract.** The same repository bytes, Architekton version and ruleset version always produce a byte-identical `architecture.json`. This rules out unseeded randomness (clustering uses a fixed seed), hash-map iteration order leaking into output (output is sorted), and model output inside the graph (models only annotate, in a separate layer).
+**Determinism contract.** The same repository bytes, FolderKnower version and ruleset version always produce a byte-identical `architecture.json`. This rules out unseeded randomness (clustering uses a fixed seed), hash-map iteration order leaking into output (output is sorted), and model output inside the graph (models only annotate, in a separate layer).
 
 ---
 
 ## The 5-Level Semantic Zoom Hierarchy
 
-Architekton models a codebase with an automated variant of the C4 model and supports in-place recursive expansion. Sketch: [`docs/architecture/semantic-zoom.excalidraw`](docs/architecture/semantic-zoom.excalidraw).
+FolderKnower models a codebase with an automated variant of the C4 model and supports in-place recursive expansion. Sketch: [`docs/architecture/semantic-zoom.excalidraw`](docs/architecture/semantic-zoom.excalidraw).
 
 ```
 L1 System Tiers        Frontend ⇄ Gateway/Middleware ⇄ Backend ⇄ Storage ⇄ Workers
@@ -131,7 +131,7 @@ repo root
   ├─6 Ontology    ast-grep + symbol rules (YAML) → OS / network / cloud tags
   ├─7 Structure   tier heuristics (L1) → guided seeded Leiden (L2) → consistency check
   ▼
-architecture.json (schema v2, sorted, byte-stable)  +  .architekton/index.sqlite (cache)
+architecture.json (schema v2, sorted, byte-stable)  +  .folderknower/index.sqlite (cache)
 ```
 
 **Index format decision.** Per-file artifacts are content-addressed: the key is `blake3(file bytes) ‖ grammar id@abi ‖ extractor version`, and artifacts are stored in SQLite tables (`files`, `symbols`, `edges`, `chunks`, `chunks_fts`). Unchanged files are never re-parsed, and per-file facts are independent of other files, as in stack-graphs; only the cheap link pass (4) is global. This follows the per-file-isolation idea from stack graphs and the Merkle-diff design in "Code Isn't Memory" (2026). Parent summaries are cached by the hashes of their children, so they regenerate only when something below them changes.
@@ -191,7 +191,7 @@ Implementations:
 |---|---|---|---|
 | Privilege needed | `CAP_BPF` + `CAP_PERFMON` (kernel ≥ 5.8). Before 5.8, `CAP_SYS_ADMIN` | Kernel logger needs Admin/SYSTEM. Performance Log Users can run real-time sessions for user-mode providers | Same-user `proc_pidinfo` works unprivileged. `task_for_pid` is debugger-only (avoid). Endpoint Security needs a restricted entitlement |
 | Helper form | systemd **service** with `AmbientCapabilities=CAP_BPF CAP_PERFMON`, `CapabilityBoundingSet` = the same, `NoNewPrivileges`, `ProtectSystem=strict`, `PrivateTmp`, `ProtectHome=read-only`. Not setcap on a binary and not pkexec per use | Windows **service** installed by the MSI. The app runs `asInvoker`, never UAC-prompts at runtime | `SMAppService` daemon (macOS 13+), user-approved in Login Items. Deep tier deferred, so v1 ships no helper on macOS |
-| IPC | Unix socket in `/run/architekton/`, `SO_PEERCRED` → uid; requests only for PIDs owned by that uid | Named pipe with a strict DACL; authenticate by **SID via impersonation**, not `GetNamedPipeClientProcessId` (spoofable, per Project Zero) | XPC with `xpc_connection_set_peer_code_signing_requirement` pinning Team ID + bundle id. No PID-based checks (TOCTOU) |
+| IPC | Unix socket in `/run/folderknower/`, `SO_PEERCRED` → uid; requests only for PIDs owned by that uid | Named pipe with a strict DACL; authenticate by **SID via impersonation**, not `GetNamedPipeClientProcessId` (spoofable, per Project Zero) | XPC with `xpc_connection_set_peer_code_signing_requirement` pinning Team ID + bundle id. No PID-based checks (TOCTOU) |
 | Host settings | Respect `kernel.unprivileged_bpf_disabled` (Ubuntu default 2) and `perf_event_paranoid` (Debian/Ubuntu 3); explain, never auto-change | | |
 
 **Cross-cutting rules**
@@ -201,7 +201,7 @@ Implementations:
 - eBPF objects are embedded in the signed helper. No runtime loading of user-supplied BPF.
 - The helper has no network access, does no file writes beyond its socket, and exposes no generic "run" or "load" command.
 - Treat the Linux helper as **root-equivalent for confidentiality**: with CAP_BPF + CAP_PERFMON it can read kernel memory, so it must be small, audited and fuzzed.
-- Tauri: one capability file per window, with the minimal permission set. `fs` is scoped to the user-chosen repo root (read-only) plus `$APPDATA/architekton`. `shell` may run only the bundled sidecars, with fixed argument validators. No `http` plugin, so the app makes zero network requests. A strict CSP. Capabilities do not protect against bugs in Rust commands, so every command validates its paths.
+- Tauri: one capability file per window, with the minimal permission set. `fs` is scoped to the user-chosen repo root (read-only) plus `$APPDATA/folderknower`. `shell` may run only the bundled sidecars, with fixed argument validators. No `http` plugin, so the app makes zero network requests. A strict CSP. Capabilities do not protect against bugs in Rust commands, so every command validates its paths.
 - Analysed repositories are untrusted input. The indexer never executes repo code, never runs repo build scripts and never follows symlinks out of the root. SCIP indexers that need a project build (`scip-java`) are user-triggered with a warning.
 
 Threat model and details: [`docs/security/telemetry-elevation.md`](docs/security/telemetry-elevation.md).
@@ -209,7 +209,7 @@ Threat model and details: [`docs/security/telemetry-elevation.md`](docs/security
 ### 5. Neuro-symbolic layer (Phase 5; schema reserved in Phase 1)
 
 1. **Ontology (no AI).** Versioned YAML rules (ast-grep patterns + fully-qualified symbol matches) map code to concepts (thread spawn, event-loop blocking risk, OSI L4/L7, managed service, IAM boundary, and so on). Each tag stores its `rule_id`.
-2. **Role classifier.** A prototype (nearest-centroid) classifier over function embeddings plus structural features (fan-in/out, ontology tags, I/O calls), with a fixed role set: Network I/O, Auth Gate, State Mutation, CPU-bound Compute, Serialization, Orchestration, Unknown. No 2025–26 benchmark exists for this task, so Architekton ships its own labelled fixture set. Below a confidence threshold the role is `Unknown`, never guessed.
+2. **Role classifier.** A prototype (nearest-centroid) classifier over function embeddings plus structural features (fan-in/out, ontology tags, I/O calls), with a fixed role set: Network I/O, Auth Gate, State Mutation, CPU-bound Compute, Serialization, Orchestration, Unknown. No 2025–26 benchmark exists for this task, so FolderKnower ships its own labelled fixture set. Below a confidence threshold the role is `Unknown`, never guessed.
 3. **Grounded narrator (optional SLM).** The input is a serialized, verified subgraph with stable node ids. Output uses JSON-schema-constrained decoding (llama.cpp grammars), with citation fields as an **enum of the node ids in the subgraph**, so the model cannot cite anything outside it. A post-check (ETF-style entity tracing) rejects sentences that mention entities not in the subgraph. Narration is stored separately and never modifies the graph.
 
 **Model shortlist (all verified on the HF Hub, 2026-11-21).** Models are opt-in, never downloaded automatically, and checked against SHA-256 values pinned in a manifest.
@@ -357,7 +357,7 @@ Design rules (from the frontend-design pass):
 
 ### Phase 1: Static ingestion and Systems Ontology (weeks 1–3). Detailed checklist: [`docs/phase1-checklist.md`](docs/phase1-checklist.md)
 
-Deliverable: `architekton index <path> --out architecture.json` (CLI, no UI) for TS/JS, Python, Rust and Go, with a deterministic, incremental SQLite cache.
+Deliverable: `fknow index <path> --out architecture.json` (CLI, no UI) for TS/JS, Python, Rust and Go, with a deterministic, incremental SQLite cache.
 
 Milestones:
 - **M1.1** Workspace, CI, license gate.
@@ -448,13 +448,13 @@ Before each phase, re-run the literature check, update `docs/research/synthesis.
 
 ## Distribution, CLI & Web Platform Roadmap (v0.3.0+)
 
-### 1. Zero-Install CLI: `npx architekton` / `pnpm dlx architekton`
-To allow any developer or CI environment to run Architekton without installing Rust, Cargo, or system libraries:
-- **npm package wrapper (`architekton`)**:
-  - Bin script `bin/architekton.js` in a lightweight npm package.
-  - When executed (`npx architekton index .` or `pnpm dlx architekton index .`), detects `process.platform` (`win32`, `darwin`, `linux`) and `process.arch` (`x64`, `arm64`).
-  - Fetches the exact pre-compiled release binary (`architekton-cli-*`) from GitHub Releases (`https://github.com/IamSamk/Architekton/releases/latest/download/...`).
-  - Caches binary locally in `~/.architekton/bin/` and executes it directly with full arguments.
+### 1. Zero-Install CLI: `npx folderknower` / `pnpm dlx folderknower`
+To allow any developer or CI environment to run FolderKnower without installing Rust, Cargo, or system libraries:
+- **npm package wrapper (`folderknower`)**:
+  - Bin script `bin/folderknower.js` in a lightweight npm package.
+  - When executed (`npx fknow index .` or `pnpm dlx fknow index .`), detects `process.platform` (`win32`, `darwin`, `linux`) and `process.arch` (`x64`, `arm64`).
+  - Fetches the exact pre-compiled release binary (`fknow-cli-*`) from GitHub Releases (`https://github.com/IamSamk/FolderKnower/releases/latest/download/...`).
+  - Caches binary locally in `~/.folderknower/bin/` and executes it directly with full arguments.
 
 ### 2. One-Line Shell Installers
 - **macOS / Linux**: `curl -fsSL https://<domain>/install.sh | bash`

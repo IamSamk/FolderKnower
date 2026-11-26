@@ -160,7 +160,7 @@ export function UpdatePopup() {
               </div>
               <div className="flex-1">
                 <div id="update-title" className="update-card__title">
-                  Architekton {update.version} is ready
+                  FolderKnower {update.version} is ready
                 </div>
                 <div className="update-card__sub">
                   you have {update.currentVersion}

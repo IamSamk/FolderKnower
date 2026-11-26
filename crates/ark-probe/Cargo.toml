@@ -1,6 +1,6 @@
 [package]
 name = "ark-probe"
-description = "Architekton privileged telemetry helper (Phase 4)"
+description = "FolderKnower privileged telemetry helper (Phase 4)"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

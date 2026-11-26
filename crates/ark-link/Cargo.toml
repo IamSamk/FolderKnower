@@ -1,6 +1,6 @@
 [package]
 name = "ark-link"
-description = "Architekton ark-link"
+description = "FolderKnower ark-link"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

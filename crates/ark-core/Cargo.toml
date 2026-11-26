@@ -1,6 +1,6 @@
 [package]
 name = "ark-core"
-description = "Architekton ark-core"
+description = "FolderKnower ark-core"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

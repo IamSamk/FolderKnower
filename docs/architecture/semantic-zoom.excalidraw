@@ -1,7 +1,7 @@
 {
  "type": "excalidraw",
  "version": 2,
- "source": "architekton-docs",
+ "source": "folderknower-docs",
  "elements": [
   {
    "type": "text",
@@ -29,8 +29,8 @@
    "updated": 1,
    "link": null,
    "locked": false,
-   "text": "Architekton - 5-Level Semantic Zoom (Rev 2)",
-   "originalText": "Architekton - 5-Level Semantic Zoom (Rev 2)",
+   "text": "FolderKnower - 5-Level Semantic Zoom (Rev 2)",
+   "originalText": "FolderKnower - 5-Level Semantic Zoom (Rev 2)",
    "fontSize": 26,
    "fontFamily": 5,
    "textAlign": "left",
