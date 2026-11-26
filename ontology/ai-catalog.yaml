@@ -66,7 +66,13 @@ components:
   - id: ai.embed.other
     role: embedder
     library: hosted / local embeddings
-    match: ['(CohereEmbeddings|OllamaEmbeddings|VoyageEmbeddings|GoogleGenerativeAIEmbeddings|VertexAIEmbeddings|BedrockEmbeddings|MistralAIEmbeddings|NomicEmbeddings|JinaEmbeddings)$', 'ollama\.embed(dings)?$', '\.embed_documents$', '\.embed_query$', '^embed(Many)?$']
+    match: ['(CohereEmbeddings|OllamaEmbeddings|VoyageEmbeddings|GoogleGenerativeAIEmbeddings|VertexAIEmbeddings|BedrockEmbeddings|MistralAIEmbeddings|NomicEmbeddings|JinaEmbeddings)$', 'ollama\.embed(dings)?$']
+    params: [model, model_name, dimensions, input_type]
+  - id: ai.embed.generic
+    role: embedder
+    library: hosted / local embeddings
+    match: ['\.embed_documents$', '\.embed_query$', '^embed(Many)?$', '\.embed$', '\.embeddings\.create$']
+    requires: [ai, "@ai-sdk", openai, ollama, cohere, voyageai, langchain, "@langchain", llama_index, sentence_transformers, google, mistralai, "@google"]
     params: [model, model_name, dimensions, input_type]
   # ---------------- stores / indexes ----------------
   - id: ai.store.vector
@@ -111,7 +117,13 @@ components:
   - id: ai.retrieve.search
     role: retriever
     library: vector search
-    match: ['\.(similarity_search|similarity_search_with_score|similarity_search_with_relevance_scores|max_marginal_relevance_search|similaritySearch|similaritySearchWithScore|maxMarginalRelevanceSearch)$', '\.(query_points|search)$', '\.(get_relevant_documents|retrieve)$']
+    match: ['\.(similarity_search|similarity_search_with_score|similarity_search_with_relevance_scores|max_marginal_relevance_search|similaritySearch|similaritySearchWithScore|maxMarginalRelevanceSearch)$', '\.(get_relevant_documents)$']
+    params: [k, n_results, top_k, limit, filter, fetch_k, score_threshold]
+  - id: ai.retrieve.client-search
+    role: retriever
+    library: vector search
+    match: ['\.(query_points|search|retrieve|search_points|query_hybrid)$']
+    requires: [qdrant_client, chromadb, pinecone, weaviate, lancedb, faiss, pymilvus, elasticsearch, opensearchpy, langchain, llama_index, haystack, supabase, redis, "@pinecone-database", "@qdrant", "@langchain", llamaindex, vecs, pgvector, sentence_transformers]
     params: [k, n_results, top_k, limit, filter, fetch_k, score_threshold]
   - id: ai.retrieve.chroma-query
     role: retriever
@@ -170,6 +182,31 @@ components:
     requires: [llama_cpp, vllm, transformers, mlx_lm, ctransformers, gpt4all]
     params: [model, model_path, n_ctx, n_gpu_layers, max_model_len, gpu_memory_utilization, tensor_parallel_size, dtype, torch_dtype, device_map, max_new_tokens, temperature, do_sample, quantization]
     positional: model
+  - id: ai.llm.gemini
+    role: llm
+    library: Gemini
+    match: ['GenerativeModel$', '\.models\.(generate_content|generateContent|generate_content_stream)$', '\.(generate_content|generateContent)$', '^GoogleGenerativeAI$', '^GoogleGenAI$', 'genai\.Client$']
+    requires: [google, "@google", genai, vertexai]
+    params: [model, model_name, temperature, max_output_tokens]
+    positional: model
+  - id: ai.llm.local-http
+    role: llm
+    library: local model server (Ollama / LM Studio / llama.cpp)
+    match: ['^url:.*(:11434|/api/(chat|generate)|:1234/v1|/v1/chat/completions|:8080/(completion|v1))']
+    params: [model]
+  - id: ai.speech.whisper
+    role: tool
+    library: speech to text (Whisper)
+    match: ['(^|\.)(WhisperModel|load_model|transcribe)$', 'audio\.transcriptions\.create$', '^url:.*(/audio/transcriptions|whisper)', 'whisper\.cpp']
+    requires: [whisper, faster_whisper, openai, "@openai", transformers, "@xenova", "@huggingface", whisper_timestamped, stable_whisper]
+    params: [model, language]
+    positional: model
+  - id: ai.speech.tts
+    role: tool
+    library: text to speech
+    match: ['(^|\.)(text_to_speech\.(convert|stream)|textToSpeech\.(convert|stream))$', 'audio\.speech\.create$', '^url:.*(elevenlabs|/audio/speech|/text-to-speech)']
+    requires: [elevenlabs, "@elevenlabs", openai, TTS, piper, pyttsx3, edge_tts]
+    params: [voice, voice_id, model, model_id]
   - id: ai.tokenizer
     role: tokenizer
     library: tokenizer

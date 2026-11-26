@@ -10,7 +10,11 @@ Notes for each version are shown in the in-app update pop-up and on the website'
 
 ### Fixes
 - Screen transitions can no longer leave a half-drawn dark shape over the UI map.
-- Custom BM25 code and BGE-M3 (BGEM3FlagModel, dense plus sparse) are now recognized in the AI pipeline.
+- Custom BM25 code and BGE-M3 (BGEM3FlagModel, dense plus sparse) are now recognized in the AI pipeline, also when the model id only sits in a settings file or a compose command, and Postgres full-text (ts_rank) next to other AI parts counts as the keyword half of hybrid search.
+- `re.search()` and a game's `embed()` no longer make a project look like RAG; search and embed calls need a vector or embedding library in the file.
+- Whisper, Gemini, Ollama / LM Studio / llama.cpp URLs and text-to-speech are now listed as AI parts.
+- Fewer false problems: `python-frontmatter`-style package names, `cv2` with any opencv package, `src` / `app` as local code, dynamic `import()` with a template string, `&` in JSX text, Dockerfile entry files under a copied sub-folder, Next standalone `server.js`.
+- Top bar stays on one line at laptop widths; a big data diagram opens on its busiest table instead of at 16%.
 
 ## [0.7.0] - 2026-11-26
 

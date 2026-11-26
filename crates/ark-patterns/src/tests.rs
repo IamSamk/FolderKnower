@@ -430,3 +430,69 @@ def sparse_search(index, q):
         .expect("embedder");
     assert_eq!(emb.params["model"], "BAAI/bge-m3");
 }
+
+#[test]
+fn re_search_and_game_embed_are_not_ai() {
+    let src = r#"
+import re
+from game import fs
+
+def find(t):
+    return re.search(r"a+", t)
+
+def draw():
+    fs.embed("shader")
+"#;
+    let out = crate::ai::analyze(&[pf("a.py", Language::Python, src)], &[]);
+    assert!(out.ai.is_none(), "{:#?}", out.ai);
+}
+
+#[test]
+fn recognizes_whisper_gemini_and_local_http() {
+    let src = r#"
+import requests
+from faster_whisper import WhisperModel
+import google.generativeai as genai
+
+asr = WhisperModel("small")
+g = genai.GenerativeModel("gemini-2.0-flash")
+
+def chat(p):
+    return requests.post("http://localhost:11434/api/chat", json={"model": "qwen3"})
+"#;
+    let out = crate::ai::analyze(&[pf("a.py", Language::Python, src)], &[]);
+    let ai = out.ai.expect("ai");
+    let libs: Vec<&str> = ai.stages.iter().map(|s| s.library.as_str()).collect();
+    assert!(libs.iter().any(|l| l.contains("Whisper")), "{libs:?}");
+    assert!(libs.iter().any(|l| l.contains("Gemini")), "{libs:?}");
+    assert!(
+        libs.iter().any(|l| l.contains("local model server")),
+        "{libs:?}"
+    );
+}
+
+#[test]
+fn model_ids_and_fts_in_config_files() {
+    use crate::InfraFile;
+    let texts = [
+        InfraFile {
+            path: "app/config.py",
+            text: "embed_model: str = \"BAAI/bge-m3\"\nrerank = 'BAAI/bge-reranker-v2-m3'\n",
+        },
+        InfraFile {
+            path: "app/pg_store.py",
+            text: "SELECT ts_rank(tsv, q) FROM chunks, to_tsvector('simple', body) ...",
+        },
+    ];
+    let ai = crate::ai::analyze_texts(&[], &[], &texts).ai.expect("ai");
+    let roles: Vec<AiRole> = ai.stages.iter().map(|s| s.role).collect();
+    assert!(roles.contains(&AiRole::Embedder), "{roles:?}");
+    assert!(roles.contains(&AiRole::Reranker), "{roles:?}");
+    assert!(roles.contains(&AiRole::KeywordIndex), "{roles:?}");
+    // plain full-text SQL alone is not an AI system
+    let only = [InfraFile {
+        path: "db/search.sql",
+        text: "select to_tsvector('x')",
+    }];
+    assert!(crate::ai::analyze_texts(&[], &[], &only).ai.is_none());
+}

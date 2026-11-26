@@ -31,10 +31,11 @@ pub fn analyze(
     okf_evidence: &[String],
     infra: &[InfraFile],
     code: &[CodeFile],
+    texts: &[InfraFile],
 ) -> Option<Insights> {
     let data_structures = dsa::analyze(files);
     let deployment = deployment::analyze(infra, code);
-    let ai = ai::analyze(files, okf_evidence);
+    let ai = ai::analyze_texts(files, okf_evidence, texts);
     let ins = Insights {
         ruleset_version: format!(
             "{RULESET_VERSION} / catalog {} / {}",

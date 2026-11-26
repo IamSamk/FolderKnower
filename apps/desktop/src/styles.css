@@ -362,6 +362,9 @@ a {
   z-index: 20;
 }
 .ak-brand {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 220px;
   display: flex;
   align-items: center;
   gap: 9px;
@@ -379,6 +382,8 @@ a {
   background: var(--surface-2);
 }
 .ak-tabs-main {
+  flex: 0 0 auto;
+  white-space: nowrap;
   display: flex;
   gap: 2px;
   padding: 3px;
@@ -387,6 +392,7 @@ a {
   background: var(--surface-2);
 }
 .ak-tabs-main button {
+  flex: none;
   position: relative;
   height: 32px;
   padding: 0 13px;
@@ -407,6 +413,7 @@ a {
   box-shadow: var(--sh-sm);
 }
 .ak-crumbs {
+  flex: 1 1 0;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -3769,4 +3776,31 @@ button.ak-sys-row:hover {
   background: var(--surface-2);
   border: var(--b) solid var(--line);
   border-radius: var(--r-sm);
+}
+
+/* narrow windows (laptops at 1440 px): keep one row, give the path the spare room */
+@media (max-width: 1560px) {
+  .ak-topbar {
+    gap: 8px;
+    padding: 0 10px;
+  }
+  .ak-tabs-main button {
+    padding: 0 9px;
+    font-size: 13px;
+  }
+  .ak-level {
+    display: none;
+  }
+}
+@media (max-width: 1280px) {
+  .ak-tabs-main button {
+    padding: 0 7px;
+    font-size: 12.5px;
+  }
+}
+.ak-brand span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

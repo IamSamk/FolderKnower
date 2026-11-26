@@ -101,7 +101,9 @@ fn grammar_gap(lang: Language, src: &str, line: u32, text: &str) -> bool {
         return true;
     }
     // A bare `&` in JSX text, e.g. `<h2>Releases & Installers</h2>`: React renders it as-is.
-    lang != Language::TypeScript && text.starts_with("cannot parse `&") && !l.contains("&&")
+    lang != Language::TypeScript
+        && text.starts_with("cannot parse `&")
+        && !text.starts_with("cannot parse `&&")
 }
 
 /// First few ERROR / MISSING nodes, outermost first, one per line.

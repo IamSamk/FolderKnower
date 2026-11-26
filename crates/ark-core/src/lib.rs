@@ -477,7 +477,13 @@ pub fn analyze(
             tier: ft.tier,
         })
         .collect();
-    let insights = ark_patterns::analyze(&app, &okf, &infra, &code);
+    let model_texts = read_model_texts(root, &scanned.files);
+    let mentions: Vec<ark_patterns::InfraFile> = infra_text
+        .iter()
+        .chain(model_texts.iter())
+        .map(|(path, text)| ark_patterns::InfraFile { path, text })
+        .collect();
+    let insights = ark_patterns::analyze(&app, &okf, &infra, &code, &mentions);
 
     let repo_name = fs::canonicalize(root)
         .ok()
@@ -550,6 +556,35 @@ pub fn analyze(
         total,
     );
     Ok((graph, stats))
+}
+
+/// Config-like files (settings modules, env files, yaml/toml/json, compose) searched for
+/// model ids and full-text SQL. Capped so a huge repo stays quick.
+fn read_model_texts(root: &Path, files: &[ark_scan::ScannedFile]) -> Vec<(String, String)> {
+    let hit = |p: &str| {
+        let l = p.to_ascii_lowercase();
+        let name = l.rsplit('/').next().unwrap_or(&l);
+        name.starts_with(".env")
+            || name.contains("config")
+            || name.contains("settings")
+            || name.contains("store")
+            || name.contains("search")
+            || name.contains("embed")
+            || name.ends_with(".yml")
+            || name.ends_with(".yaml")
+            || name.ends_with(".toml")
+            || name.ends_with(".sql")
+    };
+    files
+        .iter()
+        .filter(|f| f.size < 400 * 1024 && hit(&f.path))
+        .take(400)
+        .filter_map(|f| {
+            fs::read_to_string(root.join(&f.path))
+                .ok()
+                .map(|t| (f.path.clone(), t))
+        })
+        .collect()
 }
 
 /// Texts of compose files, Dockerfiles and nginx configs (each capped at 512 KiB).

@@ -295,6 +295,10 @@ fn py_declared(sets: &[&BTreeSet<String>], module: &str) -> bool {
             // `qdrant-client`; also accept a declared name that is a prefix of the module
             // (`google_cloud_storage` -> `google`).
             || s.iter().any(|d| d.starts_with(&format!("{n}_")) || n.starts_with(&format!("{d}_")))
+            // `frontmatter` -> `python-frontmatter`, `age` -> `apache-age-python`: the import is a
+            // whole word of the declared name
+            || (n.len() >= 3 && s.iter().any(|d| d.split('_').any(|w| w == n)))
+            || (n == "cv2" && s.iter().any(|d| d.starts_with("opencv")))
     })
 }
 
@@ -343,6 +347,10 @@ pub fn check(
     for (path, list) in &linked.unresolved_imports {
         let dir = Path::new(path).parent().unwrap_or(Path::new(""));
         for (line, spec) in list {
+            // `import(`./reels/${name}.js`)` names a whole folder, not one file.
+            if spec.contains("${") || spec.contains('*') {
+                continue;
+            }
             // Assets and data files (`./styles.css`, `../data.json`) are not parsed, so the
             // linker cannot see them; they are fine when they exist on disk.
             if (spec.starts_with("./") || spec.starts_with("../"))
@@ -366,6 +374,8 @@ pub fn check(
     let man = read_manifests(root, scanned);
     let py_std: BTreeSet<&str> = PY_STDLIB.split(' ').collect();
     let mut local_names: BTreeSet<String> = BTreeSet::new();
+    // conventional source roots are the project's own code even when nothing was scanned there
+    local_names.extend(["src", "app", "lib", "tests"].map(String::from));
     for f in scanned {
         for seg in f.path.split('/') {
             let stem = seg.split('.').next().unwrap_or(seg);
@@ -493,7 +503,22 @@ pub fn check(
                 format!("{ctx}/{p}")
             }
         };
-        let found = target.iter().any(|t| paths.contains(in_ctx(t).as_str()));
+        // The Dockerfile may copy a sub-folder to the working directory (`COPY backend/app ./app`)
+        // and Next's `output: "standalone"` writes `server.js` at build time, so a file whose
+        // path merely ends with the target also counts, as does a Next project's `server.js`.
+        let nested = |t: &str| {
+            let tail = format!("/{t}");
+            paths.iter().any(|p| p.ends_with(&tail))
+        };
+        let next_build = target.iter().any(|t| t.ends_with("server.js"))
+            && paths.iter().any(|p| {
+                let n = p.rsplit('/').next().unwrap_or(p);
+                n.starts_with("next.config.") && p.starts_with(ctx.as_str())
+            });
+        let found = target
+            .iter()
+            .any(|t| paths.contains(in_ctx(t).as_str()) || nested(t))
+            || next_build;
         if found {
             continue;
         }

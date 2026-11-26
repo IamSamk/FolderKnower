@@ -97,7 +97,30 @@ function Inner({ built, onOpen, onNavigate }: Props) {
       setNodes(ns.map((n) => ({ ...n, position: pos.get(n.id) ?? { x: 0, y: 0 } })));
       setEdges(built.edges);
       requestAnimationFrame(() => {
-        void rf.fitView({ duration: 0, padding: 0.2, maxZoom: 1.1 });
+        void rf.fitView({ duration: 0, padding: 0.2, maxZoom: 1.1 }).then(() => {
+          // A big diagram fits at a size nobody can read: open on the busiest node and
+          // its neighbours instead, and leave the full picture one click away (Fit).
+          if (rf.getZoom() >= 0.4) return;
+          const deg = new Map<string, number>();
+          for (const e of built.edges) {
+            deg.set(e.source, (deg.get(e.source) ?? 0) + 1);
+            deg.set(e.target, (deg.get(e.target) ?? 0) + 1);
+          }
+          const hub = [...deg.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? ns[0]?.id;
+          if (!hub) return;
+          const near = new Set([hub]);
+          for (const e of built.edges) {
+            if (e.source === hub) near.add(e.target);
+            if (e.target === hub) near.add(e.source);
+          }
+          void rf.fitView({
+            nodes: [...near].map((id) => ({ id })),
+            duration: 0,
+            padding: 0.25,
+            minZoom: 0.45,
+            maxZoom: 0.9,
+          });
+        });
       });
     });
   }, [built, rf]);

@@ -11,6 +11,7 @@ use ark_schema::{
 use regex::Regex;
 
 use crate::catalog::{CATALOG, Catalog, import_matches};
+use crate::deployment::InfraFile;
 
 static DICT_PAIR: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"["']?([A-Za-z_][A-Za-z0-9_]*)["']?\s*:\s*([^,}\]]+)"#).unwrap());
@@ -178,10 +179,19 @@ pub struct AiOut {
 }
 
 pub fn analyze(files: &[ParsedFile], okf_evidence: &[String]) -> AiOut {
-    analyze_with(&CATALOG, files, okf_evidence)
+    analyze_with(&CATALOG, files, okf_evidence, &[])
 }
 
-pub fn analyze_with(cat: &Catalog, files: &[ParsedFile], okf_evidence: &[String]) -> AiOut {
+pub fn analyze_texts(files: &[ParsedFile], okf_evidence: &[String], texts: &[InfraFile]) -> AiOut {
+    analyze_with(&CATALOG, files, okf_evidence, texts)
+}
+
+pub fn analyze_with(
+    cat: &Catalog,
+    files: &[ParsedFile],
+    okf_evidence: &[String],
+    texts: &[InfraFile],
+) -> AiOut {
     let mut stages: BTreeMap<(AiRole, String), AiStage> = BTreeMap::new();
     let mut uses: BTreeMap<(AiRole, String), u32> = BTreeMap::new();
     let mut frameworks: BTreeSet<String> = BTreeSet::new();
@@ -226,8 +236,18 @@ pub fn analyze_with(cat: &Catalog, files: &[ParsedFile], okf_evidence: &[String]
                     .or_default()
                     .insert(n.clone());
             }
+            // A URL string (`http://localhost:11434/api/chat`) is matched as `url:<text>`.
+            let url_key = s
+                .call
+                .first_string
+                .as_deref()
+                .filter(|u| u.contains("://") || u.starts_with('/') || u.contains("localhost"))
+                .map(|u| format!("url:{u}"));
             if let Some(comp) = cat.components.iter().find(|c| {
-                c.patterns.iter().any(|p| p.is_match(&k)) && requires_ok(&c.requires, s.imports)
+                c.patterns
+                    .iter()
+                    .any(|p| p.is_match(&k) || url_key.as_deref().is_some_and(|u| p.is_match(u)))
+                    && requires_ok(&c.requires, s.imports)
             }) {
                 let name = stage_name(s.call);
                 let sk = (comp.role, name.clone());
@@ -401,6 +421,8 @@ pub fn analyze_with(cat: &Catalog, files: &[ParsedFile], okf_evidence: &[String]
             }
         }
     }
+
+    add_mentions(&mut stages, &mut frameworks, texts);
 
     // Attach LangGraph node names to the graph router.
     if !graph_nodes.is_empty() {
@@ -680,4 +702,142 @@ fn assemble(stages: Vec<AiStage>, frameworks: BTreeSet<String>) -> Option<AiArch
         stages,
         edges,
     })
+}
+
+static EMBED_MODEL: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)\b(BAAI/bge-[a-z0-9.\-]+|bge-(?:m3|large|base|small)[a-z0-9.\-]*|text-embedding-[a-z0-9\-]+|nomic-embed-text[a-z0-9.\-]*|all-MiniLM-[a-z0-9\-]+|multilingual-e5-[a-z]+|e5-(?:large|base|small)[a-z0-9\-]*|gte-[a-z0-9\-]+|jina-embeddings-[a-z0-9\-]+|mxbai-embed-[a-z0-9\-]+|snowflake-arctic-embed[a-z0-9\-]*)")
+        .expect("embed model regex")
+});
+static RERANK_MODEL: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)\b((?:BAAI/)?bge-reranker-[a-z0-9\-]+|jina-reranker-[a-z0-9\-]+|ms-marco-[a-z0-9\-]+|rerank-[a-z0-9\-.]+)")
+        .expect("rerank model regex")
+});
+static KEYWORD_SQL: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)\bbm25\b|\bts_rank(?:_cd)?\s*\(|\bto_tsvector\s*\(|\bplainto_tsquery|\bwebsearch_to_tsquery|\btsvector\b")
+        .expect("keyword regex")
+});
+
+/// Model ids and SQL full-text calls that sit in config files, env files, compose
+/// commands and SQL strings, where no call is made that the parser could see.
+fn add_mentions(
+    stages: &mut BTreeMap<(AiRole, String), AiStage>,
+    frameworks: &mut BTreeSet<String>,
+    texts: &[InfraFile],
+) {
+    let mut embed: BTreeMap<String, (u32, &str, u32)> = BTreeMap::new();
+    let mut rerank: BTreeMap<String, (u32, &str, u32)> = BTreeMap::new();
+    let mut keyword: Option<(bool, &str, u32)> = None;
+    for t in texts {
+        for (i, line) in t.text.lines().enumerate() {
+            let ln = (i + 1) as u32;
+            for m in RERANK_MODEL.find_iter(line) {
+                let e = rerank
+                    .entry(m.as_str().to_owned())
+                    .or_insert((0, t.path, ln));
+                e.0 += 1;
+            }
+            for m in EMBED_MODEL.find_iter(line) {
+                if m.as_str().to_ascii_lowercase().contains("rerank") {
+                    continue;
+                }
+                let e = embed
+                    .entry(m.as_str().to_owned())
+                    .or_insert((0, t.path, ln));
+                e.0 += 1;
+            }
+            if let Some(m) = KEYWORD_SQL.find(line) {
+                let bm = m.as_str().eq_ignore_ascii_case("bm25");
+                match &mut keyword {
+                    Some((b, _, _)) => *b |= bm,
+                    None => keyword = Some((bm, t.path, ln)),
+                }
+            }
+        }
+    }
+    let best = |m: &BTreeMap<String, (u32, &str, u32)>| {
+        m.iter()
+            .max_by_key(|(_, v)| v.0)
+            .map(|(k, v)| (k.clone(), v.1.to_owned(), v.2))
+    };
+    if let Some((model, path, line)) = best(&embed) {
+        let explain = if model.to_ascii_lowercase().contains("bge-m3") {
+            "BGE-M3 embedding model. One pass gives a dense vector (meaning), a sparse word-weight vector (keywords) and multi-vector scores, so it can drive both vector and keyword-style search."
+        } else {
+            role_explain(AiRole::Embedder)
+        };
+        let at = (path.as_str(), line);
+        put_mention(
+            stages,
+            frameworks,
+            (AiRole::Embedder, model, "embedding model"),
+            at,
+            explain,
+        );
+    }
+    if let Some((model, path, line)) = best(&rerank) {
+        let at = (path.as_str(), line);
+        let explain = role_explain(AiRole::Reranker);
+        put_mention(
+            stages,
+            frameworks,
+            (AiRole::Reranker, model, "reranker model"),
+            at,
+            explain,
+        );
+    }
+    // full-text SQL on its own is ordinary search; it only counts next to other AI stages
+    if !stages.is_empty()
+        && let Some((bm, path, line)) = keyword
+    {
+        let (name, lib) = if bm {
+            ("BM25", "BM25")
+        } else {
+            ("Postgres full-text", "Postgres full-text")
+        };
+        let explain = role_explain(AiRole::KeywordIndex);
+        put_mention(
+            stages,
+            frameworks,
+            (AiRole::KeywordIndex, name.to_owned(), lib),
+            (path, line),
+            explain,
+        );
+    }
+}
+
+/// Adds a stage found in text, or only names the model on a stage of that role that the
+/// code already produced.
+fn put_mention(
+    stages: &mut BTreeMap<(AiRole, String), AiStage>,
+    frameworks: &mut BTreeSet<String>,
+    (role, name, library): (AiRole, String, &str),
+    (path, line): (&str, u32),
+    explain: &str,
+) {
+    if let Some(existing) = stages.values_mut().find(|s| s.role == role) {
+        if role == AiRole::Embedder || role == AiRole::Reranker {
+            existing.params.entry("model".to_owned()).or_insert(name);
+        }
+        return;
+    }
+    frameworks.insert(library.to_owned());
+    let mut params = BTreeMap::new();
+    if role == AiRole::Embedder || role == AiRole::Reranker {
+        params.insert("model".to_owned(), name.clone());
+    }
+    stages.insert(
+        (role, name.clone()),
+        AiStage {
+            id: format!("ai:{}:{name}", role_slug(role)),
+            role,
+            name,
+            library: library.to_owned(),
+            file_id: file_id(path),
+            function_id: None,
+            line,
+            params,
+            rule_id: "ai.mention".to_owned(),
+            explain: explain.to_owned(),
+        },
+    );
 }
