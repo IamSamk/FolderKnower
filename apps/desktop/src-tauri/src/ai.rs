@@ -194,6 +194,9 @@ pub struct Component {
     /// Set when the component is the user's own file rather than a download.
     #[serde(skip_serializing_if = "Option::is_none")]
     linked: Option<Link>,
+    /// A file the user pointed to that is no longer there (moved, renamed, unplugged).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    missing_path: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -214,6 +217,12 @@ fn status(app: &AppHandle) -> Result<AiStatus, String> {
     let decider = model_path(&dir, "decider").is_some();
     let narrator = model_path(&dir, "narrator").is_some();
     let link = |id: &str| live_link(&dir, id);
+    let missing = |id: &str| {
+        read_links(&dir)
+            .remove(id)
+            .map(|l| l.path)
+            .filter(|p| !Path::new(p).is_file())
+    };
     Ok(AiStatus {
         components: vec![
             Component {
@@ -227,6 +236,7 @@ fn status(app: &AppHandle) -> Result<AiStatus, String> {
                 installed: runtime,
                 supported: rt.is_some(),
                 linked: link("runtime"),
+                missing_path: missing("runtime"),
             },
             Component {
                 id: "decider",
@@ -239,6 +249,7 @@ fn status(app: &AppHandle) -> Result<AiStatus, String> {
                 installed: decider,
                 supported: rt.is_some(),
                 linked: link("decider"),
+                missing_path: missing("decider"),
             },
             Component {
                 id: "narrator",
@@ -251,6 +262,7 @@ fn status(app: &AppHandle) -> Result<AiStatus, String> {
                 installed: narrator,
                 supported: rt.is_some(),
                 linked: link("narrator"),
+                missing_path: missing("narrator"),
             },
         ],
         decider_ready: runtime && decider,
@@ -843,10 +855,10 @@ pub struct Found {
 
 /// Look for models and llama-server in the places other tools keep them.
 #[tauri::command]
-pub async fn ai_find(app: AppHandle) -> Result<Vec<Found>, String> {
+pub async fn ai_find(app: AppHandle, folder: Option<String>) -> Result<Vec<Found>, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let home = app.path().home_dir().map_err(|e| e.to_string())?;
-        let roots = [
+        let mut roots = vec![
             home.join(".cache/huggingface/hub"),
             home.join(".lmstudio/models"),
             home.join(".cache/lm-studio/models"),
@@ -856,6 +868,11 @@ pub async fn ai_find(app: AppHandle) -> Result<Vec<Found>, String> {
             home.join("Models"),
             home.join("Downloads"),
         ];
+        // A folder the user chose is searched alone: they know where the files went.
+        let chosen = folder.map(PathBuf::from);
+        if let Some(d) = &chosen {
+            roots = vec![d.clone()];
+        }
         let mut out: Vec<Found> = Vec::new();
         let mut visited = 0usize;
         for root in roots {
@@ -937,7 +954,11 @@ pub async fn ai_find(app: AppHandle) -> Result<Vec<Found>, String> {
             PathBuf::from("/usr/local/bin"),
             home.join(".local/bin"),
         ]);
-        if let Some(d) = dirs.iter().map(|d| d.join(exe)).find(|p| p.is_file()) {
+        let on_path = match &chosen {
+            Some(d) => find_server_in(d),
+            None => dirs.iter().map(|d| d.join(exe)).find(|p| p.is_file()),
+        };
+        if let Some(d) = on_path {
             out.push(Found {
                 id: "runtime",
                 path: d.display().to_string(),
@@ -952,6 +973,98 @@ pub async fn ai_find(app: AppHandle) -> Result<Vec<Found>, String> {
     })
     .await
     .map_err(|e| e.to_string())?
+}
+
+// ---- What it takes to run this ---------------------------------------------------
+
+const GB: u64 = 1 << 30;
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Requirement {
+    what: &'static str,
+    minimum: String,
+    recommended: &'static str,
+    yours: String,
+    /// "good", "ok" (meets the minimum) or "low".
+    verdict: &'static str,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Requirements {
+    rows: Vec<Requirement>,
+    suggestion: &'static str,
+}
+
+fn verdict(have: u64, minimum: u64, recommended: u64) -> &'static str {
+    match have {
+        h if h >= recommended => "good",
+        h if h >= minimum => "ok",
+        _ => "low",
+    }
+}
+
+/// Advice by installed memory. The built-in runtime is CPU only.
+fn suggest(ram_gb: u64, threads: u64) -> &'static str {
+    if ram_gb < 8 || threads < 4 {
+        "Skip the local models on this computer. Every diagram, trace and health check works without them."
+    } else if ram_gb < 16 {
+        "Use the built-in Laya and Qwen2.5 0.5B models. Explanations are short; check them against the cited code."
+    } else if ram_gb < 32 {
+        "The built-in models run comfortably. For clearly better explanations, point the narrator at a 3B instruct model such as Qwen2.5-Coder 3B Q4_K_M (about 2 GB)."
+    } else {
+        "You have room for a 7B instruct model such as Qwen2.5-Coder 7B Q4_K_M (about 4.7 GB) as the narrator. It explains best, but answers slowly on the CPU."
+    }
+}
+
+/// Minimum and recommended hardware next to what this computer has. Memory and disk
+/// figures are estimates with room for the app and the system.
+#[tauri::command]
+pub fn ai_requirements(app: AppHandle) -> Result<Requirements, String> {
+    let dir = ai_dir(&app)?;
+    let mut sys = sysinfo::System::new().map_err(|e| e.to_string())?;
+    sys.refresh_memory();
+    // Marketed sizes: an "8 GB" machine reports a little under 8 GiB.
+    let ram = (sys.total_memory() + GB / 2) / GB;
+    let threads = std::thread::available_parallelism().map_or(0, |n| n.get() as u64);
+    let disks = sysinfo::Disks::new_with_refreshed_list().ok();
+    let free = disks
+        .iter()
+        .flat_map(|d| d.iter())
+        .filter(|d| dir.starts_with(d.mount_point()))
+        .max_by_key(|d| d.mount_point().as_os_str().len())
+        .map(|d| d.available_space());
+    let download = runtime_artifact().map_or(0, |a| a.size) + DECIDER.size + NARRATOR.size;
+    let mut rows = vec![
+        Requirement {
+            what: "Memory (RAM)",
+            minimum: "8 GB".to_owned(),
+            recommended: "16 GB",
+            yours: format!("{ram} GB"),
+            verdict: verdict(ram, 8, 16),
+        },
+        Requirement {
+            what: "Processor threads",
+            minimum: "4".to_owned(),
+            recommended: "8 or more",
+            yours: threads.to_string(),
+            verdict: verdict(threads, 4, 8),
+        },
+    ];
+    if let Some(free) = free {
+        rows.push(Requirement {
+            what: "Free disk for downloads",
+            minimum: format!("2 GB (the downloads are {} MB)", download / 1_000_000),
+            recommended: "5 GB",
+            yours: format!("{} GB", free / GB),
+            verdict: verdict(free / GB, 2, 5),
+        });
+    }
+    Ok(Requirements {
+        rows,
+        suggestion: suggest(ram, threads),
+    })
 }
 
 #[cfg(test)]
@@ -976,6 +1089,15 @@ mod tests {
         let mut b = (v.len() as u64).to_le_bytes().to_vec();
         b.extend(v.as_bytes());
         b
+    }
+
+    #[test]
+    fn advice_follows_the_hardware() {
+        assert!(suggest(4, 8).starts_with("Skip"));
+        assert!(suggest(8, 8).starts_with("Use the built-in"));
+        assert!(suggest(16, 8).contains("3B"));
+        assert!(suggest(64, 16).contains("7B"));
+        assert_eq!(verdict(8, 8, 16), "ok");
     }
 
     #[test]

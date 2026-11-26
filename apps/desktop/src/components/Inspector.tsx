@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import type { TierLabel } from "../gen";
-import { aiStartNarrator, CONCEPT_BY_ID, type Sentence, slmExplain } from "../lib/backend";
+import { CONCEPT_BY_ID } from "../lib/backend";
 import type { Indexed } from "../lib/graph";
 import { DSA_EXPLAIN, DSA_LABEL } from "../lib/insights";
 import {
@@ -15,6 +15,7 @@ import {
 } from "../lib/theme";
 import { useStore } from "../store";
 import { CodeView } from "./CodeView";
+import { Explain } from "./Explain";
 
 type Tab = "details" | "code" | "explain";
 
@@ -522,174 +523,6 @@ function BigOCard({ label, o }: { label: string; o: string }) {
         {o}
       </div>
       <div className="ak-stat-l">{label}</div>
-    </div>
-  );
-}
-
-function grounded(ix: Indexed, id: string) {
-  const nodes = new Map<string, { id: string; kind: string; label: string; facts: unknown }>();
-  const edges: unknown[] = [];
-  const add = (nid: string) => {
-    if (nodes.has(nid) || nodes.size > 24) return;
-    const fe = ix.fns.get(nid);
-    if (fe) {
-      nodes.set(nid, {
-        id: nid,
-        kind: "function",
-        label: fe.fn.name,
-        facts: {
-          file: fe.file.path,
-          tier: fe.tier,
-          signature: fe.fn.signature,
-          bigO: fe.fn.complexity.timeBigO,
-          concepts: fe.fn.ontologyTags.map((t) => t.concept),
-          routes: (ix.routesByHandler.get(nid) ?? []).map((r) => `${r.method} ${r.path}`),
-        },
-      });
-      return;
-    }
-    const m = ix.models.get(nid);
-    if (m)
-      nodes.set(nid, {
-        id: nid,
-        kind: "table",
-        label: m.name,
-        facts: { table: m.table, fields: m.fields.map((f) => f.name), framework: m.framework },
-      });
-    const f = ix.files.get(nid);
-    if (f)
-      nodes.set(nid, {
-        id: nid,
-        kind: "file",
-        label: f.file.path,
-        facts: { tier: f.tier, role: f.file.role, functions: f.file.functions.map((x) => x.name) },
-      });
-    const u = ix.ui.get(nid);
-    if (u)
-      nodes.set(nid, {
-        id: nid,
-        kind: "ui-element",
-        label: `<${u.tag}> ${u.label ?? ""}`,
-        facts: { event: u.event, file: u.fileId },
-      });
-  };
-  add(id);
-  for (const h of useStore.getState().hops) add(h.id);
-  const fe = ix.fns.get(id);
-  for (const c of fe?.fn.calls ?? []) {
-    add(c.target);
-    edges.push({ from: id, to: c.target, kind: "call", provenance: c.provenance });
-  }
-  for (const c of fe?.fn.calledBy ?? []) {
-    add(c);
-    edges.push({ from: c, to: id, kind: "call" });
-  }
-  for (const e of [...(ix.crossOut.get(id) ?? []), ...(ix.crossIn.get(id) ?? [])]) {
-    add(e.source);
-    add(e.target);
-    edges.push({ from: e.source, to: e.target, kind: e.protocol, evidence: e.evidence });
-  }
-  return { nodes: [...nodes.values()], edges };
-}
-
-function Explain({ id, ix }: { id: string; ix: Indexed }) {
-  const slm = useStore((s) => s.slm);
-  const model = useStore((s) => s.model);
-  const reveal = useStore((s) => s.reveal);
-  const [q, setQ] = useState(
-    "Explain what this does and which OS, network and data mechanisms it relies on.",
-  );
-  const [busy, setBusy] = useState(false);
-  const [out, setOut] = useState<{ sentences: Sentence[]; dropped: number } | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  useEffect(() => {
-    setOut(null);
-    setErr(null);
-  }, [id]);
-  if (!slm?.available || !slm.baseUrl || !model) {
-    return (
-      <div className="ak-callout">
-        <div className="font-semibold">Local model (optional)</div>
-        <p className="ak-muted mt-1 text-[12.5px] leading-relaxed">
-          {slm?.hint ?? "Checking for a local model…"}
-        </p>
-        <p className="ak-muted mt-2 text-[12.5px] leading-relaxed">
-          Everything you see is computed statically. A small local model only narrates the selected
-          subgraph, must cite node ids for every sentence, and is never sent anything off this
-          machine.
-        </p>
-        <button
-          type="button"
-          className="ak-btn mt-3"
-          onClick={() => void useStore.getState().refreshSlm()}
-        >
-          Check again
-        </button>
-      </div>
-    );
-  }
-  const run = async () => {
-    setBusy(true);
-    setErr(null);
-    try {
-      const g = grounded(ix, id);
-      const base = slm.baseUrl === "builtin" ? await aiStartNarrator() : (slm.baseUrl as string);
-      const r = await slmExplain({
-        baseUrl: base,
-        model,
-        question: q,
-        nodes: g.nodes,
-        edges: g.edges,
-      });
-      setOut(r);
-    } catch (e) {
-      setErr(String(e));
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <div>
-      <div className="ak-muted mb-2 text-[11.5px]">
-        {slm.server} · <span className="ak-mono">{model}</span>
-      </div>
-      <textarea className="ak-input h-20 w-full" value={q} onChange={(e) => setQ(e.target.value)} />
-      <button
-        type="button"
-        className="ak-btn-primary mt-2 w-full"
-        disabled={busy}
-        onClick={() => void run()}
-      >
-        {busy ? "Thinking locally…" : "Explain with citations"}
-      </button>
-      {err && <div className="mt-2 text-[12px] text-rose-400">{err}</div>}
-      <AnimatePresence>
-        {out && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 space-y-2">
-            {out.sentences.map((s, i) => (
-              <motion.p
-                key={s.text}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.15 }}
-                className="text-[13px] leading-relaxed"
-              >
-                {s.text}{" "}
-                {s.cites.map((c) => (
-                  <button key={c} type="button" className="ak-cite" onClick={() => reveal(c)}>
-                    {ix.label(c)}
-                  </button>
-                ))}
-              </motion.p>
-            ))}
-            {out.dropped > 0 && (
-              <div className="ak-muted text-[11px]">
-                {out.dropped} ungrounded sentence(s) removed.
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

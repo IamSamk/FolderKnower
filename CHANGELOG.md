@@ -2,6 +2,19 @@
 
 Notes for each version are shown in the in-app update pop-up and on the website's releases page.
 
+## [Unreleased]
+
+### Search pipelines
+- Hand-written hybrid search is now read correctly: embeddings called over HTTP (for example BGE-M3), pgvector queries written in SQL, and your own rank-fusion function. Postgres full-text search is no longer labelled BM25, and a web page calling its own `/api/...` is no longer taken for a model server.
+
+### Local AI
+- Settings show the minimum and recommended hardware next to what your computer has, with a suggestion.
+- If a model file was moved, settings say so. You can search a folder or change the file at any time.
+- Explain shows what is selected, asks what it does and why it matters there, and can let the model look at code, callers and neighbours first.
+
+### Updates
+- The update check runs as soon as the app starts.
+
 ## [0.13.0] - 2026-11-26
 
 ### New name: FolderKnower

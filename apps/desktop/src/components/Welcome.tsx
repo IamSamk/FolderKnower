@@ -116,7 +116,7 @@ export function Welcome() {
           className="ak-btn ghost"
           onClick={() => useStore.setState({ setupOpen: true })}
         >
-          <Sparkles size={15} /> Local AI
+          <Sparkles size={15} /> Local AI settings
         </button>
         <ThemeSwitch />
       </div>

@@ -573,6 +573,11 @@ fn read_model_texts(root: &Path, files: &[ark_scan::ScannedFile]) -> Vec<(String
             || name.contains("store")
             || name.contains("search")
             || name.contains("embed")
+            || name.contains("retriev")
+            || name.contains("vector")
+            || name.contains("fusion")
+            || name.contains("rank")
+            || name.contains("rag")
             || name.ends_with(".yml")
             || name.ends_with(".yaml")
             || name.ends_with(".toml")
@@ -580,7 +585,7 @@ fn read_model_texts(root: &Path, files: &[ark_scan::ScannedFile]) -> Vec<(String
     };
     files
         .iter()
-        .filter(|f| f.size < 400 * 1024 && hit(&f.path))
+        .filter(|f| f.size < 400 * 1024 && hit(&f.path) && !is_side_path(&f.path))
         .take(400)
         .filter_map(|f| {
             fs::read_to_string(root.join(&f.path))
@@ -588,6 +593,17 @@ fn read_model_texts(root: &Path, files: &[ark_scan::ScannedFile]) -> Vec<(String
                 .map(|t| (f.path.clone(), t))
         })
         .collect()
+}
+
+/// Tests, experiments and benchmarks name models the app itself never uses.
+fn is_side_path(path: &str) -> bool {
+    path.split('/').any(|part| {
+        let p = part.to_ascii_lowercase();
+        matches!(
+            p.as_str(),
+            "test" | "tests" | "experiments" | "benchmarks" | "fixtures"
+        ) || p.starts_with("test_")
+    })
 }
 
 /// Texts of compose files, Dockerfiles and nginx configs (each capped at 512 KiB).

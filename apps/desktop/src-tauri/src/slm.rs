@@ -138,6 +138,8 @@ fn chat(base: &str, model: &str, system: &str, user: &str, schema: Value) -> Res
         "model": model,
         "temperature": 0,
         "seed": 7,
+        // A small model can loop on one sentence; this ends the reply.
+        "max_tokens": 900,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": user}
@@ -147,7 +149,7 @@ fn chat(base: &str, model: &str, system: &str, user: &str, schema: Value) -> Res
             "json_schema": {"name": "answer", "strict": true, "schema": schema}
         }
     });
-    let mut resp = agent(120)
+    let mut resp = agent(300)
         .post(format!("{base}/v1/chat/completions"))
         .send_json(&body)
         .map_err(|e| format!("model server: {e}"))?;
@@ -179,13 +181,14 @@ pub async fn slm_explain(req: ExplainRequest) -> Result<ExplainResponse, String>
             "properties": {
                 "sentences": {
                     "type": "array",
+                    "minItems": 2,
                     "maxItems": 8,
                     "items": {
                         "type": "object",
                         "additionalProperties": false,
                         "required": ["text", "cites"],
                         "properties": {
-                            "text": {"type": "string"},
+                            "text": {"type": "string", "maxLength": 400},
                             "cites": {"type": "array", "minItems": 1, "items": {"type": "string", "enum": ids}}
                         }
                     }
@@ -194,21 +197,68 @@ pub async fn slm_explain(req: ExplainRequest) -> Result<ExplainResponse, String>
         });
         let system = "You are a systems teacher explaining a codebase to a developer. \
             Use ONLY the facts provided. Every sentence must cite the ids of the nodes it talks about. \
-            Explain what the code does and how OS, network, database and cloud concepts are involved. \
+            Say first what the selected part does, then its significance in this part of the codebase: \
+            who relies on it, what it hands on, and what would stop working without it. \
+            Mention operating system, network, database or cloud mechanics only when the facts show them. \
             Never invent functions, files, tables or calls that are not in the facts. Be concise.";
-        let user = format!("Question: {}\n\nFacts (JSON):\n{}", req.question, facts);
+        // Facts first, task last: the 0.5B narrator otherwise repeats the question back.
+        let user = format!("Facts (JSON):\n{}\n\nTask: {}", facts, req.question);
         let v = chat(&req.base_url, &req.model, system, &user, schema)?;
         let raw: Vec<Sentence> = serde_json::from_value(v["sentences"].clone()).unwrap_or_default();
         let total = raw.len();
+        let mut said = std::collections::BTreeSet::new();
         let kept: Vec<Sentence> = raw
             .into_iter()
             .filter(|s| !s.cites.is_empty() && s.cites.iter().all(|c| ids.contains(c)) && !s.text.trim().is_empty())
+            .filter(|s| said.insert(s.text.trim().to_owned()))
             .collect();
         Ok(ExplainResponse {
             dropped: total - kept.len(),
             sentences: kept,
             model: req.model,
         })
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChooseRequest {
+    base_url: String,
+    model: String,
+    question: String,
+    seen: Vec<String>,
+    moves: Vec<String>,
+}
+
+const ENOUGH: &str = "enough, explain now";
+
+/// Pick the next place to look. The schema's enum holds only real moves, so the model
+/// can steer the exploration but cannot make a target up. `None` means stop.
+#[tauri::command]
+pub async fn slm_choose(req: ChooseRequest) -> Result<Option<String>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut options = req.moves;
+        options.push(ENOUGH.to_owned());
+        let schema = json!({
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["move"],
+            "properties": {"move": {"type": "string", "enum": options}}
+        });
+        let system = "You are about to explain part of a codebase. Choose the ONE look that would \
+            teach you the most about what the selected part does and why it matters. \
+            Choose `enough, explain now` when you already know.";
+        let user = format!(
+            "Question: {}\nAlready seen: {}\nPossible looks:\n{}",
+            req.question,
+            req.seen.join(", "),
+            options.join("\n")
+        );
+        let v = chat(&req.base_url, &req.model, system, &user, schema)?;
+        let picked = v["move"].as_str().unwrap_or_default().to_owned();
+        Ok((picked != ENOUGH && options.contains(&picked)).then_some(picked))
     })
     .await
     .map_err(|e| e.to_string())?

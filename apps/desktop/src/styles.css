@@ -4062,3 +4062,47 @@ button.ak-sys-row:hover {
   padding: 0;
   vertical-align: middle;
 }
+
+.ak-req {
+  margin: 0 0 14px;
+  font-size: 13px;
+}
+.ak-req h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+.ak-req table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+.ak-req th,
+.ak-req td {
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+.ak-req p {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+.ak-req .ak-tag.good {
+  background: #7fe0b4;
+  color: #1f1d36;
+}
+.ak-req .ak-tag.low {
+  background: #ff9d9d;
+  color: #1f1d36;
+}
+.ak-explain-about {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border: var(--b) solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font-size: 12px;
+}

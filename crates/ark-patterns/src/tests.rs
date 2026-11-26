@@ -496,3 +496,35 @@ fn model_ids_and_fts_in_config_files() {
     }];
     assert!(crate::ai::analyze_texts(&[], &[], &only).ai.is_none());
 }
+
+#[test]
+fn finds_hand_written_hybrid_search() {
+    let embed = "import httpx\n\n\ndef embed_query(base, text):\n    return httpx.post(base + \"/v1/embeddings\", json={\"input\": text})\n";
+    let store = "import psycopg\n\n\ndef search_chunks_vector(cur, vec):\n    cur.execute(\"SELECT id FROM chunks ORDER BY embedding <=> %s::vector\", (vec,))\n\n\ndef search_text(cur, q):\n    cur.execute(\"SELECT id FROM docs WHERE tsv @@ plainto_tsquery(%s)\", (q,))\n";
+    let fuse = "def rrf_fuse(lists, k=60):\n    return lists\n";
+    let compose = "# the word bm25 in a comment is not a keyword index\nEMBED_MODEL: BAAI/bge-m3\n";
+    let files = [
+        pf("embed_client.py", Language::Python, embed),
+        pf("store.py", Language::Python, store),
+        pf("retrieval.py", Language::Python, fuse),
+    ];
+    let texts = [
+        ("compose.yml", compose),
+        ("embed_client.py", embed),
+        ("store.py", store),
+        ("retrieval.py", fuse),
+    ]
+    .map(|(path, text)| crate::deployment::InfraFile { path, text });
+    let ai = crate::ai::analyze_texts(&files, &[], &texts)
+        .ai
+        .expect("ai");
+    let get = |r: AiRole| ai.stages.iter().find(|s| s.role == r).expect("stage");
+    assert_eq!(ai.kind, AiSystemKind::HybridRag);
+    assert_eq!(get(AiRole::Embedder).name, "BAAI/bge-m3");
+    assert_eq!(
+        get(AiRole::VectorStore).function_id.as_deref(),
+        Some("fn:store.py#search_chunks_vector")
+    );
+    assert_eq!(get(AiRole::KeywordIndex).name, "Postgres full-text");
+    assert_eq!(get(AiRole::Fusion).name, "rrf_fuse");
+}

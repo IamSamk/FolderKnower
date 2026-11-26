@@ -1,5 +1,5 @@
-// In-app update pop-up. Checks the signed GitHub Releases feed shortly after launch
-// and every six hours, then shows a modal with the release notes and a real download
+// In-app update pop-up. Checks the signed GitHub Releases feed as soon as the app
+// starts and every six hours, then shows a modal with the release notes and a real download
 // progress bar. Signature verification happens in the Rust updater plugin; a tampered
 // or unsigned package is rejected before install.
 
@@ -13,7 +13,8 @@ import {
   type UpdateProgress,
 } from "../lib/backend";
 
-const FIRST_CHECK_MS = 4_000;
+// Checked at launch; the later tries cover a network that was not up yet.
+const START_CHECKS_MS = [0, 8_000, 30_000];
 const RECHECK_MS = 6 * 60 * 60 * 1000;
 const SKIP_KEY = "ak.update.skip";
 const CHECK_EVENT = "ak:check-update";
@@ -70,7 +71,8 @@ export function UpdatePopup() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
-  const check = useCallback(async (manual: boolean) => {
+  /** True once the feed answered, so the start-up retries can stop. */
+  const check = useCallback(async (manual: boolean): Promise<boolean> => {
     try {
       const info = await checkForUpdate();
       if (info && (manual || info.version !== readSkip())) {
@@ -79,19 +81,26 @@ export function UpdatePopup() {
       } else if (manual) {
         setToast("You have the latest version.");
       }
+      return true;
     } catch (e) {
       // offline or feed unreachable: the app keeps working, we try again later
       if (manual) setToast(`Could not check for updates: ${String(e)}`);
+      return false;
     }
   }, []);
 
   useEffect(() => {
-    const first = setTimeout(() => check(false), FIRST_CHECK_MS);
+    let answered = false;
+    const first = START_CHECKS_MS.map((ms) =>
+      setTimeout(async () => {
+        if (!answered) answered = (await check(false)) || answered;
+      }, ms),
+    );
     const every = setInterval(() => check(false), RECHECK_MS);
     const manual = () => check(true);
     window.addEventListener(CHECK_EVENT, manual);
     return () => {
-      clearTimeout(first);
+      for (const t of first) clearTimeout(t);
       clearInterval(every);
       window.removeEventListener(CHECK_EVENT, manual);
     };
