@@ -194,7 +194,8 @@ pub async fn slm_explain(req: ExplainRequest) -> Result<ExplainResponse, String>
         });
         let system = "You are a systems teacher explaining a codebase to a developer. \
             Use ONLY the facts provided. Every sentence must cite the ids of the nodes it talks about. \
-            Explain what the code does and how OS, network, database and cloud concepts are involved. \
+            Answer the question directly: say what the selected item does, why it matters in this part of the codebase, \
+            and what depends on it or what it relies on. Mention OS, network, database or cloud concepts only when the facts show them. \
             Never invent functions, files, tables or calls that are not in the facts. Be concise.";
         let user = format!("Question: {}\n\nFacts (JSON):\n{}", req.question, facts);
         let v = chat(&req.base_url, &req.model, system, &user, schema)?;

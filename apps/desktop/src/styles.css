@@ -4062,3 +4062,21 @@ button.ak-sys-row:hover {
   padding: 0;
   vertical-align: middle;
 }
+
+.ak-device {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 2px solid color-mix(in oklch, var(--line) 60%, transparent);
+  border-radius: 12px;
+  font-size: 13px;
+}
+.ak-device ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+.ak-device-now {
+  margin-top: 8px;
+}
+.ak-device-now.warn b:first-child {
+  color: var(--warn, #b45309);
+}

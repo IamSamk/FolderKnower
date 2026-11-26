@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { TierLabel } from "../gen";
 import { aiStartNarrator, CONCEPT_BY_ID, type Sentence, slmExplain } from "../lib/backend";
 import type { Indexed } from "../lib/graph";
@@ -596,9 +596,16 @@ function Explain({ id, ix }: { id: string; ix: Indexed }) {
   const slm = useStore((s) => s.slm);
   const model = useStore((s) => s.model);
   const reveal = useStore((s) => s.reveal);
-  const [q, setQ] = useState(
-    "Explain what this does and which OS, network and data mechanisms it relies on.",
-  );
+  const subject = useMemo(() => {
+    const first = grounded(ix, id).nodes[0];
+    return first ? `${first.label}` : "this";
+  }, [ix, id]);
+  const defaultQ = `Explain what ${subject} does and its significance in this part of the codebase: what depends on it and what it relies on.`;
+  const [q, setQ] = useState(defaultQ);
+  const [edited, setEdited] = useState(false);
+  useEffect(() => {
+    if (!edited) setQ(defaultQ);
+  }, [defaultQ, edited]);
   const [busy, setBusy] = useState(false);
   const [out, setOut] = useState<{ sentences: Sentence[]; dropped: number } | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -653,7 +660,14 @@ function Explain({ id, ix }: { id: string; ix: Indexed }) {
       <div className="ak-muted mb-2 text-[11.5px]">
         {slm.server} · <span className="ak-mono">{model}</span>
       </div>
-      <textarea className="ak-input h-20 w-full" value={q} onChange={(e) => setQ(e.target.value)} />
+      <textarea
+        className="ak-input h-20 w-full"
+        value={q}
+        onChange={(e) => {
+          setQ(e.target.value);
+          setEdited(true);
+        }}
+      />
       <button
         type="button"
         className="ak-btn-primary mt-2 w-full"

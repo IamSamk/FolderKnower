@@ -14,6 +14,7 @@ import {
   isTauri,
   pickModelFile,
 } from "../lib/backend";
+import { type SystemSnapshot, systemSnapshot } from "../lib/telemetry";
 import { useStore } from "../store";
 
 const TERMS_VERSION = "2";
@@ -69,6 +70,56 @@ function Privacy() {
         sent to those sites. If you already have them, you can point to your own files instead: they
         are checked, only read, and never moved or deleted.
       </p>
+    </div>
+  );
+}
+
+const GB = 1_073_741_824;
+
+/** What the optional models need, judged against this computer's real memory and cores. */
+function DeviceCheck() {
+  const [sys, setSys] = useState<SystemSnapshot | null>(null);
+  useEffect(() => {
+    void systemSnapshot()
+      .then(setSys)
+      .catch(() => setSys(null));
+  }, []);
+  const total = sys ? sys.totalMemory / GB : 0;
+  const free = sys ? sys.availableMemory / GB : 0;
+  const cores = sys ? (sys.physicalCores ?? sys.cpus.length) : 0;
+  let verdict = "";
+  let tone: "ok" | "warn" = "ok";
+  if (sys) {
+    if (free < 1.5) {
+      tone = "warn";
+      verdict = `Only ${free.toFixed(1)} GB is free right now. Close a few programs first, or skip the models: everything else works without them.`;
+    } else if (total < 8) {
+      tone = "warn";
+      verdict = `${total.toFixed(0)} GB of memory is enough for one model at a time. Install the narrator or Laya, not both, and expect slower answers.`;
+    } else if (cores < 4) {
+      verdict = "Memory is fine. With fewer than 4 cores, answers take a few seconds longer.";
+    } else {
+      verdict = "Your computer meets the recommended setup for both models.";
+    }
+  }
+  return (
+    <div className="ak-device">
+      <b>What it needs</b>
+      <ul>
+        <li>
+          Minimum: 4 GB of memory with 1.5 GB free, 2 CPU cores, about 1 GB of disk. No graphics
+          card needed.
+        </li>
+        <li>
+          Recommended: 8 GB or more of memory and 4 or more cores, so both models run smoothly.
+        </li>
+      </ul>
+      {sys && (
+        <p className={`ak-device-now ${tone}`}>
+          <b>This computer:</b> {total.toFixed(1)} GB memory ({free.toFixed(1)} GB free), {cores}{" "}
+          cores. {verdict}
+        </p>
+      )}
     </div>
   );
 }
@@ -192,6 +243,7 @@ function LocalAi() {
           ))}
         </ul>
       )}
+      <DeviceCheck />
       <p>
         Everything in FolderKnower works without these. Add them for a second opinion when the rules
         are unsure, and for plain-language explanations that cite the graph. They run on your CPU,
@@ -225,15 +277,26 @@ function LocalAi() {
                 License and model card
               </a>
               {c.installed ? (
-                <button
-                  type="button"
-                  className="ak-btn ghost"
-                  disabled={!!busy}
-                  onClick={() => void aiRemove(c.id).then(setSt)}
-                  title={c.linked ? "Forget this file. It is not deleted." : undefined}
-                >
-                  <Trash2 size={14} /> {c.linked ? "Stop using" : "Remove"}
-                </button>
+                <span className="flex gap-1.5">
+                  <button
+                    type="button"
+                    className="ak-btn ghost"
+                    disabled={!!busy}
+                    onClick={async () => link(c.id, await pickModelFile(c.id))}
+                    title="Point to a different file, for example if you moved it"
+                  >
+                    <FolderOpen size={14} /> Change file
+                  </button>
+                  <button
+                    type="button"
+                    className="ak-btn ghost"
+                    disabled={!!busy}
+                    onClick={() => void aiRemove(c.id).then(setSt)}
+                    title={c.linked ? "Forget this file. It is not deleted." : undefined}
+                  >
+                    <Trash2 size={14} /> {c.linked ? "Stop using" : "Remove"}
+                  </button>
+                </span>
               ) : (
                 <span className="flex gap-1.5">
                   <button
