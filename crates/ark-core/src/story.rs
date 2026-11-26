@@ -733,7 +733,9 @@ pub fn system_headline(g: &mut SystemArchitectureGraph) {
         Some(_) => "AI system",
         None => "Containerized app",
     };
-    g.summary.headline = format!("{lead} in {} containers: {}.", d.services.len(), parts);
+    let n = d.services.len();
+    let noun = if n == 1 { "container" } else { "containers" };
+    g.summary.headline = format!("{lead} in {n} {noun}: {parts}.");
     let limited: u64 = d.services.iter().filter_map(|s| s.memory_limit).sum();
     let mut text = format!(
         "{} services from {}; {} links proven by env URLs, depends_on or proxy rules.",

@@ -2564,5 +2564,92 @@
         }
       ]
     }
+  ],
+  "features": [
+    {
+      "id": "feature:todos",
+      "name": "Todos",
+      "explain": "3 routes, 1 screen, 1 table (Todo) under /todos.",
+      "basis": "routes",
+      "routes": [
+        "route:GET /todos#api/app/routers/todos.py",
+        "route:PATCH /todos/:param/complete#api/app/routers/todos.py",
+        "route:POST /todos#api/app/routers/todos.py"
+      ],
+      "ui": [
+        "ui:web/src/components/TodoList.tsx:35:6"
+      ],
+      "files": [
+        "file:api/app/models.py",
+        "file:api/app/routers/todos.py",
+        "file:web/src/components/TodoList.tsx",
+        "file:worker/tasks.py"
+      ],
+      "sharedFiles": [
+        "file:web/src/lib/api.ts"
+      ],
+      "tables": [
+        "model:api/app/models.py#Todo"
+      ],
+      "services": [],
+      "aiStages": [],
+      "stack": [
+        "FastAPI",
+        "@tanstack/react-query",
+        "Celery",
+        "React",
+        "SQLAlchemy"
+      ]
+    },
+    {
+      "id": "feature:auth",
+      "name": "Sign in",
+      "explain": "1 route, 1 screen, 1 table (User) under /auth.",
+      "basis": "routes",
+      "routes": [
+        "route:POST /auth/login#api/app/routers/auth.py"
+      ],
+      "ui": [
+        "ui:web/src/components/LoginForm.tsx:14:4",
+        "ui:web/src/components/LoginForm.tsx:15:6",
+        "ui:web/src/components/LoginForm.tsx:16:6"
+      ],
+      "files": [
+        "file:api/app/core/security.py",
+        "file:api/app/routers/auth.py",
+        "file:api/app/schemas.py",
+        "file:web/src/components/LoginForm.tsx"
+      ],
+      "sharedFiles": [
+        "file:web/src/lib/api.ts"
+      ],
+      "tables": [
+        "model:api/app/models.py#User"
+      ],
+      "services": [],
+      "aiStages": [],
+      "stack": [
+        "FastAPI",
+        "React",
+        "jose",
+        "passlib",
+        "pydantic"
+      ]
+    }
+  ],
+  "memoryMap": [
+    {
+      "id": "memmap:0",
+      "what": "localStorage (\"token\")",
+      "place": "browser",
+      "holder": "browser",
+      "holderName": "the user's browser",
+      "lifetime": "persistent",
+      "proof": [
+        "web/src/lib/api.ts:30"
+      ],
+      "explain": "Saved in the browser per site, up to about 5 MB; it stays after the tab closes until the user clears site data.",
+      "source": "file:web/src/lib/api.ts"
+    }
   ]
 }

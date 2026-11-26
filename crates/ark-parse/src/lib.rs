@@ -17,7 +17,7 @@ use ark_scan::Language;
 use tree_sitter::Parser;
 
 /// Bump when extraction output changes, so cached facts are invalidated.
-pub const EXTRACTOR_VERSION: &str = "3";
+pub const EXTRACTOR_VERSION: &str = "4";
 
 fn ts_language(lang: Language) -> tree_sitter::Language {
     match lang {
@@ -63,6 +63,7 @@ pub fn parse_file(lang: Language, path: &str, src: &str) -> FileFacts {
         facts
             .diagnostics
             .push("syntax errors present; facts may be partial".to_owned());
+        collect_syntax_errors(root, src.as_bytes(), &mut facts.syntax_errors);
     }
     let bytes = src.as_bytes();
     match lang {
@@ -76,6 +77,50 @@ pub fn parse_file(lang: Language, path: &str, src: &str) -> FileFacts {
     enrich::enrich(lang, root, bytes, &mut facts);
     facts.finish();
     facts
+}
+
+/// First few ERROR / MISSING nodes, outermost first, one per line.
+fn collect_syntax_errors(
+    root: tree_sitter::Node,
+    src: &[u8],
+    out: &mut Vec<facts::SyntaxErrorFact>,
+) {
+    const MAX: usize = 5;
+    let mut stack = vec![root];
+    while let Some(n) = stack.pop() {
+        if out.len() >= MAX {
+            break;
+        }
+        if n.is_missing() || n.is_error() {
+            let line = n.start_position().row as u32 + 1;
+            if !out.iter().any(|e| e.line == line) {
+                let text = if n.is_missing() {
+                    format!("missing {}", n.kind())
+                } else {
+                    let t = n.utf8_text(src).unwrap_or("").trim();
+                    let first = t.lines().next().unwrap_or("").trim();
+                    let clip: String = first.chars().take(60).collect();
+                    if clip.is_empty() {
+                        "unexpected input".to_owned()
+                    } else {
+                        format!("cannot parse `{clip}`")
+                    }
+                };
+                out.push(facts::SyntaxErrorFact { line, text });
+            }
+            if n.is_error() {
+                // Look inside an error node only for MISSING tokens, which are more precise.
+                continue;
+            }
+        }
+        if !n.has_error() {
+            continue;
+        }
+        let mut c = n.walk();
+        let kids: Vec<_> = n.children(&mut c).collect();
+        stack.extend(kids.into_iter().rev());
+    }
+    out.sort_by_key(|e| e.line);
 }
 
 #[cfg(test)]

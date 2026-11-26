@@ -55,6 +55,16 @@ enum Cmd {
         #[arg(long)]
         text: bool,
     },
+    /// Find what is broken without running anything: syntax errors, imports of missing
+    /// files, packages missing from the manifest, calls to undeclared routes, start
+    /// commands that name a missing file. Exits 1 when any error is found.
+    Check {
+        /// Repository root.
+        path: PathBuf,
+        /// Print JSON instead of one line per issue.
+        #[arg(long)]
+        json: bool,
+    },
     /// Print the JSON Schema of architecture.json.
     Schema,
     /// Print the Systems Ontology catalogue (concepts + teaching text) as JSON.
@@ -79,6 +89,7 @@ fn main() -> ExitCode {
             list,
             text,
         } => run_cmd(&path, from.as_deref(), list, text),
+        Cmd::Check { path, json } => check_cmd(&path, json),
         Cmd::Schema => {
             print!("{}", ark_schema::json_schema_string());
             ExitCode::SUCCESS
@@ -149,6 +160,59 @@ fn main() -> ExitCode {
                 }
             }
         }
+    }
+}
+
+fn check_cmd(path: &std::path::Path, json: bool) -> ExitCode {
+    let opts = Options {
+        no_cache: true,
+        ..Options::default()
+    };
+    let g = match analyze(path, &opts, &|_| {}) {
+        Ok((g, _)) => g,
+        Err(e) => {
+            eprintln!("error: {e}");
+            return ExitCode::FAILURE;
+        }
+    };
+    let Some(h) = g.health else {
+        if json {
+            println!("{{\"issues\": []}}");
+        } else {
+            println!("No problems found.");
+        }
+        return ExitCode::SUCCESS;
+    };
+    if json {
+        println!("{}", serde_json::to_string_pretty(&h).expect("json"));
+    } else {
+        for i in &h.issues {
+            let sev = match i.severity {
+                ark_schema::Severity::Error => "error",
+                ark_schema::Severity::Warning => "warning",
+            };
+            println!(
+                "{}:{}: {sev}: {}\n    fix: {}",
+                i.file_id.trim_start_matches("file:"),
+                i.line,
+                i.message,
+                i.fix
+            );
+        }
+        println!(
+            "{} issue(s); {} of {} files have syntax errors.",
+            h.issues.len(),
+            h.files_with_errors,
+            h.files_checked
+        );
+    }
+    if h.issues
+        .iter()
+        .any(|i| i.severity == ark_schema::Severity::Error)
+    {
+        ExitCode::FAILURE
+    } else {
+        ExitCode::SUCCESS
     }
 }
 

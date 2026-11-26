@@ -15,6 +15,16 @@ pub struct FileFacts {
     /// Calls at module level (e.g. `app.use(cors())`, `urlpatterns = [path(...)]`).
     pub top_calls: Vec<CallFact>,
     pub diagnostics: Vec<String>,
+    /// Where the parser had to recover: (line, the text there), first few only.
+    #[serde(default)]
+    pub syntax_errors: Vec<SyntaxErrorFact>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SyntaxErrorFact {
+    pub line: u32,
+    /// `missing )` or the clipped source text the parser could not place.
+    pub text: String,
 }
 
 impl FileFacts {

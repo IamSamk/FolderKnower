@@ -220,3 +220,162 @@ fn rag_agent_example_run_is_grounded() {
     }
     assert_eq!(run.sample_input.as_deref(), Some("What is chunk overlap?"));
 }
+
+#[test]
+fn golden_broken_shop() {
+    golden("broken-shop");
+}
+
+fn analyze_fixture(name: &str) -> SystemArchitectureGraph {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../fixtures/repos")
+        .join(name);
+    let opts = Options {
+        no_cache: true,
+        ..Options::default()
+    };
+    analyze(&dir, &opts, &|_| {}).unwrap().0
+}
+
+#[test]
+fn broken_code_is_reported_and_still_mapped() {
+    use ark_schema::{HealthKind as K, Severity};
+    let g = analyze_fixture("broken-shop");
+    let h = g.health.as_ref().expect("health issues");
+    let has = |k: K, file: &str, line: u32| {
+        h.issues
+            .iter()
+            .any(|i| i.kind == k && i.file_id == format!("file:{file}") && i.line == line)
+    };
+    assert!(
+        has(K::SyntaxError, "server/pricing.py", 9),
+        "{:#?}",
+        h.issues
+    );
+    assert!(has(K::UnresolvedImport, "server/api.py", 6));
+    assert!(has(K::UnresolvedImport, "web/src/api.ts", 2));
+    assert!(has(K::MissingPackage, "server/api.py", 3));
+    assert!(has(K::MissingPackage, "web/src/api.ts", 1));
+    assert!(has(K::DeadRoute, "web/src/api.ts", 10));
+    assert!(has(K::MissingEntry, "docker-compose.yml", 2));
+    assert_eq!(h.issues.len(), 7, "no false positives: {:#?}", h.issues);
+    assert_eq!(h.files_with_errors, 1);
+    // Declared packages, stdlib and the working files are not flagged.
+    assert!(!h.issues.iter().any(|i| i.message.contains("fastapi")));
+    assert!(
+        h.issues
+            .iter()
+            .filter(|i| i.severity == Severity::Error)
+            .count()
+            == 4
+    );
+    // The broken file is still parsed: the function before the error is in the map.
+    let pricing = g
+        .tiers
+        .iter()
+        .flat_map(|t| &t.clusters)
+        .flat_map(|c| &c.files)
+        .find(|f| f.path == "server/pricing.py")
+        .expect("pricing.py mapped");
+    assert!(pricing.functions.iter().any(|f| f.name == "total"));
+}
+
+#[test]
+fn healthy_fixtures_have_no_issues() {
+    for name in ["fullstack-todo", "rag-agent"] {
+        let g = analyze_fixture(name);
+        assert!(g.health.is_none(), "{name}: {:#?}", g.health);
+    }
+}
+
+#[test]
+fn features_split_by_route_family() {
+    let g = analyze_fixture("fullstack-todo");
+    let names: Vec<&str> = g.features.iter().map(|f| f.name.as_str()).collect();
+    assert_eq!(names, ["Todos", "Sign in"]);
+    let todos = &g.features[0];
+    assert_eq!(todos.routes.len(), 3);
+    assert!(
+        todos
+            .files
+            .contains(&"file:api/app/routers/todos.py".to_owned())
+    );
+    assert!(
+        todos
+            .tables
+            .contains(&"model:api/app/models.py#Todo".to_owned())
+    );
+    let auth = &g.features[1];
+    assert!(
+        auth.tables
+            .contains(&"model:api/app/models.py#User".to_owned())
+    );
+    assert!(
+        auth.files
+            .contains(&"file:web/src/components/LoginForm.tsx".to_owned())
+    );
+    // The API client is used by both, so it is shared, not owned.
+    assert!(
+        todos
+            .shared_files
+            .contains(&"file:web/src/lib/api.ts".to_owned())
+    );
+    assert!(
+        auth.shared_files
+            .contains(&"file:web/src/lib/api.ts".to_owned())
+    );
+    assert!(todos.stack.iter().any(|s| s == "FastAPI"));
+}
+
+#[test]
+fn rag_features_keep_indexing_apart_from_asking() {
+    let g = analyze_fixture("rag-agent");
+    let f = |n: &str| g.features.iter().find(|f| f.name == n).expect(n);
+    let ask = f("Ask");
+    let ingest = f("Ingest");
+    assert!(ask.ai_stages.iter().any(|s| s.contains("reranker")));
+    assert!(!ask.ai_stages.iter().any(|s| s.contains("loader")));
+    assert!(ingest.ai_stages.iter().any(|s| s.contains("loader")));
+    assert!(!ingest.ai_stages.iter().any(|s| s.contains("reranker")));
+    assert!(ask.services.contains(&"svc:ollama".to_owned()));
+    assert!(ask.services.contains(&"svc:cache".to_owned()));
+    assert!(!ingest.services.contains(&"svc:cache".to_owned()));
+    assert!(f("History").ai_stages.is_empty());
+}
+
+#[test]
+fn memory_map_places_each_store() {
+    use ark_schema::{MemoryLifetime as L, MemoryPlace as P};
+    let g = analyze_fixture("rag-agent");
+    let find = |holder: &str, what: &str| {
+        g.memory_map
+            .iter()
+            .find(|m| m.holder == holder && m.what.starts_with(what))
+            .unwrap_or_else(|| panic!("{holder} {what}: {:#?}", g.memory_map))
+    };
+    let w = find("svc:ollama", "Model weights");
+    assert_eq!(w.place, P::Vram, "ollama has a GPU reservation");
+    assert!(w.bound.as_deref().unwrap_or("").contains("keep_alive"));
+    let h = find("svc:cache", "Chat history");
+    assert_eq!((h.place, h.lifetime), (P::Ram, L::Session));
+    assert!(h.bound.as_deref().unwrap_or("").contains("maxmemory 256mb"));
+    assert_eq!(find("svc:chroma", "Vector index").place, P::Ram);
+    assert_eq!(
+        find("svc:chroma", "Stored collections").lifetime,
+        L::Persistent
+    );
+    assert_eq!(
+        find("svc:api", "Embedding model").place,
+        P::Ram,
+        "api has no GPU"
+    );
+    assert_eq!(
+        find("svc:api", "KV cache").place,
+        P::Vram,
+        "vLLM runs on the GPU"
+    );
+    assert_eq!(find("browser", "localStorage").lifetime, L::Persistent);
+    for m in &g.memory_map {
+        assert!(!m.proof.is_empty(), "{} has no proof", m.what);
+    }
+}

@@ -47,6 +47,11 @@ pub struct Linked {
     pub ui_elements: Vec<UiElement>,
     /// Frontend/client function -> backend route handler.
     pub http_edges: Vec<CrossTierEdge>,
+    /// path -> relative imports that resolve to no file: (line, specifier).
+    pub unresolved_imports: BTreeMap<String, Vec<(u32, String)>>,
+    /// Same-origin HTTP calls (`/api/...`) that match no route declared here:
+    /// (path, line, method, url). Only filled when the repository declares routes.
+    pub dead_calls: Vec<(String, u32, String, String)>,
 }
 
 /// Round confidence to 2 decimals so floating noise never changes output bytes.
@@ -337,6 +342,12 @@ pub fn link(files: &[ParsedFile], inputs: &LinkInputs) -> Linked {
         for imp in &f.facts.imports {
             let resolved = resolver.resolve_import(&f.scan.path, lang, &imp.source, &imp.names);
             if resolved.is_empty() {
+                if imp.source.starts_with('.') {
+                    out.unresolved_imports
+                        .entry(f.scan.path.clone())
+                        .or_default()
+                        .push((imp.line, imp.source.clone()));
+                }
                 if let Some(pkg) = external_package(lang, &imp.source) {
                     out.externals
                         .entry(f.scan.path.clone())
@@ -518,6 +529,14 @@ pub fn link(files: &[ParsedFile], inputs: &LinkInputs) -> Linked {
                     Some(s) if score == s => best.push((r, score)),
                     _ => best = vec![(r, score)],
                 }
+            }
+            if best.is_empty() && !route_segs.is_empty() && call.url.starts_with('/') {
+                out.dead_calls.push((
+                    f.scan.path.clone(),
+                    call.line,
+                    call.method.clone(),
+                    call.url.clone(),
+                ));
             }
             let source = call
                 .in_fn

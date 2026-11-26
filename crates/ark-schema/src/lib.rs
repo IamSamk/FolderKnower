@@ -57,6 +57,149 @@ pub struct SystemArchitectureGraph {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[ts(as = "Option<Vec<ExampleRun>>", optional)]
     pub example_runs: Vec<ExampleRun>,
+    /// What the project does, split into features (one per route family or screen
+    /// group), each with its own files, tables, services and tech stack.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<Feature>>", optional)]
+    pub features: Vec<Feature>,
+    /// Where each kind of data lives while the system runs: GPU memory, RAM, disk, the
+    /// browser or a remote provider. Every entry carries the line that proves it.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<MemoryPlacement>>", optional)]
+    pub memory_map: Vec<MemoryPlacement>,
+    /// Problems that stop the code from running as written: syntax errors, imports
+    /// that point nowhere, packages missing from the manifest, calls to routes that
+    /// do not exist. The rest of the analysis still runs on broken code.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub health: Option<CodeHealth>,
+}
+
+/// One thing the project does for its users, e.g. "Todos" or "Sign in".
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct Feature {
+    /// `feature:<slug>`.
+    pub id: String,
+    pub name: String,
+    /// Plain sentence, e.g. "Handles 3 routes under /todos and 2 screens."
+    pub explain: String,
+    /// How the feature was found: `routes` (a URL family) or `cluster` (a code group).
+    pub basis: String,
+    pub routes: Vec<String>,
+    pub ui: Vec<String>,
+    /// Files only this feature uses.
+    pub files: Vec<String>,
+    /// Files this feature shares with other features.
+    pub shared_files: Vec<String>,
+    pub tables: Vec<String>,
+    pub services: Vec<String>,
+    pub ai_stages: Vec<String>,
+    /// Packages the feature's files import, most used first.
+    pub stack: Vec<String>,
+}
+
+/// Where a piece of runtime data is kept.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct MemoryPlacement {
+    pub id: String,
+    /// What is stored, e.g. "Chat history (last N turns)".
+    pub what: String,
+    pub place: MemoryPlace,
+    /// Service id (`svc:redis`), tier box id (`tier:backend`) or `browser` / `remote`.
+    pub holder: String,
+    pub holder_name: String,
+    pub lifetime: MemoryLifetime,
+    /// Limit or eviction, e.g. `maxmemory 256mb, allkeys-lru` or `ttl`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub bound: Option<String>,
+    /// `path:line` (or `path`) for every fact used.
+    pub proof: Vec<String>,
+    pub explain: String,
+    /// Memory technique, AI stage or service id this came from.
+    pub source: String,
+}
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema, TS,
+)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub enum MemoryPlace {
+    /// GPU memory.
+    Vram,
+    Ram,
+    Disk,
+    Browser,
+    /// Kept by a hosted provider (model API, hosted vector DB).
+    Remote,
+}
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema, TS,
+)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub enum MemoryLifetime {
+    /// Gone when the request finishes.
+    Request,
+    /// Kept for one conversation or user session.
+    Session,
+    /// Kept until the process or container restarts.
+    Process,
+    /// Survives restarts.
+    Persistent,
+}
+
+/// What is broken, found without running anything.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct CodeHealth {
+    pub files_checked: u32,
+    pub files_with_errors: u32,
+    pub issues: Vec<HealthIssue>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct HealthIssue {
+    pub id: String,
+    pub kind: HealthKind,
+    pub severity: Severity,
+    pub file_id: String,
+    pub line: u32,
+    pub message: String,
+    /// What to try, in one sentence.
+    pub fix: String,
+}
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema, TS,
+)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub enum HealthKind {
+    SyntaxError,
+    UnresolvedImport,
+    MissingPackage,
+    DeadRoute,
+    MissingEntry,
+}
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema, TS,
+)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub enum Severity {
+    Error,
+    Warning,
 }
 
 /// One request followed from a UI element through the services and back.

@@ -28,8 +28,26 @@
         "$ref": "#/$defs/ExampleRun"
       }
     },
+    "features": {
+      "description": "What the project does, split into features (one per route family or screen\ngroup), each with its own files, tables, services and tech stack.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Feature"
+      }
+    },
     "generator": {
       "$ref": "#/$defs/GeneratorInfo"
+    },
+    "health": {
+      "description": "Problems that stop the code from running as written: syntax errors, imports\nthat point nowhere, packages missing from the manifest, calls to routes that\ndo not exist. The rest of the analysis still runs on broken code.",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CodeHealth"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "insights": {
       "description": "Recognized data structures, AI/ML pipelines, named libraries and memory techniques.",
@@ -41,6 +59,13 @@
           "type": "null"
         }
       ]
+    },
+    "memoryMap": {
+      "description": "Where each kind of data lives while the system runs: GPU memory, RAM, disk, the\nbrowser or a remote provider. Every entry carries the line that proves it.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/MemoryPlacement"
+      }
     },
     "nonCodeNodes": {
       "description": "Config, docs, tests, migrations, infra and manifests.",
@@ -356,6 +381,34 @@
         "seed",
         "resolution",
         "anchors"
+      ]
+    },
+    "CodeHealth": {
+      "description": "What is broken, found without running anything.",
+      "type": "object",
+      "properties": {
+        "filesChecked": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "filesWithErrors": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HealthIssue"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "filesChecked",
+        "filesWithErrors",
+        "issues"
       ]
     },
     "Complexity": {
@@ -767,6 +820,93 @@
         "hops"
       ]
     },
+    "Feature": {
+      "description": "One thing the project does for its users, e.g. \"Todos\" or \"Sign in\".",
+      "type": "object",
+      "properties": {
+        "aiStages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "basis": {
+          "description": "How the feature was found: `routes` (a URL family) or `cluster` (a code group).",
+          "type": "string"
+        },
+        "explain": {
+          "description": "Plain sentence, e.g. \"Handles 3 routes under /todos and 2 screens.\"",
+          "type": "string"
+        },
+        "files": {
+          "description": "Files only this feature uses.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "id": {
+          "description": "`feature:<slug>`.",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sharedFiles": {
+          "description": "Files this feature shares with other features.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "stack": {
+          "description": "Packages the feature's files import, most used first.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ui": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "explain",
+        "basis",
+        "routes",
+        "ui",
+        "files",
+        "sharedFiles",
+        "tables",
+        "services",
+        "aiStages",
+        "stack"
+      ]
+    },
     "Finding": {
       "description": "One sentence the app can say about the repo, with the node/rule ids behind it.",
       "type": "object",
@@ -983,6 +1123,55 @@
         "grammars"
       ]
     },
+    "HealthIssue": {
+      "type": "object",
+      "properties": {
+        "fileId": {
+          "type": "string"
+        },
+        "fix": {
+          "description": "What to try, in one sentence.",
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/HealthKind"
+        },
+        "line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "message": {
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "severity",
+        "fileId",
+        "line",
+        "message",
+        "fix"
+      ]
+    },
+    "HealthKind": {
+      "type": "string",
+      "enum": [
+        "syntaxError",
+        "unresolvedImport",
+        "missingPackage",
+        "deadRoute",
+        "missingEntry"
+      ]
+    },
     "InferredRole": {
       "type": "object",
       "properties": {
@@ -1137,6 +1326,111 @@
         "cpuPercent",
         "rssBytes",
         "activeThreads"
+      ]
+    },
+    "MemoryLifetime": {
+      "oneOf": [
+        {
+          "description": "Gone when the request finishes.",
+          "type": "string",
+          "const": "request"
+        },
+        {
+          "description": "Kept for one conversation or user session.",
+          "type": "string",
+          "const": "session"
+        },
+        {
+          "description": "Kept until the process or container restarts.",
+          "type": "string",
+          "const": "process"
+        },
+        {
+          "description": "Survives restarts.",
+          "type": "string",
+          "const": "persistent"
+        }
+      ]
+    },
+    "MemoryPlace": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "ram",
+            "disk",
+            "browser"
+          ]
+        },
+        {
+          "description": "GPU memory.",
+          "type": "string",
+          "const": "vram"
+        },
+        {
+          "description": "Kept by a hosted provider (model API, hosted vector DB).",
+          "type": "string",
+          "const": "remote"
+        }
+      ]
+    },
+    "MemoryPlacement": {
+      "description": "Where a piece of runtime data is kept.",
+      "type": "object",
+      "properties": {
+        "bound": {
+          "description": "Limit or eviction, e.g. `maxmemory 256mb, allkeys-lru` or `ttl`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "explain": {
+          "type": "string"
+        },
+        "holder": {
+          "description": "Service id (`svc:redis`), tier box id (`tier:backend`) or `browser` / `remote`.",
+          "type": "string"
+        },
+        "holderName": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "lifetime": {
+          "$ref": "#/$defs/MemoryLifetime"
+        },
+        "place": {
+          "$ref": "#/$defs/MemoryPlace"
+        },
+        "proof": {
+          "description": "`path:line` (or `path`) for every fact used.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source": {
+          "description": "Memory technique, AI stage or service id this came from.",
+          "type": "string"
+        },
+        "what": {
+          "description": "What is stored, e.g. \"Chat history (last N turns)\".",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "what",
+        "place",
+        "holder",
+        "holderName",
+        "lifetime",
+        "proof",
+        "explain",
+        "source"
       ]
     },
     "MemoryTechnique": {
@@ -1700,6 +1994,13 @@
         "to",
         "via",
         "detail"
+      ]
+    },
+    "Severity": {
+      "type": "string",
+      "enum": [
+        "error",
+        "warning"
       ]
     },
     "Signature": {

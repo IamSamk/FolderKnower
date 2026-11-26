@@ -11,6 +11,9 @@ use std::{
     time::Instant,
 };
 
+mod features;
+mod health;
+mod memory;
 mod story;
 
 use ark_link::{LinkInputs, ParsedFile, file_id, fn_id, link};
@@ -478,13 +481,26 @@ pub fn analyze(
         non_code_nodes: non_code,
         summary: structure.summary,
         data_models: structure.data_models,
-        routes: linked.routes,
+        routes: linked.routes.clone(),
         ui_elements: ui,
         questions: structure.questions,
         insights,
         example_runs: Vec::new(),
+        features: Vec::new(),
+        memory_map: Vec::new(),
+        health: None,
     };
     graph.example_runs = story::example_runs(&graph);
+    graph.features = features::build(&graph, &linked.externals, &app);
+    graph.memory_map = memory::build(&graph, &app);
+    let services = graph
+        .insights
+        .as_ref()
+        .and_then(|i| i.deployment.as_ref())
+        .map(|d| d.services.clone())
+        .unwrap_or_default();
+    let checked: Vec<&ParsedFile> = app.iter().chain(tests.iter()).collect();
+    graph.health = health::check(root, &scanned.files, &checked, &linked, &services);
     story::system_headline(&mut graph);
     let stats = RunStats {
         files: scanned.files.len(),

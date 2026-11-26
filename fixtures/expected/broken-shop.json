@@ -1,0 +1,849 @@
+{
+  "schemaVersion": "2.0",
+  "repoName": "broken-shop",
+  "rootPath": ".",
+  "generator": {
+    "version": "golden",
+    "rulesetVersion": "ontology 0.1.0 / tiers 0.1.0",
+    "grammars": {
+      "tree-sitter-go": "0.25.0",
+      "tree-sitter-javascript": "0.25.0",
+      "tree-sitter-python": "0.25.0",
+      "tree-sitter-rust": "0.24.2",
+      "tree-sitter-typescript": "0.23.2"
+    }
+  },
+  "contentRoot": "9fe2ba872c352a1ed9fa12846c178b832bee18f15fde889ed91a5b85efe87fd7",
+  "tiers": [
+    {
+      "id": "tier:frontend",
+      "label": "Frontend",
+      "evidence": [
+        "tier.fe.component",
+        "tier.fe.dir",
+        "tier.fe.framework",
+        "tier.fe.http-client"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:frontend:api",
+          "name": "api",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:web/src/App.tsx",
+              "path": "web/src/App.tsx",
+              "language": "typescript",
+              "contentHash": "edf2f3f75465c5513c4aa69645642f067817d65324cbfd01e56e2ae7bff834db",
+              "lines": 15,
+              "tierConfidence": 0.99,
+              "role": "component",
+              "imports": [
+                {
+                  "target": "file:web/src/api.ts",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:web/src/App.tsx#App",
+                  "name": "App",
+                  "visibility": "public",
+                  "lineRange": [
+                    4,
+                    15
+                  ],
+                  "byteRange": [
+                    106,
+                    437
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Client state",
+                      "layer": "data",
+                      "ruleId": "data.state.client"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 5,
+                      "label": "const [items, setItems] = useState<{ id: number; name: strin…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 6,
+                      "label": "useEffect(() =>"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 9,
+                      "label": "return ("
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:web/src/api.ts#listItems",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    },
+                    {
+                      "target": "fn:web/src/api.ts#loadCart",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                }
+              ]
+            },
+            {
+              "id": "file:web/src/api.ts",
+              "path": "web/src/api.ts",
+              "language": "typescript",
+              "contentHash": "585dfcd3293e692e58010830d9df3dcaa5389afa346e8da71a6635b073ab1e56",
+              "lines": 16,
+              "tierConfidence": 0.9,
+              "role": "api-client",
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:web/src/api.ts#listItems",
+                  "name": "listItems",
+                  "visibility": "public",
+                  "lineRange": [
+                    4,
+                    7
+                  ],
+                  "byteRange": [
+                    82,
+                    174
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "JSON serialization",
+                      "layer": "data",
+                      "ruleId": "data.serialize.json"
+                    },
+                    {
+                      "concept": "HTTP request",
+                      "layer": "network",
+                      "ruleId": "net.http.client"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 5,
+                      "label": "const res = await fetch(\"/api/items\");"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 6,
+                      "label": "return res.json();"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:web/src/App.tsx#App"
+                  ]
+                },
+                {
+                  "id": "fn:web/src/api.ts#loadCart",
+                  "name": "loadCart",
+                  "visibility": "public",
+                  "lineRange": [
+                    9,
+                    12
+                  ],
+                  "byteRange": [
+                    183,
+                    273
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "JSON serialization",
+                      "layer": "data",
+                      "ruleId": "data.serialize.json"
+                    },
+                    {
+                      "concept": "HTTP request",
+                      "layer": "network",
+                      "ruleId": "net.http.client"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 10,
+                      "label": "const res = await fetch(\"/api/cart\");"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 11,
+                      "label": "return res.json();"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:web/src/App.tsx#App"
+                  ]
+                },
+                {
+                  "id": "fn:web/src/api.ts#label",
+                  "name": "label",
+                  "visibility": "public",
+                  "lineRange": [
+                    14,
+                    16
+                  ],
+                  "byteRange": [
+                    282,
+                    374
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "price",
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 15,
+                      "label": "return `${money(price)} on ${format(new Date(), \"PP\")}`;"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tier:backend",
+      "label": "Backend",
+      "evidence": [
+        "tier.be.dir",
+        "tier.be.framework",
+        "tier.be.routes",
+        "tier.propagated"
+      ],
+      "clusters": [
+        {
+          "id": "cluster:backend:api",
+          "name": "api",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": [
+              "file:server/api.py"
+            ]
+          },
+          "files": [
+            {
+              "id": "file:server/__init__.py",
+              "path": "server/__init__.py",
+              "language": "python",
+              "contentHash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+              "lines": 0,
+              "tierConfidence": 0.85,
+              "imports": [],
+              "functions": []
+            },
+            {
+              "id": "file:server/api.py",
+              "path": "server/api.py",
+              "language": "python",
+              "contentHash": "eb69324bd3dae027a970ea5c1f090c36911aae2e975e0b5312e86c6bc014b55b",
+              "lines": 20,
+              "tierConfidence": 0.99,
+              "role": "route-handler",
+              "imports": [
+                {
+                  "target": "file:server/pricing.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:server/api.py#list_items",
+                  "name": "list_items",
+                  "visibility": "public",
+                  "lineRange": [
+                    11,
+                    13
+                  ],
+                  "byteRange": [
+                    153,
+                    236
+                  ],
+                  "signature": {
+                    "parameters": [],
+                    "returnType": "list[dict]"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 13,
+                      "label": "return [{\"id\": 1, \"name\": \"Mug\", \"price\": 9.5}]"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:server/api.py#checkout",
+                  "name": "checkout",
+                  "visibility": "public",
+                  "lineRange": [
+                    16,
+                    20
+                  ],
+                  "byteRange": [
+                    266,
+                    472
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "body",
+                        "type": "dict"
+                      }
+                    ],
+                    "returnType": "dict"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "Payments API",
+                      "layer": "cloud",
+                      "ruleId": "cloud.payments"
+                    },
+                    {
+                      "concept": "ORM write",
+                      "layer": "data",
+                      "ruleId": "data.orm.write"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 18,
+                      "label": "amount = total(body[\"items\"]) + vat_for(body[\"country\"])"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 19,
+                      "label": "intent = stripe.PaymentIntent.create(amount=int(amount * 100…"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 20,
+                      "label": "return {\"id\": intent.id}"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:server/pricing.py#total",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                }
+              ]
+            },
+            {
+              "id": "file:server/pricing.py",
+              "path": "server/pricing.py",
+              "language": "python",
+              "contentHash": "af982b22eef2c493069d55d6fd9153921587f8b5c24af0bbf13bc37b9b632d14",
+              "lines": 9,
+              "tierConfidence": 0.93,
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:server/pricing.py#total",
+                  "name": "total",
+                  "visibility": "public",
+                  "lineRange": [
+                    4,
+                    5
+                  ],
+                  "byteRange": [
+                    71,
+                    169
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "items",
+                        "type": "list[dict]"
+                      }
+                    ],
+                    "returnType": "float"
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(N)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.loop.depth-1"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 5,
+                      "label": "return sum(i[\"price\"] * i.get(\"qty\", 1) for i in items)"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:server/api.py#checkout",
+                    "fn:server/pricing.py#discount"
+                  ]
+                },
+                {
+                  "id": "fn:server/pricing.py#discount",
+                  "name": "discount",
+                  "visibility": "public",
+                  "lineRange": [
+                    8,
+                    9
+                  ],
+                  "byteRange": [
+                    172,
+                    266
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "items",
+                        "type": "list[dict]"
+                      },
+                      {
+                        "name": "pct",
+                        "type": "float"
+                      }
+                    ],
+                    "returnType": "float"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "calls": [
+                    {
+                      "target": "fn:server/pricing.py#total",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.9
+                    }
+                  ],
+                  "calledBy": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "crossTierEdges": [
+    {
+      "id": "xedge:fn:web/src/api.ts#listItems->fn:server/api.py#list_items",
+      "source": "fn:web/src/api.ts#listItems",
+      "target": "fn:server/api.py#list_items",
+      "protocol": "HTTP/REST",
+      "evidence": [
+        "http.GET /api/items",
+        "route.fastapi",
+        "match.exact"
+      ]
+    }
+  ],
+  "nonCodeNodes": [
+    {
+      "id": "noncode:Dockerfile",
+      "path": "Dockerfile",
+      "kind": "infra",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:README.md",
+      "path": "README.md",
+      "kind": "doc",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:docker-compose.yml",
+      "path": "docker-compose.yml",
+      "kind": "infra",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:requirements.txt",
+      "path": "requirements.txt",
+      "kind": "manifest",
+      "relatesTo": []
+    },
+    {
+      "id": "noncode:web/package.json",
+      "path": "web/package.json",
+      "kind": "manifest",
+      "relatesTo": []
+    }
+  ],
+  "summary": {
+    "kind": "full-stack",
+    "headline": "Containerized app in 1 container: API (api).",
+    "findings": [
+      {
+        "text": "1 services from Dockerfile, docker-compose.yml; 0 links proven by env URLs, depends_on or proxy rules.",
+        "evidence": [
+          "svc:api"
+        ]
+      },
+      {
+        "text": "Sorted 5 files by what they do, not where they live: 2 frontend, 0 gateway/middleware, 3 backend, 0 data, 0 worker, 0 shared.",
+        "evidence": [
+          "tier.*"
+        ]
+      },
+      {
+        "text": "Found 2 HTTP routes (fastapi).",
+        "evidence": [
+          "route:GET /api/items#server/api.py",
+          "route:POST /api/checkout#server/api.py"
+        ]
+      },
+      {
+        "text": "1 client calls reach 1 backend handlers over HTTP.",
+        "evidence": [
+          "xedge:fn:web/src/api.ts#listItems->fn:server/api.py#list_items"
+        ]
+      },
+      {
+        "text": "1 UI elements are wired to handlers you can follow into the code.",
+        "evidence": [
+          "ui:web/src/App.tsx:12:6"
+        ]
+      }
+    ],
+    "stats": {
+      "files": 5,
+      "functions": 8,
+      "lines": 60,
+      "languages": {
+        "python": 3,
+        "typescript": 2
+      }
+    }
+  },
+  "dataModels": [],
+  "routes": [
+    {
+      "id": "route:GET /api/items#server/api.py",
+      "method": "GET",
+      "path": "/api/items",
+      "framework": "fastapi",
+      "fileId": "file:server/api.py",
+      "line": 11,
+      "handler": "fn:server/api.py#list_items"
+    },
+    {
+      "id": "route:POST /api/checkout#server/api.py",
+      "method": "POST",
+      "path": "/api/checkout",
+      "framework": "fastapi",
+      "fileId": "file:server/api.py",
+      "line": 16,
+      "handler": "fn:server/api.py#checkout"
+    }
+  ],
+  "uiElements": [
+    {
+      "id": "ui:web/src/App.tsx:12:6",
+      "tag": "button",
+      "label": "Open cart",
+      "fileId": "file:web/src/App.tsx",
+      "line": 12,
+      "component": "fn:web/src/App.tsx#App",
+      "event": "onClick",
+      "handler": "fn:web/src/api.ts#loadCart"
+    }
+  ],
+  "questions": [],
+  "insights": {
+    "rulesetVersion": "patterns 0.1.0 / catalog 0.1.0 / services 0.1.0",
+    "dataStructures": [],
+    "libraries": [
+      {
+        "name": "FastAPI",
+        "category": "web framework",
+        "explain": "Python web API framework; routes are typed functions validated with Pydantic.",
+        "evidence": [
+          "fastapi"
+        ]
+      },
+      {
+        "name": "React",
+        "category": "UI library",
+        "explain": "Builds UIs from components; re-renders when state changes.",
+        "evidence": [
+          "react"
+        ]
+      }
+    ],
+    "memoryTechniques": [],
+    "deployment": {
+      "sources": [
+        "Dockerfile",
+        "docker-compose.yml"
+      ],
+      "services": [
+        {
+          "id": "svc:api",
+          "name": "api",
+          "kind": "api",
+          "image": "python:3.12-slim",
+          "buildContext": "",
+          "command": "uvicorn server.main:app --host 0.0.0.0 --port 8000",
+          "ports": [
+            "8000:8000"
+          ],
+          "volumes": [],
+          "envKeys": [],
+          "codeFiles": 5,
+          "declaredIn": "docker-compose.yml:2",
+          "explain": "Backend API built from this repository (5 source files): receives HTTP requests and runs the app logic."
+        }
+      ],
+      "links": []
+    }
+  },
+  "features": [
+    {
+      "id": "feature:checkout",
+      "name": "Checkout",
+      "explain": "1 route under /checkout.",
+      "basis": "routes",
+      "routes": [
+        "route:POST /api/checkout#server/api.py"
+      ],
+      "ui": [],
+      "files": [
+        "file:server/pricing.py"
+      ],
+      "sharedFiles": [
+        "file:server/api.py"
+      ],
+      "tables": [],
+      "services": [
+        "svc:api"
+      ],
+      "aiStages": [],
+      "stack": [
+        "FastAPI",
+        "stripe"
+      ]
+    },
+    {
+      "id": "feature:items",
+      "name": "Items",
+      "explain": "1 route under /items.",
+      "basis": "routes",
+      "routes": [
+        "route:GET /api/items#server/api.py"
+      ],
+      "ui": [],
+      "files": [
+        "file:web/src/api.ts"
+      ],
+      "sharedFiles": [
+        "file:server/api.py"
+      ],
+      "tables": [],
+      "services": [
+        "svc:api"
+      ],
+      "aiStages": [],
+      "stack": [
+        "FastAPI",
+        "date-fns",
+        "stripe"
+      ]
+    }
+  ],
+  "health": {
+    "filesChecked": 5,
+    "filesWithErrors": 1,
+    "issues": [
+      {
+        "id": "health:0",
+        "kind": "syntaxError",
+        "severity": "error",
+        "fileId": "file:server/pricing.py",
+        "line": 9,
+        "message": "Syntax error: cannot parse `return total(items) * (1 - pct / 100`",
+        "fix": "Fix this line first: the parser skipped the code around it, so functions here may be missing from the map."
+      },
+      {
+        "id": "health:1",
+        "kind": "unresolvedImport",
+        "severity": "error",
+        "fileId": "file:server/api.py",
+        "line": 6,
+        "message": "Import `.tax` points at no file in the repository",
+        "fix": "Check the path and file name (case matters on Linux), or add the missing file."
+      },
+      {
+        "id": "health:2",
+        "kind": "unresolvedImport",
+        "severity": "error",
+        "fileId": "file:web/src/api.ts",
+        "line": 2,
+        "message": "Import `./utils/money` points at no file in the repository",
+        "fix": "Check the path and file name (case matters on Linux), or add the missing file."
+      },
+      {
+        "id": "health:3",
+        "kind": "missingEntry",
+        "severity": "error",
+        "fileId": "file:docker-compose.yml",
+        "line": 2,
+        "message": "`api` starts `uvicorn server.main:app --host 0.0.0.0 --port 8000`, but server/main.py is not in the repository",
+        "fix": "Fix the module path in the start command, or add the file it names."
+      },
+      {
+        "id": "health:4",
+        "kind": "missingPackage",
+        "severity": "warning",
+        "fileId": "file:server/api.py",
+        "line": 3,
+        "message": "`stripe` is imported but no requirements or pyproject file lists it",
+        "fix": "Add the package that provides `stripe` to requirements.txt (or pyproject.toml), then reinstall."
+      },
+      {
+        "id": "health:5",
+        "kind": "missingPackage",
+        "severity": "warning",
+        "fileId": "file:web/src/api.ts",
+        "line": 1,
+        "message": "`date-fns` is imported but package.json does not list it",
+        "fix": "Run `npm install date-fns` (or pnpm/yarn add) in the folder with package.json."
+      },
+      {
+        "id": "health:6",
+        "kind": "deadRoute",
+        "severity": "warning",
+        "fileId": "file:web/src/api.ts",
+        "line": 10,
+        "message": "GET /api/cart matches no route declared in this repository",
+        "fix": "Check the URL and method against the backend routes; a typo or a removed route returns 404."
+      }
+    ]
+  }
+}

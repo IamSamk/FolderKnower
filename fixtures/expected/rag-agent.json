@@ -13,7 +13,7 @@
       "tree-sitter-typescript": "0.23.2"
     }
   },
-  "contentRoot": "9319e953b12a0e30939511757d624c7a8fb97b2784d4ed6ca3a9d9e2ca8134b6",
+  "contentRoot": "c4e6070fe4542f7acc93e930075c839b17acab85f5f3947150d9484c114919d5",
   "tiers": [
     {
       "id": "tier:frontend",
@@ -39,8 +39,8 @@
               "id": "file:web/src/App.tsx",
               "path": "web/src/App.tsx",
               "language": "typescript",
-              "contentHash": "b100f5fb00749fd5ef6fd55e1cbd65e2221054483f786094442da8cade111993",
-              "lines": 27,
+              "contentHash": "bf0683360722500a8eb80e3c5feeff9a096ac5204cbee70657fab0250b14cb27",
+              "lines": 37,
               "tierConfidence": 0.99,
               "role": "component",
               "imports": [],
@@ -51,11 +51,11 @@
                   "visibility": "public",
                   "lineRange": [
                     5,
-                    27
+                    37
                   ],
                   "byteRange": [
                     103,
-                    755
+                    1154
                   ],
                   "signature": {
                     "parameters": []
@@ -90,8 +90,13 @@
                       "label": "const [answer, setAnswer] = useState(\"\");"
                     },
                     {
+                      "kind": "call",
+                      "line": 9,
+                      "label": "const [turns, setTurns] = useState<{ role: string; text: str…"
+                    },
+                    {
                       "kind": "return",
-                      "line": 19,
+                      "line": 27,
                       "label": "return ("
                     }
                   ],
@@ -103,12 +108,80 @@
                   "name": "ask",
                   "visibility": "internal",
                   "lineRange": [
-                    9,
-                    17
+                    11,
+                    20
                   ],
                   "byteRange": [
-                    215,
-                    492
+                    292,
+                    621
+                  ],
+                  "signature": {
+                    "parameters": []
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [
+                    {
+                      "concept": "JSON serialization",
+                      "layer": "data",
+                      "ruleId": "data.serialize.json"
+                    },
+                    {
+                      "concept": "Browser storage",
+                      "layer": "data",
+                      "ruleId": "data.storage.browser"
+                    },
+                    {
+                      "concept": "HTTP request",
+                      "layer": "network",
+                      "ruleId": "net.http.client"
+                    }
+                  ],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 12,
+                      "label": "localStorage.setItem(\"lastQuestion\", question);"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 13,
+                      "label": "const res = await fetch(`${API}/ask`,"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 18,
+                      "label": "const data = await res.json();"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 19,
+                      "label": "setAnswer(data.answer);"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:web/src/App.tsx#showHistory",
+                  "name": "showHistory",
+                  "visibility": "internal",
+                  "lineRange": [
+                    22,
+                    25
+                  ],
+                  "byteRange": [
+                    625,
+                    743
                   ],
                   "signature": {
                     "parameters": []
@@ -139,18 +212,13 @@
                   "flow": [
                     {
                       "kind": "call",
-                      "line": 10,
-                      "label": "const res = await fetch(`${API}/ask`,"
+                      "line": 23,
+                      "label": "const res = await fetch(`${API}/history/demo`);"
                     },
                     {
                       "kind": "call",
-                      "line": 15,
-                      "label": "const data = await res.json();"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 16,
-                      "label": "setAnswer(data.answer);"
+                      "line": 24,
+                      "label": "setTurns(await res.json());"
                     }
                   ],
                   "calls": [],
@@ -179,9 +247,7 @@
             "algo": "louvain",
             "seed": 0,
             "resolution": 1.0,
-            "anchors": [
-              "file:app/api.py"
-            ]
+            "anchors": []
           },
           "files": [
             {
@@ -376,140 +442,6 @@
               ]
             },
             {
-              "id": "file:app/api.py",
-              "path": "app/api.py",
-              "language": "python",
-              "contentHash": "60d6363bc1e7a648edb4549168102376fdb1d1dcc687645a304866afdcc5d4d7",
-              "lines": 27,
-              "tierConfidence": 0.94,
-              "role": "route-handler",
-              "imports": [
-                {
-                  "target": "file:app/agent.py",
-                  "provenance": "ts_resolved",
-                  "confidence": 0.95
-                },
-                {
-                  "target": "file:app/memory.py",
-                  "provenance": "ts_resolved",
-                  "confidence": 0.95
-                }
-              ],
-              "functions": [
-                {
-                  "id": "fn:app/api.py#ask",
-                  "name": "ask",
-                  "visibility": "public",
-                  "lineRange": [
-                    16,
-                    27
-                  ],
-                  "byteRange": [
-                    326,
-                    760
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "body",
-                        "type": "Ask"
-                      }
-                    ],
-                    "returnType": "dict"
-                  },
-                  "complexity": {
-                    "cyclomatic": 2,
-                    "cognitive": 1,
-                    "maxNesting": 1,
-                    "timeBigO": "O(1)",
-                    "spaceBigO": "O(1)",
-                    "basis": [
-                      "bigo.no-loops"
-                    ],
-                    "memoryFlags": []
-                  },
-                  "ontologyTags": [],
-                  "flow": [
-                    {
-                      "kind": "call",
-                      "line": 18,
-                      "label": "q = normalize(body.question)"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 19,
-                      "label": "hit = cached_answer(q)"
-                    },
-                    {
-                      "kind": "branch",
-                      "line": 20,
-                      "label": "if hit",
-                      "children": [
-                        {
-                          "kind": "return",
-                          "line": 21,
-                          "label": "return {\"answer\": hit, \"cached\": True}"
-                        }
-                      ]
-                    },
-                    {
-                      "kind": "call",
-                      "line": 22,
-                      "label": "remember(body.session, \"user\", body.question)"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 23,
-                      "label": "out = agent.invoke({\"question\": q, \"history\": history(body.s…"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 25,
-                      "label": "remember(body.session, \"assistant\", answer)"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 26,
-                      "label": "store_answer(q, answer)"
-                    },
-                    {
-                      "kind": "return",
-                      "line": 27,
-                      "label": "return {\"answer\": answer, \"cached\": False}"
-                    }
-                  ],
-                  "calls": [
-                    {
-                      "target": "fn:app/memory.py#cached_answer",
-                      "provenance": "ts_resolved",
-                      "confidence": 0.85
-                    },
-                    {
-                      "target": "fn:app/memory.py#history",
-                      "provenance": "ts_resolved",
-                      "confidence": 0.85
-                    },
-                    {
-                      "target": "fn:app/memory.py#normalize",
-                      "provenance": "ts_resolved",
-                      "confidence": 0.85
-                    },
-                    {
-                      "target": "fn:app/memory.py#remember",
-                      "provenance": "ts_resolved",
-                      "confidence": 0.85
-                    },
-                    {
-                      "target": "fn:app/memory.py#store_answer",
-                      "provenance": "ts_resolved",
-                      "confidence": 0.85
-                    }
-                  ],
-                  "calledBy": []
-                }
-              ]
-            },
-            {
               "id": "file:app/retrieve.py",
               "path": "app/retrieve.py",
               "language": "python",
@@ -608,6 +540,365 @@
                   "calls": [],
                   "calledBy": [
                     "fn:app/agent.py#search_book"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cluster:backend:api",
+          "name": "api",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": [
+              "file:app/api.py"
+            ]
+          },
+          "files": [
+            {
+              "id": "file:app/api.py",
+              "path": "app/api.py",
+              "language": "python",
+              "contentHash": "40ccff62ea6a1c52f83b181a8c3941b74c97b5b96f644ca41fdef780563bd3db",
+              "lines": 43,
+              "tierConfidence": 0.94,
+              "role": "route-handler",
+              "imports": [
+                {
+                  "target": "file:app/agent.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:app/ingest.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                },
+                {
+                  "target": "file:app/memory.py",
+                  "provenance": "ts_resolved",
+                  "confidence": 0.95
+                }
+              ],
+              "functions": [
+                {
+                  "id": "fn:app/api.py#ask",
+                  "name": "ask",
+                  "visibility": "public",
+                  "lineRange": [
+                    17,
+                    28
+                  ],
+                  "byteRange": [
+                    358,
+                    792
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "body",
+                        "type": "Ask"
+                      }
+                    ],
+                    "returnType": "dict"
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 19,
+                      "label": "q = normalize(body.question)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 20,
+                      "label": "hit = cached_answer(q)"
+                    },
+                    {
+                      "kind": "branch",
+                      "line": 21,
+                      "label": "if hit",
+                      "children": [
+                        {
+                          "kind": "return",
+                          "line": 22,
+                          "label": "return {\"answer\": hit, \"cached\": True}"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "call",
+                      "line": 23,
+                      "label": "remember(body.session, \"user\", body.question)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 24,
+                      "label": "out = agent.invoke({\"question\": q, \"history\": history(body.s…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 26,
+                      "label": "remember(body.session, \"assistant\", answer)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 27,
+                      "label": "store_answer(q, answer)"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 28,
+                      "label": "return {\"answer\": answer, \"cached\": False}"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:app/memory.py#cached_answer",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    },
+                    {
+                      "target": "fn:app/memory.py#history",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    },
+                    {
+                      "target": "fn:app/memory.py#normalize",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    },
+                    {
+                      "target": "fn:app/memory.py#remember",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    },
+                    {
+                      "target": "fn:app/memory.py#store_answer",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:app/api.py#ingest",
+                  "name": "ingest",
+                  "visibility": "public",
+                  "lineRange": [
+                    35,
+                    38
+                  ],
+                  "byteRange": [
+                    861,
+                    960
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "body",
+                        "type": "Ingest"
+                      }
+                    ],
+                    "returnType": "dict"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 37,
+                      "label": "_, _, n = build_index(body.pdf_path)"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 38,
+                      "label": "return {\"chunks\": n}"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:app/ingest.py#build_index",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                },
+                {
+                  "id": "fn:app/api.py#get_history",
+                  "name": "get_history",
+                  "visibility": "public",
+                  "lineRange": [
+                    41,
+                    43
+                  ],
+                  "byteRange": [
+                    994,
+                    1066
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "session",
+                        "type": "str"
+                      }
+                    ],
+                    "returnType": "list[dict]"
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "return",
+                      "line": 43,
+                      "label": "return history(session)"
+                    }
+                  ],
+                  "calls": [
+                    {
+                      "target": "fn:app/memory.py#history",
+                      "provenance": "ts_resolved",
+                      "confidence": 0.85
+                    }
+                  ],
+                  "calledBy": []
+                }
+              ]
+            },
+            {
+              "id": "file:app/ingest.py",
+              "path": "app/ingest.py",
+              "language": "python",
+              "contentHash": "09d07c1e2db9ed444a590483f1e6430ca350f801cad1c694a52c24a02b514b5b",
+              "lines": 21,
+              "tierConfidence": 0.87,
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:app/ingest.py#build_index",
+                  "name": "build_index",
+                  "visibility": "public",
+                  "lineRange": [
+                    12,
+                    21
+                  ],
+                  "byteRange": [
+                    390,
+                    968
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "pdf_path",
+                        "type": "str"
+                      },
+                      {
+                        "name": "persist_dir",
+                        "type": "str",
+                        "defaultValue": "\"./index\""
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 2,
+                    "cognitive": 1,
+                    "maxNesting": 1,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 13,
+                      "label": "docs = PyPDFLoader(pdf_path).load()"
+                    },
+                    {
+                      "kind": "branch",
+                      "line": 14,
+                      "label": "if not docs",
+                      "children": [
+                        {
+                          "kind": "raise",
+                          "line": 15,
+                          "label": "raise ValueError(f\"{pdf_path} has no pages\")",
+                          "error": true
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "call",
+                      "line": 16,
+                      "label": "splitter = RecursiveCharacterTextSplitter(chunk_size=800, ch…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 17,
+                      "label": "chunks = splitter.split_documents(docs)"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 18,
+                      "label": "embeddings = HuggingFaceEmbeddings(model_name=\"BAAI/bge-smal…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 19,
+                      "label": "store = Chroma.from_documents(chunks, embeddings, persist_di…"
+                    },
+                    {
+                      "kind": "call",
+                      "line": 20,
+                      "label": "keywords = BM25Retriever.from_documents(chunks, k=8)"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 21,
+                      "label": "return store, keywords, len(chunks)"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": [
+                    "fn:app/api.py#ingest"
                   ]
                 }
               ]
@@ -758,7 +1049,8 @@
                   ],
                   "calls": [],
                   "calledBy": [
-                    "fn:app/api.py#ask"
+                    "fn:app/api.py#ask",
+                    "fn:app/api.py#get_history"
                   ]
                 },
                 {
@@ -1467,177 +1759,6 @@
       "evidence": [],
       "clusters": [
         {
-          "id": "cluster:shared:ingest",
-          "name": "ingest",
-          "method": {
-            "algo": "louvain",
-            "seed": 0,
-            "resolution": 1.0,
-            "anchors": []
-          },
-          "files": [
-            {
-              "id": "file:app/ingest.py",
-              "path": "app/ingest.py",
-              "language": "python",
-              "contentHash": "09d07c1e2db9ed444a590483f1e6430ca350f801cad1c694a52c24a02b514b5b",
-              "lines": 21,
-              "tierConfidence": 0.3,
-              "imports": [],
-              "functions": [
-                {
-                  "id": "fn:app/ingest.py#build_index",
-                  "name": "build_index",
-                  "visibility": "public",
-                  "lineRange": [
-                    12,
-                    21
-                  ],
-                  "byteRange": [
-                    390,
-                    968
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "pdf_path",
-                        "type": "str"
-                      },
-                      {
-                        "name": "persist_dir",
-                        "type": "str",
-                        "defaultValue": "\"./index\""
-                      }
-                    ]
-                  },
-                  "complexity": {
-                    "cyclomatic": 2,
-                    "cognitive": 1,
-                    "maxNesting": 1,
-                    "timeBigO": "O(1)",
-                    "spaceBigO": "O(1)",
-                    "basis": [
-                      "bigo.no-loops"
-                    ],
-                    "memoryFlags": []
-                  },
-                  "ontologyTags": [],
-                  "flow": [
-                    {
-                      "kind": "call",
-                      "line": 13,
-                      "label": "docs = PyPDFLoader(pdf_path).load()"
-                    },
-                    {
-                      "kind": "branch",
-                      "line": 14,
-                      "label": "if not docs",
-                      "children": [
-                        {
-                          "kind": "raise",
-                          "line": 15,
-                          "label": "raise ValueError(f\"{pdf_path} has no pages\")",
-                          "error": true
-                        }
-                      ]
-                    },
-                    {
-                      "kind": "call",
-                      "line": 16,
-                      "label": "splitter = RecursiveCharacterTextSplitter(chunk_size=800, ch…"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 17,
-                      "label": "chunks = splitter.split_documents(docs)"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 18,
-                      "label": "embeddings = HuggingFaceEmbeddings(model_name=\"BAAI/bge-smal…"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 19,
-                      "label": "store = Chroma.from_documents(chunks, embeddings, persist_di…"
-                    },
-                    {
-                      "kind": "call",
-                      "line": 20,
-                      "label": "keywords = BM25Retriever.from_documents(chunks, k=8)"
-                    },
-                    {
-                      "kind": "return",
-                      "line": 21,
-                      "label": "return store, keywords, len(chunks)"
-                    }
-                  ],
-                  "calls": [],
-                  "calledBy": []
-                }
-              ]
-            },
-            {
-              "id": "file:app/serve.py",
-              "path": "app/serve.py",
-              "language": "python",
-              "contentHash": "ed07bf108a85c235cef02a2ad9261eef21ee4f764d094c57a812ac8ec96a2217",
-              "lines": 15,
-              "tierConfidence": 0.3,
-              "imports": [],
-              "functions": [
-                {
-                  "id": "fn:app/serve.py#answer",
-                  "name": "answer",
-                  "visibility": "public",
-                  "lineRange": [
-                    13,
-                    15
-                  ],
-                  "byteRange": [
-                    277,
-                    413
-                  ],
-                  "signature": {
-                    "parameters": [
-                      {
-                        "name": "prompts",
-                        "type": "list[str]"
-                      }
-                    ]
-                  },
-                  "complexity": {
-                    "cyclomatic": 1,
-                    "cognitive": 0,
-                    "maxNesting": 0,
-                    "timeBigO": "O(1)",
-                    "spaceBigO": "O(1)",
-                    "basis": [
-                      "bigo.no-loops"
-                    ],
-                    "memoryFlags": []
-                  },
-                  "ontologyTags": [],
-                  "flow": [
-                    {
-                      "kind": "call",
-                      "line": 14,
-                      "label": "params = SamplingParams(temperature=0.0, max_tokens=512)"
-                    },
-                    {
-                      "kind": "return",
-                      "line": 15,
-                      "label": "return engine.generate(prompts, params)"
-                    }
-                  ],
-                  "calls": [],
-                  "calledBy": []
-                }
-              ]
-            }
-          ]
-        },
-        {
           "id": "cluster:shared:algorithms",
           "name": "algorithms",
           "method": {
@@ -2161,6 +2282,76 @@
               ]
             }
           ]
+        },
+        {
+          "id": "cluster:shared:serve",
+          "name": "serve",
+          "method": {
+            "algo": "louvain",
+            "seed": 0,
+            "resolution": 1.0,
+            "anchors": []
+          },
+          "files": [
+            {
+              "id": "file:app/serve.py",
+              "path": "app/serve.py",
+              "language": "python",
+              "contentHash": "ed07bf108a85c235cef02a2ad9261eef21ee4f764d094c57a812ac8ec96a2217",
+              "lines": 15,
+              "tierConfidence": 0.3,
+              "imports": [],
+              "functions": [
+                {
+                  "id": "fn:app/serve.py#answer",
+                  "name": "answer",
+                  "visibility": "public",
+                  "lineRange": [
+                    13,
+                    15
+                  ],
+                  "byteRange": [
+                    277,
+                    413
+                  ],
+                  "signature": {
+                    "parameters": [
+                      {
+                        "name": "prompts",
+                        "type": "list[str]"
+                      }
+                    ]
+                  },
+                  "complexity": {
+                    "cyclomatic": 1,
+                    "cognitive": 0,
+                    "maxNesting": 0,
+                    "timeBigO": "O(1)",
+                    "spaceBigO": "O(1)",
+                    "basis": [
+                      "bigo.no-loops"
+                    ],
+                    "memoryFlags": []
+                  },
+                  "ontologyTags": [],
+                  "flow": [
+                    {
+                      "kind": "call",
+                      "line": 14,
+                      "label": "params = SamplingParams(temperature=0.0, max_tokens=512)"
+                    },
+                    {
+                      "kind": "return",
+                      "line": 15,
+                      "label": "return engine.generate(prompts, params)"
+                    }
+                  ],
+                  "calls": [],
+                  "calledBy": []
+                }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -2173,6 +2364,17 @@
       "protocol": "HTTP/REST",
       "evidence": [
         "http.POST :param/ask",
+        "route.fastapi",
+        "match.exact"
+      ]
+    },
+    {
+      "id": "xedge:fn:web/src/App.tsx#showHistory->fn:app/api.py#get_history",
+      "source": "fn:web/src/App.tsx#showHistory",
+      "target": "fn:app/api.py#get_history",
+      "protocol": "HTTP/REST",
+      "evidence": [
+        "http.GET :param/history/demo",
         "route.fastapi",
         "match.exact"
       ]
@@ -2262,40 +2464,45 @@
         ]
       },
       {
-        "text": "Sorted 9 files by what they do, not where they live: 1 frontend, 0 gateway/middleware, 3 backend, 2 data, 0 worker, 3 shared.",
+        "text": "Sorted 9 files by what they do, not where they live: 1 frontend, 0 gateway/middleware, 4 backend, 2 data, 0 worker, 2 shared.",
         "evidence": [
           "tier.*"
         ]
       },
       {
-        "text": "Found 1 HTTP routes (fastapi).",
+        "text": "Found 3 HTTP routes (fastapi).",
         "evidence": [
-          "route:POST /ask#app/api.py"
+          "route:GET /history/:param#app/api.py",
+          "route:POST /ask#app/api.py",
+          "route:POST /ingest#app/api.py"
         ]
       },
       {
-        "text": "1 client calls reach 1 backend handlers over HTTP.",
+        "text": "2 client calls reach 2 backend handlers over HTTP.",
         "evidence": [
-          "xedge:fn:web/src/App.tsx#ask->fn:app/api.py#ask"
+          "xedge:fn:web/src/App.tsx#ask->fn:app/api.py#ask",
+          "xedge:fn:web/src/App.tsx#showHistory->fn:app/api.py#get_history"
         ]
       },
       {
-        "text": "0 tables and 1 schemas/DTOs; 0 schemas mirror a table; 0 functions touch the database.",
+        "text": "0 tables and 2 schemas/DTOs; 0 schemas mirror a table; 0 functions touch the database.",
         "evidence": [
-          "model:app/api.py#Ask"
+          "model:app/api.py#Ask",
+          "model:app/api.py#Ingest"
         ]
       },
       {
-        "text": "1 UI elements are wired to handlers you can follow into the code.",
+        "text": "2 UI elements are wired to handlers you can follow into the code.",
         "evidence": [
-          "ui:web/src/App.tsx:23:6"
+          "ui:web/src/App.tsx:31:6",
+          "ui:web/src/App.tsx:33:6"
         ]
       }
     ],
     "stats": {
       "files": 9,
-      "functions": 29,
-      "lines": 314,
+      "functions": 32,
+      "lines": 340,
       "languages": {
         "python": 8,
         "typescript": 1
@@ -2309,7 +2516,7 @@
       "kind": "schema",
       "framework": "pydantic",
       "fileId": "file:app/api.py",
-      "line": 11,
+      "line": 12,
       "fields": [
         {
           "name": "question",
@@ -2326,38 +2533,84 @@
       ],
       "relations": [],
       "mirrors": []
+    },
+    {
+      "id": "model:app/api.py#Ingest",
+      "name": "Ingest",
+      "kind": "schema",
+      "framework": "pydantic",
+      "fileId": "file:app/api.py",
+      "line": 31,
+      "fields": [
+        {
+          "name": "pdf_path",
+          "type": "str",
+          "primaryKey": false,
+          "nullable": false
+        }
+      ],
+      "relations": [],
+      "mirrors": []
     }
   ],
   "routes": [
+    {
+      "id": "route:GET /history/:param#app/api.py",
+      "method": "GET",
+      "path": "/history/:param",
+      "framework": "fastapi",
+      "fileId": "file:app/api.py",
+      "line": 41,
+      "handler": "fn:app/api.py#get_history"
+    },
     {
       "id": "route:POST /ask#app/api.py",
       "method": "POST",
       "path": "/ask",
       "framework": "fastapi",
       "fileId": "file:app/api.py",
-      "line": 16,
+      "line": 17,
       "handler": "fn:app/api.py#ask"
+    },
+    {
+      "id": "route:POST /ingest#app/api.py",
+      "method": "POST",
+      "path": "/ingest",
+      "framework": "fastapi",
+      "fileId": "file:app/api.py",
+      "line": 35,
+      "handler": "fn:app/api.py#ingest"
     }
   ],
   "uiElements": [
     {
-      "id": "ui:web/src/App.tsx:22:6",
+      "id": "ui:web/src/App.tsx:30:6",
       "tag": "input",
       "label": "What is chunk overlap?",
       "fileId": "file:web/src/App.tsx",
-      "line": 22,
+      "line": 30,
       "component": "fn:web/src/App.tsx#App",
       "event": "onChange"
     },
     {
-      "id": "ui:web/src/App.tsx:23:6",
+      "id": "ui:web/src/App.tsx:31:6",
       "tag": "button",
       "label": "Ask",
       "fileId": "file:web/src/App.tsx",
-      "line": 23,
+      "line": 31,
       "component": "fn:web/src/App.tsx#App",
       "event": "onClick",
       "handler": "fn:web/src/App.tsx#ask"
+    },
+    {
+      "id": "ui:web/src/App.tsx:33:6",
+      "tag": "button",
+      "label": "Show history",
+      "fileId": "file:web/src/App.tsx",
+      "line": 33,
+      "component": "fn:web/src/App.tsx#App",
+      "event": "onClick",
+      "handler": "fn:web/src/App.tsx#showHistory"
     }
   ],
   "questions": [
@@ -3289,31 +3542,31 @@
   },
   "exampleRuns": [
     {
-      "id": "run:ui:web/src/App.tsx:23:6",
+      "id": "run:ui:web/src/App.tsx:31:6",
       "title": "Ask → POST /ask",
-      "start": "ui:web/src/App.tsx:23:6",
+      "start": "ui:web/src/App.tsx:31:6",
       "sampleInput": "What is chunk overlap?",
       "hops": [
         {
-          "node": "ui:web/src/App.tsx:22:6",
+          "node": "ui:web/src/App.tsx:30:6",
           "kind": "ui",
           "label": "type “What is chunk overlap?”",
           "service": "svc:web",
           "via": "start",
           "proof": [
-            "web/src/App.tsx:22"
+            "web/src/App.tsx:30"
           ],
           "confidence": 1.0,
           "explain": "The user types a question into the input on this screen."
         },
         {
-          "node": "ui:web/src/App.tsx:23:6",
+          "node": "ui:web/src/App.tsx:31:6",
           "kind": "ui",
           "label": "<button> “Ask”",
           "service": "svc:web",
           "via": "handler",
           "proof": [
-            "web/src/App.tsx:23"
+            "web/src/App.tsx:31"
           ],
           "confidence": 1.0,
           "explain": "The user clicks this button."
@@ -3325,7 +3578,7 @@
           "service": "svc:web",
           "via": "handler",
           "proof": [
-            "web/src/App.tsx:9"
+            "web/src/App.tsx:11"
           ],
           "confidence": 1.0,
           "explain": "Its onClick handler runs in the browser."
@@ -3351,7 +3604,7 @@
           "via": "proxy",
           "proof": [
             "xedge:fn:web/src/App.tsx#ask->fn:app/api.py#ask",
-            "app/api.py:16"
+            "app/api.py:17"
           ],
           "confidence": 1.0,
           "explain": "The browser sends http.POST :param/ask; the backend route POST /ask receives it and runs ask()."
@@ -3554,7 +3807,7 @@
           "explain": "The work behind ChatOllama happens in its own container. The ollama container is reached over the network (OLLAMA_BASE_URL -> ollama:11434)."
         },
         {
-          "node": "ui:web/src/App.tsx:23:6",
+          "node": "ui:web/src/App.tsx:31:6",
           "kind": "response",
           "label": "answer shown on screen",
           "service": "svc:web",
@@ -3566,6 +3819,614 @@
           "explain": "The response travels back the same way and the screen updates."
         }
       ]
+    },
+    {
+      "id": "run:ui:web/src/App.tsx:33:6",
+      "title": "Show history → GET /history/:param",
+      "start": "ui:web/src/App.tsx:33:6",
+      "sampleInput": "What is chunk overlap?",
+      "hops": [
+        {
+          "node": "ui:web/src/App.tsx:30:6",
+          "kind": "ui",
+          "label": "type “What is chunk overlap?”",
+          "service": "svc:web",
+          "via": "start",
+          "proof": [
+            "web/src/App.tsx:30"
+          ],
+          "confidence": 1.0,
+          "explain": "The user types a question into the input on this screen."
+        },
+        {
+          "node": "ui:web/src/App.tsx:33:6",
+          "kind": "ui",
+          "label": "<button> “Show history”",
+          "service": "svc:web",
+          "via": "handler",
+          "proof": [
+            "web/src/App.tsx:33"
+          ],
+          "confidence": 1.0,
+          "explain": "The user clicks this button."
+        },
+        {
+          "node": "fn:web/src/App.tsx#showHistory",
+          "kind": "function",
+          "label": "showHistory()",
+          "service": "svc:web",
+          "via": "handler",
+          "proof": [
+            "web/src/App.tsx:22"
+          ],
+          "confidence": 1.0,
+          "explain": "Its onClick handler runs in the browser."
+        },
+        {
+          "node": "svc:proxy",
+          "kind": "proxy",
+          "label": "proxy (reverse proxy)",
+          "service": "svc:proxy",
+          "via": "http",
+          "proof": [
+            "VITE_API_URL -> proxy:80",
+            "proxy_pass in deploy/nginx.conf"
+          ],
+          "confidence": 0.9,
+          "explain": "The request reaches the reverse proxy “proxy” first (VITE_API_URL -> proxy:80), which forwards it to api (proxy_pass in deploy/nginx.conf)."
+        },
+        {
+          "node": "route:GET /history/:param#app/api.py",
+          "kind": "route",
+          "label": "GET /history/:param",
+          "service": "svc:api",
+          "via": "proxy",
+          "proof": [
+            "xedge:fn:web/src/App.tsx#showHistory->fn:app/api.py#get_history",
+            "app/api.py:41"
+          ],
+          "confidence": 1.0,
+          "explain": "The browser sends http.GET :param/history/demo; the backend route GET /history/:param receives it and runs get_history()."
+        },
+        {
+          "node": "file:app/memory.py",
+          "kind": "function",
+          "label": "history() in app/memory.py",
+          "service": "svc:api",
+          "via": "call",
+          "proof": [
+            "app/memory.py:20"
+          ],
+          "confidence": 0.85,
+          "explain": "get_history() calls history() in app/memory.py (Capped history in Redis (rolling buffer); Response cache with expiry (TTL))."
+        },
+        {
+          "node": "svc:cache",
+          "kind": "service",
+          "label": "cache container",
+          "service": "svc:cache",
+          "via": "network",
+          "proof": [
+            "REDIS_URL -> cache:6379",
+            "docker-compose.yml:62"
+          ],
+          "confidence": 0.8,
+          "explain": "app/memory.py keeps its data in Redis. The cache container is reached over the network (REDIS_URL -> cache:6379)."
+        },
+        {
+          "node": "file:app/agent.py",
+          "kind": "function",
+          "label": "hand off to app/agent.py",
+          "service": "svc:api",
+          "via": "import",
+          "proof": [
+            "app/api.py imports app/agent.py"
+          ],
+          "confidence": 0.7,
+          "explain": "get_history() uses the pipeline defined in app/agent.py (matched by import; the call itself is dynamic)."
+        },
+        {
+          "node": "ai:agent:bind_tools",
+          "kind": "stage",
+          "label": "bind_tools",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/agent.py:25",
+            "ai.agent.langchain"
+          ],
+          "confidence": 0.9,
+          "explain": "Agent loop. The model chooses a tool, the tool runs, the result goes back to the model, and this repeats until the model decides it is done."
+        },
+        {
+          "node": "ai:router:StateGraph",
+          "kind": "stage",
+          "label": "StateGraph",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/agent.py:39",
+            "ai.router.langgraph"
+          ],
+          "confidence": 0.9,
+          "explain": "runs: A router (decision step). After a node runs, a function looks at the state and picks the next node, for example \"call a tool again\" or \"finish\". This is what turns a straight pipeline into a loop. Settings in the code: nodes=agent, tools."
+        },
+        {
+          "node": "ai:tool:search_book",
+          "kind": "stage",
+          "label": "search_book",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/agent.py:17",
+            "ai.tool.decorated-function"
+          ],
+          "confidence": 0.9,
+          "explain": "call tool: Tool. A function the model may ask to run (search, calculator, database query). Its result is fed back to the model."
+        },
+        {
+          "node": "ai:vectorStore:Chroma.from_documents",
+          "kind": "stage",
+          "label": "Chroma.from_documents",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/ingest.py:19",
+            "ai.store.vector"
+          ],
+          "confidence": 0.9,
+          "explain": "nearest-neighbour search: Vector store. Keeps every chunk's vector with its text and metadata, indexed (often HNSW) for fast nearest-neighbour search. Settings in the code: collection_name=book, persist_directory=persist_dir."
+        },
+        {
+          "node": "svc:chroma",
+          "kind": "service",
+          "label": "chroma container",
+          "service": "svc:chroma",
+          "via": "network",
+          "proof": [
+            "CHROMA_URL -> chroma:8000",
+            "docker-compose.yml:56"
+          ],
+          "confidence": 0.8,
+          "explain": "The work behind Chroma.from_documents happens in its own container. The chroma container is reached over the network (CHROMA_URL -> chroma:8000)."
+        },
+        {
+          "node": "ai:retriever:as_retriever",
+          "kind": "stage",
+          "label": "as_retriever",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/retrieve.py:12",
+            "ai.retrieve.as-retriever"
+          ],
+          "confidence": 0.9,
+          "explain": "retrieve (as a tool): Retriever. Embeds the question and returns the k chunks whose vectors are closest (top-k). Settings in the code: k=8, search_kwargs={\"k\": 8}, search_type=similarity."
+        },
+        {
+          "node": "ai:keywordIndex:BM25Retriever.from_documents",
+          "kind": "stage",
+          "label": "BM25Retriever.from_documents",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/ingest.py:20",
+            "ai.keyword.bm25"
+          ],
+          "confidence": 0.9,
+          "explain": "keyword hits: BM25 is keyword search. It scores chunks by how often the query words appear in them, discounted by how common those words are everywhere. It finds exact names and codes that embeddings miss. Settings in the code: k=8."
+        },
+        {
+          "node": "ai:fusion:EnsembleRetriever",
+          "kind": "stage",
+          "label": "EnsembleRetriever",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/retrieve.py:13",
+            "ai.fusion.ensemble"
+          ],
+          "confidence": 0.9,
+          "explain": "top-k chunks: Fusion merges two ranked lists (dense vectors and BM25 keywords) into one. Reciprocal Rank Fusion gives each chunk 1/(60 + rank) from every list and adds them up, so chunks that rank well in both win. Settings in the code: weights=[0.6, 0.4]."
+        },
+        {
+          "node": "ai:reranker:CrossEncoder",
+          "kind": "stage",
+          "label": "CrossEncoder",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/retrieve.py:8",
+            "ai.rerank.cross-encoder"
+          ],
+          "confidence": 0.9,
+          "explain": "fused candidates: Reranker (cross-encoder). Reads the question and each candidate chunk together and scores how well they match. Slower than vector search but much more precise, so it re-orders the top-k candidates and keeps the best top-n. Settings in the code: model=cross-encoder/ms-marco-MiniLM-L-6-v2."
+        },
+        {
+          "node": "ai:prompt:ChatPromptTemplate.from_messages",
+          "kind": "stage",
+          "label": "ChatPromptTemplate.from_messages",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/agent.py:11",
+            "ai.prompt.template"
+          ],
+          "confidence": 0.9,
+          "explain": "top-n chunks: Prompt template. Puts the instructions, the retrieved chunks and the question into the text the model will read."
+        },
+        {
+          "node": "ai:llm:ChatOllama",
+          "kind": "stage",
+          "label": "ChatOllama",
+          "service": "svc:api",
+          "via": "pipeline",
+          "proof": [
+            "app/agent.py:9",
+            "ai.llm.chat-wrapper"
+          ],
+          "confidence": 0.9,
+          "explain": "prompt: Language model call. Reads the prompt and generates the answer token by token; with tools enabled it can answer with a tool call instead. Settings in the code: model=qwen3:4b, num_ctx=8192, temperature=0."
+        },
+        {
+          "node": "svc:ollama",
+          "kind": "service",
+          "label": "ollama container",
+          "service": "svc:ollama",
+          "via": "network",
+          "proof": [
+            "OLLAMA_BASE_URL -> ollama:11434",
+            "docker-compose.yml:39"
+          ],
+          "confidence": 0.8,
+          "explain": "The work behind ChatOllama happens in its own container. The ollama container is reached over the network (OLLAMA_BASE_URL -> ollama:11434)."
+        },
+        {
+          "node": "ui:web/src/App.tsx:33:6",
+          "kind": "response",
+          "label": "answer shown on screen",
+          "service": "svc:web",
+          "via": "return",
+          "proof": [
+            "xedge:fn:web/src/App.tsx#showHistory->fn:app/api.py#get_history"
+          ],
+          "confidence": 1.0,
+          "explain": "The response travels back the same way and the screen updates."
+        }
+      ]
+    }
+  ],
+  "features": [
+    {
+      "id": "feature:ask",
+      "name": "Ask",
+      "explain": "1 route, 1 screen, 9 AI steps under /ask.",
+      "basis": "routes",
+      "routes": [
+        "route:POST /ask#app/api.py"
+      ],
+      "ui": [
+        "ui:web/src/App.tsx:30:6",
+        "ui:web/src/App.tsx:31:6"
+      ],
+      "files": [
+        "file:app/agent.py",
+        "file:app/retrieve.py"
+      ],
+      "sharedFiles": [
+        "file:app/api.py",
+        "file:app/memory.py",
+        "file:web/src/App.tsx"
+      ],
+      "tables": [],
+      "services": [
+        "svc:api",
+        "svc:cache",
+        "svc:chroma",
+        "svc:ollama",
+        "svc:proxy",
+        "svc:web"
+      ],
+      "aiStages": [
+        "ai:agent:bind_tools",
+        "ai:fusion:EnsembleRetriever",
+        "ai:llm:ChatOllama",
+        "ai:prompt:ChatPromptTemplate.from_messages",
+        "ai:reranker:CrossEncoder",
+        "ai:retriever:as_retriever",
+        "ai:router:StateGraph",
+        "ai:router:add_conditional_edges",
+        "ai:tool:search_book"
+      ],
+      "stack": [
+        "FastAPI",
+        "LangChain",
+        "LangGraph",
+        "React",
+        "Redis",
+        "langchain-ollama",
+        "pydantic",
+        "sentence-transformers"
+      ]
+    },
+    {
+      "id": "feature:ingest",
+      "name": "Ingest",
+      "explain": "1 route, 5 AI steps under /ingest.",
+      "basis": "routes",
+      "routes": [
+        "route:POST /ingest#app/api.py"
+      ],
+      "ui": [],
+      "files": [
+        "file:app/ingest.py"
+      ],
+      "sharedFiles": [
+        "file:app/api.py"
+      ],
+      "tables": [],
+      "services": [
+        "svc:api",
+        "svc:chroma"
+      ],
+      "aiStages": [
+        "ai:embedder:HuggingFaceEmbeddings",
+        "ai:keywordIndex:BM25Retriever.from_documents",
+        "ai:loader:PyPDFLoader",
+        "ai:splitter:RecursiveCharacterTextSplitter",
+        "ai:vectorStore:Chroma.from_documents"
+      ],
+      "stack": [
+        "FastAPI",
+        "LangChain",
+        "langchain-huggingface",
+        "langchain-text-splitters",
+        "pydantic"
+      ]
+    },
+    {
+      "id": "feature:history",
+      "name": "History",
+      "explain": "1 route, 1 screen under /history.",
+      "basis": "routes",
+      "routes": [
+        "route:GET /history/:param#app/api.py"
+      ],
+      "ui": [
+        "ui:web/src/App.tsx:30:6",
+        "ui:web/src/App.tsx:33:6"
+      ],
+      "files": [],
+      "sharedFiles": [
+        "file:app/api.py",
+        "file:app/memory.py",
+        "file:web/src/App.tsx"
+      ],
+      "tables": [],
+      "services": [
+        "svc:api",
+        "svc:cache",
+        "svc:proxy",
+        "svc:web"
+      ],
+      "aiStages": [],
+      "stack": [
+        "FastAPI",
+        "React",
+        "Redis",
+        "pydantic"
+      ]
+    }
+  ],
+  "memoryMap": [
+    {
+      "id": "memmap:0",
+      "what": "KV cache (attention keys and values)",
+      "place": "vram",
+      "holder": "svc:api",
+      "holderName": "api",
+      "lifetime": "request",
+      "bound": "kv_cache_dtype=\"fp8\"; max_model_len=8192, gpu_memory_utilization=0.85, enable_prefix_caching=True",
+      "proof": [
+        "app/serve.py:4"
+      ],
+      "explain": "Every token being generated keeps a key and a value per layer; this cache grows with the context and is freed when the request ends.",
+      "source": "mem:mem.kv.quant:app/serve.py"
+    },
+    {
+      "id": "memmap:1",
+      "what": "Model weights (Qwen/Qwen3-4B)",
+      "place": "vram",
+      "holder": "svc:api",
+      "holderName": "api",
+      "lifetime": "process",
+      "bound": "gpu_memory_utilization 0.85",
+      "proof": [
+        "app/serve.py:4"
+      ],
+      "explain": "LLM loads the whole model into GPU memory of api and keeps it there.",
+      "source": "ai:llm:LLM"
+    },
+    {
+      "id": "memmap:2",
+      "what": "Shared prompt prefixes (reused KV blocks)",
+      "place": "vram",
+      "holder": "svc:api",
+      "holderName": "api",
+      "lifetime": "process",
+      "bound": "enable_prefix_caching=True",
+      "proof": [
+        "app/serve.py:4"
+      ],
+      "explain": "KV blocks for a prefix many prompts share stay in GPU memory and are reused until space is needed.",
+      "source": "mem:mem.vllm.prefix:app/serve.py"
+    },
+    {
+      "id": "memmap:3",
+      "what": "KV cache (attention keys and values)",
+      "place": "vram",
+      "holder": "svc:ollama",
+      "holderName": "ollama",
+      "lifetime": "request",
+      "bound": "num_ctx 8192 tokens",
+      "proof": [
+        "app/agent.py:9",
+        "docker-compose.yml:39"
+      ],
+      "explain": "While a reply is generated the model keeps a key and a value per token per layer; the context size decides how big this gets.",
+      "source": "svc:ollama"
+    },
+    {
+      "id": "memmap:4",
+      "what": "Model weights (qwen3:4b)",
+      "place": "vram",
+      "holder": "svc:ollama",
+      "holderName": "ollama",
+      "lifetime": "process",
+      "bound": "container limit 12 GiB; num_ctx=8192, keep_alive=\"10m\"",
+      "proof": [
+        "app/agent.py:9",
+        "docker-compose.yml:39"
+      ],
+      "explain": "The chat model is loaded into GPU memory by Ollama, not into the API process; the API only sends HTTP requests.",
+      "source": "svc:ollama"
+    },
+    {
+      "id": "memmap:5",
+      "what": "BM25 keyword index (word -> chunks)",
+      "place": "ram",
+      "holder": "svc:api",
+      "holderName": "api",
+      "lifetime": "process",
+      "bound": "returns top 8",
+      "proof": [
+        "app/ingest.py:20"
+      ],
+      "explain": "BM25Retriever.from_documents holds the word counts for every chunk in api's RAM; it is rebuilt when the process restarts.",
+      "source": "ai:keywordIndex:BM25Retriever.from_documents"
+    },
+    {
+      "id": "memmap:6",
+      "what": "Embedding model weights (BAAI/bge-small-en-v1.5)",
+      "place": "ram",
+      "holder": "svc:api",
+      "holderName": "api",
+      "lifetime": "process",
+      "proof": [
+        "app/ingest.py:18"
+      ],
+      "explain": "HuggingFaceEmbeddings loads the model into RAM when it is created and keeps it there for the life of the process.",
+      "source": "ai:embedder:HuggingFaceEmbeddings"
+    },
+    {
+      "id": "memmap:7",
+      "what": "Reranker model weights (cross-encoder/ms-marco-MiniLM-L-6-v2)",
+      "place": "ram",
+      "holder": "svc:api",
+      "holderName": "api",
+      "lifetime": "process",
+      "proof": [
+        "app/retrieve.py:8"
+      ],
+      "explain": "CrossEncoder loads the model into RAM when it is created and keeps it there for the life of the process.",
+      "source": "ai:reranker:CrossEncoder"
+    },
+    {
+      "id": "memmap:8",
+      "what": "Cached responses (expire after a TTL)",
+      "place": "ram",
+      "holder": "svc:cache",
+      "holderName": "cache",
+      "lifetime": "session",
+      "bound": "r.setex(...); maxmemory 256mb, allkeys-lru, container limit 300 MiB",
+      "proof": [
+        "app/memory.py:30"
+      ],
+      "explain": "Stores a computed result under a key with a time-to-live. A repeat request reads the stored copy instead of recomputing; Redis deletes the key when the TTL runs out, and its maxmemory policy evicts old keys when it is full.",
+      "source": "mem:mem.redis.ttl-cache:app/memory.py"
+    },
+    {
+      "id": "memmap:9",
+      "what": "Chat history (last N messages per conversation)",
+      "place": "ram",
+      "holder": "svc:cache",
+      "holderName": "cache",
+      "lifetime": "session",
+      "bound": "r.ltrim(...); maxmemory 256mb, allkeys-lru, container limit 300 MiB",
+      "proof": [
+        "app/memory.py:17"
+      ],
+      "explain": "Pushes each new item onto a Redis list and trims it to the last N, so the list works as a ring buffer. Used for chat history, memory per conversation stays fixed however long it runs, and every API worker sees the same history because it lives in the Redis container, not in the process.",
+      "source": "mem:mem.redis.capped-list:app/memory.py"
+    },
+    {
+      "id": "memmap:10",
+      "what": "Vector index (HNSW graph + vectors)",
+      "place": "ram",
+      "holder": "svc:chroma",
+      "holderName": "chroma",
+      "lifetime": "process",
+      "bound": "container limit 1 GiB",
+      "proof": [
+        "app/ingest.py:19",
+        "docker-compose.yml:56"
+      ],
+      "explain": "chroma keeps the search graph and the vectors it walks in RAM so a query touches a few hundred vectors in milliseconds.",
+      "source": "svc:chroma"
+    },
+    {
+      "id": "memmap:11",
+      "what": "Vector index files (persist_directory=persist_dir)",
+      "place": "disk",
+      "holder": "svc:api",
+      "holderName": "api",
+      "lifetime": "persistent",
+      "proof": [
+        "app/ingest.py:19"
+      ],
+      "explain": "Chroma.from_documents writes the collection to persist_dir inside api, so it survives restarts (if that folder is on a volume).",
+      "source": "ai:vectorStore:Chroma.from_documents"
+    },
+    {
+      "id": "memmap:12",
+      "what": "Stored collections (vectors, chunks, metadata)",
+      "place": "disk",
+      "holder": "svc:chroma",
+      "holderName": "chroma",
+      "lifetime": "persistent",
+      "proof": [
+        "docker-compose.yml:56",
+        "volume index:/data"
+      ],
+      "explain": "chroma saves every collection to its data folder.",
+      "source": "svc:chroma"
+    },
+    {
+      "id": "memmap:13",
+      "what": "Downloaded model files",
+      "place": "disk",
+      "holder": "svc:ollama",
+      "holderName": "ollama",
+      "lifetime": "persistent",
+      "proof": [
+        "docker-compose.yml:39",
+        "volume models:/root/.ollama"
+      ],
+      "explain": "Model files are kept on a volume so they are not downloaded again after a restart.",
+      "source": "svc:ollama"
+    },
+    {
+      "id": "memmap:14",
+      "what": "localStorage (\"lastQuestion\")",
+      "place": "browser",
+      "holder": "browser",
+      "holderName": "the user's browser",
+      "lifetime": "persistent",
+      "proof": [
+        "web/src/App.tsx:12"
+      ],
+      "explain": "Saved in the browser per site, up to about 5 MB; it stays after the tab closes until the user clears site data.",
+      "source": "file:web/src/App.tsx"
     }
   ]
 }
