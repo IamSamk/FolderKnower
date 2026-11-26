@@ -2,6 +2,16 @@
 
 Notes for each version are shown in the in-app update pop-up and on the website's releases page.
 
+## [0.8.0] - 2026-11-26
+
+### Example run as a walkthrough
+- Playing an example run now zooms onto each step, pulls back while the request travels to the next one, then zooms in again. Simple stays a little further back; Standard and Deep go right onto the function and show the few lines of code that ran.
+- Code map stays the place to browse the structure; its Play button opens this walkthrough instead of drawing a second one.
+
+### Fixes
+- Screen transitions can no longer leave a half-drawn dark shape over the UI map.
+- Custom BM25 code and BGE-M3 (BGEM3FlagModel, dense plus sparse) are now recognized in the AI pipeline.
+
 ## [0.7.0] - 2026-11-26
 
 ### Architekton explains itself

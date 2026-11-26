@@ -18,6 +18,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ExampleRun, RunHop } from "../../gen";
+import { readSource } from "../../lib/backend";
 import { fmtBytes } from "../../lib/insights";
 import {
   type Box,
@@ -69,7 +70,8 @@ function writePref(key: string, v: string) {
   }
 }
 
-const HOP_MS = 1900;
+const HOP_MS = 3200;
+const PULL_MS = 1000;
 const VIA_TEXT: Record<RunHop["via"], string> = {
   start: "starts",
   handler: "event handler",
@@ -97,6 +99,38 @@ function useSize(ref: React.RefObject<HTMLDivElement | null>) {
 }
 
 /** The screen the user sees, drawn from the UI elements found in the start file. */
+/** The few lines of code behind a step, so a deep run shows what actually executed. */
+function CodeGlimpse({ proof }: { proof: string[] }) {
+  const root = useStore((s) => s.root);
+  const loc = proof.map((p) => /^(.+):(\d+)$/.exec(p)).find(Boolean);
+  const path = loc?.[1];
+  const line = loc ? Number(loc[2]) : 0;
+  const [text, setText] = useState<string | null>(null);
+  useEffect(() => {
+    setText(null);
+    if (!root || !path) return;
+    let live = true;
+    readSource(root, path)
+      .then((src) => {
+        if (!live) return;
+        const lines = src.split("\n");
+        const from = Math.max(0, line - 2);
+        setText(
+          lines
+            .slice(from, from + 8)
+            .map((l, i) => `${String(from + i + 1).padStart(3)}  ${l}`)
+            .join("\n"),
+        );
+      })
+      .catch(() => live && setText(null));
+    return () => {
+      live = false;
+    };
+  }, [root, path, line]);
+  if (!text) return null;
+  return <pre className="ak-sys-glimpse ak-mono">{text}</pre>;
+}
+
 function Preview({ run, step }: { run: ExampleRun; step: number }) {
   const ix = useStore((s) => s.ix);
   const start = ix?.ui.get(run.start);
@@ -499,6 +533,9 @@ export function SystemView() {
   const run = runs.find((r) => r.id === runId) ?? (feature ? runs[0] : undefined);
   const [step, setStep] = useState(-1);
   const [playing, setPlaying] = useState(false);
+  // between two steps the camera pulls back so the packet is seen travelling
+  const [pullback, setPullback] = useState(false);
+  const [ended, setEnded] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const m = useMemo(
     () => (ix ? buildSystem(ix, run, { depth, feature }) : null),
@@ -509,15 +546,34 @@ export function SystemView() {
   const hop = run && step >= 0 ? run.hops[step] : undefined;
   const anchor = ix && m && hop ? hopAnchor(ix, m, hop) : undefined;
 
+  // The "video": zoom in on a step, dwell, zoom out while the packet travels, zoom in on the next.
   useEffect(() => {
     if (!playing || !run) return;
     if (step >= run.hops.length - 1) {
-      const t = setTimeout(() => setPlaying(false), HOP_MS);
+      const t = setTimeout(() => {
+        setEnded(true);
+        setPlaying(false);
+      }, HOP_MS);
       return () => clearTimeout(t);
     }
-    const t = setTimeout(() => setStep((s) => s + 1), step < 0 ? 300 : HOP_MS);
-    return () => clearTimeout(t);
+    if (step < 0) {
+      const t = setTimeout(() => setStep(0), 300);
+      return () => clearTimeout(t);
+    }
+    const t1 = setTimeout(() => setPullback(true), HOP_MS - PULL_MS);
+    const t2 = setTimeout(() => {
+      setStep((s) => s + 1);
+      setPullback(false);
+    }, HOP_MS);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [playing, step, run]);
+
+  // any manual or automatic step back into the story ends the closing wide shot
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset on step and run change only
+  useEffect(() => setEnded(false), [step, runId]);
 
   // Asked to play a run from another view (UI map, Inspector): start it once.
   useEffect(() => {
@@ -533,6 +589,7 @@ export function SystemView() {
   const play = useCallback(() => {
     if (!run) return;
     if (step >= run.hops.length - 1) setStep(-1);
+    setEnded(false);
     setPlaying(true);
   }, [run, step]);
 
@@ -561,9 +618,30 @@ export function SystemView() {
 
   // Camera: whole system when idle, follow the packet while a run plays.
   const fit = Math.min(1, (size.w - 40) / m.width, (size.h - 40) / m.height);
-  const zoom = hop ? Math.max(fit, Math.min(1.15, fit * 1.6)) : fit;
-  const cx = anchor ? anchor.x : m.width / 2;
-  const cy = anchor ? anchor.y : m.height / 2;
+  const nextHop = run && step >= 0 ? run.hops[step + 1] : undefined;
+  const nextAnchor = ix && m && nextHop ? hopAnchor(ix, m, nextHop) : undefined;
+  // deep runs zoom right onto the function row, simple runs stay a little further back
+  const closeUp = Math.min(
+    depth === "simple" ? 1.5 : 2.3,
+    Math.max(fit, 0.9) * (depth === "simple" ? 1.9 : 2.8),
+  );
+  const sameBox = !!anchor && !!nextAnchor && anchor.box === nextAnchor.box;
+  const wideZoom = sameBox ? Math.max(fit, closeUp * 0.6) : fit;
+  const wide = ended || (playing && pullback);
+  const zoom = !hop ? fit : wide ? (ended ? fit : wideZoom) : Math.max(fit, closeUp);
+  const focusing = hop && !wide;
+  const cx =
+    focusing || !anchor
+      ? (anchor?.x ?? m.width / 2)
+      : nextAnchor
+        ? (anchor.x + nextAnchor.x) / 2
+        : anchor.x;
+  const cy =
+    focusing || !anchor
+      ? (anchor?.y ?? m.height / 2) - (focusing ? (depth === "simple" ? 70 : 150) / zoom : 0)
+      : nextAnchor
+        ? (anchor.y + nextAnchor.y) / 2
+        : anchor.y;
   const tx = size.w / 2 - cx * zoom;
   const ty = size.h / 2 - cy * zoom;
   const activeSvc = hop ? hopService(ix, hop, m.synthetic) : undefined;
@@ -728,7 +806,7 @@ export function SystemView() {
             className="ak-sys-canvas"
             style={{ width: m.width, height: m.height, originX: 0, originY: 0 }}
             animate={{ x: tx, y: ty, scale: zoom }}
-            transition={{ type: "spring", stiffness: 70, damping: 20, mass: 0.9 }}
+            transition={{ type: "spring", stiffness: 55, damping: 19, mass: 0.9 }}
           >
             {lanes.map((l) => {
               const first = m.boxes.find((b) => b.lane === l);
@@ -829,6 +907,7 @@ export function SystemView() {
                   <span className="ak-chip ml-auto shrink-0">{VIA_TEXT[hop.via]}</span>
                 </div>
                 <p className="mt-1 text-[13px] leading-relaxed">{hop.explain}</p>
+                {depth !== "simple" && <CodeGlimpse proof={hop.proof} />}
                 <div className="mt-1.5 flex flex-wrap items-center gap-1">
                   <span className="ak-muted text-[11px]">proof</span>
                   {hop.proof.map((p) => {

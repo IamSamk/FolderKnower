@@ -55,7 +55,7 @@ components:
   - id: ai.embed.sentence-transformers
     role: embedder
     library: sentence-transformers
-    match: ['^SentenceTransformer$', 'HuggingFaceEmbeddings$', 'HuggingFaceBgeEmbeddings$', 'HuggingFaceEmbedding$', 'FastEmbedEmbeddings$', '(^|\.)TextEmbedding$']
+    match: ['^SentenceTransformer$', '^(BGEM3FlagModel|FlagModel|FlagAutoModel|BGEM3EmbeddingFunction|BGEM3Embedding)$', '(^|\.)BGEM3[A-Za-z]*$', 'HuggingFaceEmbeddings$', 'HuggingFaceBgeEmbeddings$', 'HuggingFaceEmbedding$', 'FastEmbedEmbeddings$', '(^|\.)TextEmbedding$']
     params: [model_name, model, device, normalize_embeddings, truncate_dim]
     positional: model
   - id: ai.embed.openai
@@ -88,13 +88,13 @@ components:
   - id: ai.keyword.bm25
     role: keywordIndex
     library: BM25
-    match: ['^BM25Retriever(\.from_documents|\.from_texts|\.from_defaults)?$', '^BM25Okapi$', '^BM25$', 'bm25s\.(BM25|tokenize)$']
+    match: ['^BM25Retriever(\.from_documents|\.from_texts|\.from_defaults)?$', '^BM25Okapi$', '^BM25$', 'bm25s\.(BM25|tokenize)$', '(?i)(^|\.)(bm25(plus|l|f|s)?|[a-z_]*bm25[a-z_0-9]*|sparse_?bm25[a-z_]*)$', '(?i)(^|\.)(compute_idf|build_bm25|score_bm25|bm25_(search|score|rank|index|query)|lexical_search|keyword_search|sparse_search)$']
     params: [k, similarity_top_k, k1, b]
     explain: BM25 is keyword search. It scores chunks by how often the query words appear in them, discounted by how common those words are everywhere. It finds exact names and codes that embeddings miss.
   - id: ai.keyword.sparse
     role: keywordIndex
     library: sparse embeddings
-    match: ['^(SparseTextEmbedding|SparseEmbedding|SpladeEncoder|BM42|SparseVectorParams|SparseVector)$', 'models\.(SparseVectorParams|SparseVector|SparseIndexParams)$', 'FastEmbedSparse$', 'SPLADE$']
+    match: ['(^|\.)(compute_lexical_matching_score|convert_id_to_token|lexical_weights|colbert_score)$', '^(SparseTextEmbedding|SparseEmbedding|SpladeEncoder|BM42|SparseVectorParams|SparseVector)$', 'models\.(SparseVectorParams|SparseVector|SparseIndexParams)$', 'FastEmbedSparse$', 'SPLADE$']
     params: [model_name, modifier, index]
     explain: A sparse vector has one slot per vocabulary word and is almost all zeros; only the words in the text (and, for SPLADE, learned related words) get weights. It behaves like learned keyword search, stored next to the dense vector so one query can use both.
   - id: ai.keyword.tsvector

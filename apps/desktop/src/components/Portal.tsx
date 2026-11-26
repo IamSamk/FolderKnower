@@ -6,6 +6,7 @@
 // tab you clicked. All of it is driven by one `portal` value in the store.
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useEffect } from "react";
 import { useStore } from "../store";
 
 export interface PortalOrigin {
@@ -33,6 +34,12 @@ export function PortalScene({
   const ox = portal ? `${portal.x}px` : "50%";
   const oy = portal ? `${portal.y}px` : "50%";
   const dir = portal?.dir ?? "tab";
+  // watchdog: if a transition is still flagged after 2.5 s (a busy main thread can
+  // starve the animation), drop the flags so nothing stays half-clipped
+  useEffect(() => {
+    const t = window.setTimeout(() => useStore.setState({ portal: null, lens: null }), 2500);
+    return () => window.clearTimeout(t);
+  }, [sceneKey]);
   const variants = {
     initial: () =>
       reduce
@@ -41,7 +48,14 @@ export function PortalScene({
           ? { clipPath: "circle(150% at 50% 50%)", zIndex: 1 }
           : { clipPath: `circle(0px at ${ox} ${oy})`, zIndex: 2 },
     animate: () =>
-      reduce ? { opacity: 1 } : { clipPath: `circle(150% at ${ox} ${oy})`, zIndex: 1 },
+      reduce
+        ? { opacity: 1 }
+        : {
+            clipPath: `circle(150% at ${ox} ${oy})`,
+            zIndex: 1,
+            // never leave a clip behind: a stuck circle shows up as a dark wedge
+            transitionEnd: { clipPath: "none" },
+          },
     exit: () =>
       reduce
         ? { opacity: 0 }

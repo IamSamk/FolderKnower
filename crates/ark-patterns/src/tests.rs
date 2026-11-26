@@ -397,3 +397,36 @@ def search(q):
     assert!(roles.contains(&AiRole::Fusion), "{roles:?}");
     assert!(roles.contains(&AiRole::Embedder), "{roles:?}");
 }
+
+#[test]
+fn recognizes_custom_bm25_and_bge_m3() {
+    let src = r#"
+from FlagEmbedding import BGEM3FlagModel
+
+model = BGEM3FlagModel("BAAI/bge-m3", use_fp16=True)
+
+class BM25Index:
+    def __init__(self, docs, k1=1.5, b=0.75):
+        self.k1 = k1
+
+def build(docs):
+    return BM25Index(docs)
+
+def dense_search(q):
+    out = model.encode([q], return_dense=True, return_sparse=True)
+    return out
+
+def sparse_search(index, q):
+    return index.bm25_score(q)
+"#;
+    let out = crate::ai::analyze(&[pf("search.py", Language::Python, src)], &[]);
+    let ai = out.ai.expect("ai");
+    let roles: Vec<AiRole> = ai.stages.iter().map(|s| s.role).collect();
+    assert!(roles.contains(&AiRole::KeywordIndex), "{roles:?}");
+    let emb = ai
+        .stages
+        .iter()
+        .find(|s| s.role == AiRole::Embedder)
+        .expect("embedder");
+    assert_eq!(emb.params["model"], "BAAI/bge-m3");
+}
