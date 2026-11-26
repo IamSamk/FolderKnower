@@ -220,7 +220,7 @@ function Inner({ built, onOpen, onNavigate }: Props) {
           variant={BackgroundVariant.Dots}
           gap={24}
           size={1.6}
-          color={dark ? "#3a3760" : "#c3c6d9"}
+          color={dark ? "oklch(36.0% 0.070 286)" : "oklch(83.0% 0.027 279)"}
         />
         <ZoomBar />
         <MiniMap
@@ -228,11 +228,15 @@ function Inner({ built, onOpen, onNavigate }: Props) {
           zoomable
           position="bottom-left"
           className="ak-minimap"
-          bgColor={dark ? "#26244a" : "#ffffff"}
+          bgColor={dark ? "oklch(28.4% 0.068 284)" : "oklch(100.0% 0.000 0)"}
           maskColor={dark ? "rgba(20,19,38,0.7)" : "rgba(238,240,247,0.7)"}
           nodeColor={(n) => {
             const t = (n.data as { tier?: TierLabel }).tier;
-            return t ? TIER_COLOR[t] : n.type === "model" ? TIER_COLOR.Storage : "#b9bccc";
+            return t
+              ? TIER_COLOR[t]
+              : n.type === "model"
+                ? TIER_COLOR.Storage
+                : "oklch(79.8% 0.023 277)";
           }}
           nodeStrokeWidth={0}
         />

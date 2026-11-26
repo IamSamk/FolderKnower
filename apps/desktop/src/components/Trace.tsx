@@ -12,7 +12,7 @@ const VIA: Record<NonNullable<Hop["via"]>, string> = {
 const KIND_ICON: Record<Hop["kind"], string> = { ui: "◉", fn: "ƒ", route: "⇥", model: "▤" };
 
 function HopCard({ h, i, onClick }: { h: Hop; i: number; onClick: () => void }) {
-  const c = h.tier ? TIER_COLOR[h.tier] : "#94A3B8";
+  const c = h.tier ? TIER_COLOR[h.tier] : "oklch(71.1% 0.035 257)";
   return (
     <motion.button
       type="button"
@@ -86,7 +86,13 @@ export function TraceStrip() {
                   <Link
                     via={h.via}
                     i={i}
-                    color={h.via === "http" ? "#22D3EE" : h.via === "sql" ? "#34D399" : "#71717A"}
+                    color={
+                      h.via === "http"
+                        ? "oklch(79.7% 0.134 212)"
+                        : h.via === "sql"
+                          ? "oklch(77.3% 0.153 163)"
+                          : "oklch(55.2% 0.014 286)"
+                    }
                   />
                 )}
                 <HopCard h={h} i={i} onClick={() => reveal(h.id)} />

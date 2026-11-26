@@ -101,12 +101,12 @@ export function TopBar() {
   if (!ix) return null;
   const top = stack[stack.length - 1];
   const views: { k: View; label: string; icon: React.ReactNode }[] = [
-    { k: "system", label: "System", icon: <Container size={15} strokeWidth={2.2} /> },
-    { k: "architecture", label: "Code map", icon: <Network size={15} strokeWidth={2.2} /> },
-    { k: "ui", label: "UI map", icon: <Boxes size={15} strokeWidth={2.2} /> },
-    { k: "er", label: "Data", icon: <Database size={15} strokeWidth={2.2} /> },
-    { k: "insights", label: "How it works", icon: <Brain size={15} strokeWidth={2.2} /> },
-    { k: "live", label: "Live", icon: <Activity size={15} strokeWidth={2.2} /> },
+    { k: "system", label: "System", icon: <Container size={15} strokeWidth={2.4} /> },
+    { k: "architecture", label: "Code map", icon: <Network size={15} strokeWidth={2.4} /> },
+    { k: "ui", label: "UI map", icon: <Boxes size={15} strokeWidth={2.4} /> },
+    { k: "er", label: "Data", icon: <Database size={15} strokeWidth={2.4} /> },
+    { k: "insights", label: "How it works", icon: <Brain size={15} strokeWidth={2.4} /> },
+    { k: "live", label: "Live", icon: <Activity size={15} strokeWidth={2.4} /> },
   ];
   const switchView = (k: View, el: Element) => {
     if (k === view) return;
@@ -179,7 +179,7 @@ export function TopBar() {
             onClick={toggleHealth}
             title="Problems found without running the code: syntax errors, missing files and packages, dead routes"
           >
-            <TriangleAlert size={15} strokeWidth={2.3} />
+            <TriangleAlert size={15} strokeWidth={2.4} />
             {health.issues.length} problem{health.issues.length === 1 ? "" : "s"}
           </button>
         )}
@@ -190,7 +190,7 @@ export function TopBar() {
           onClick={toggleTools}
           title="DSA tools: structures in your code, hidden in your tools, and real-life problems"
         >
-          <Wrench size={15} strokeWidth={2.2} />
+          <Wrench size={15} strokeWidth={2.4} />
           DSA tools
         </button>
         {view !== "live" && view !== "system" && (

@@ -233,7 +233,7 @@ export function ModelNodeView({ data, selected }: NodeProps) {
   const d = data as Common & { model: DataModel };
   const m = d.model;
   const isSchema = m.kind === "schema";
-  const color = isSchema ? "#A78BFA" : "#10B981";
+  const color = isSchema ? "oklch(70.9% 0.159 294)" : "oklch(69.6% 0.149 162)";
   return (
     <Shell
       color={color}

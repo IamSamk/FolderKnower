@@ -30,8 +30,8 @@ export function CopyCommand({ label, command }: { label: string; command: string
           className="shrink-0 w-9 h-9 rounded-[4px] flex items-center justify-center text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-[var(--hair)] transition-colors"
         >
           <span className="ak-swap">
-            <Copy size={16} strokeWidth={2.5} data-on={!copied} />
-            <Check size={16} strokeWidth={2.5} data-on={copied} className="text-[var(--ok)]" />
+            <Copy size={16} strokeWidth={2.4} data-on={!copied} />
+            <Check size={16} strokeWidth={2.4} data-on={copied} className="text-[var(--ok)]" />
           </span>
         </button>
       </div>

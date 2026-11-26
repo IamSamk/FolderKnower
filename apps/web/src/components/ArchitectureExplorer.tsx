@@ -211,7 +211,7 @@ export function ArchitectureExplorer() {
         <div className="ak-card p-6 sm:p-8 bg-[var(--code-bg)]" aria-live="polite">
           <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 mb-4 border-b-2 border-[var(--hair)] gap-4">
             <div className="flex items-center gap-3">
-              <FileCode size={22} strokeWidth={2.25} className="text-[var(--ink-2)] shrink-0" />
+              <FileCode size={22} strokeWidth={2.4} className="text-[var(--ink-2)] shrink-0" />
               <div>
                 <span className="text-[11px] font-bold text-[var(--ink-3)] uppercase tracking-wider block">
                   Evidence
@@ -223,7 +223,7 @@ export function ArchitectureExplorer() {
             </div>
 
             <div className="flex items-center gap-2 text-sm font-bold text-[var(--ok)]">
-              <CheckCircle2 size={16} strokeWidth={2.5} />
+              <CheckCircle2 size={16} strokeWidth={2.4} />
               <span>Linked from the syntax tree</span>
             </div>
           </div>

@@ -34,20 +34,20 @@ export const SVC_LABEL: Record<ServiceKind, string> = {
 };
 
 export const SVC_COLOR: Record<ServiceKind, string> = {
-  frontend: "#5ec8ff",
-  proxy: "#c9b6ff",
-  api: "#7cf0a6",
-  worker: "#ffd36b",
-  agent: "#ff9ecf",
-  modelServer: "#ff8a5c",
-  vectorStore: "#b48cff",
-  searchEngine: "#9ad0ff",
-  database: "#6be3d6",
-  cache: "#ff6b6b",
-  broker: "#ffc46b",
-  objectStore: "#d0d4e4",
-  observability: "#a8e06b",
-  other: "#dcdcec",
+  frontend: "oklch(79.2% 0.125 234)",
+  proxy: "oklch(81.8% 0.103 296)",
+  api: "oklch(86.8% 0.149 154)",
+  worker: "oklch(88.5% 0.132 87)",
+  agent: "oklch(81.2% 0.129 349)",
+  modelServer: "oklch(75.3% 0.155 42)",
+  vectorStore: "oklch(72.5% 0.165 298)",
+  searchEngine: "oklch(83.7% 0.087 245)",
+  database: "oklch(84.3% 0.110 186)",
+  cache: "oklch(71.2% 0.181 23)",
+  broker: "oklch(85.6% 0.126 76)",
+  objectStore: "oklch(87.2% 0.022 275)",
+  observability: "oklch(84.3% 0.159 130)",
+  other: "oklch(89.9% 0.022 286)",
 };
 
 /** Columns, left to right: what the user touches, the edge, the code, what it leans on. */
@@ -164,11 +164,11 @@ export const PLACE_NAME: Record<MemoryPlacement["place"], string> = {
 };
 
 export const PLACE_COLOR: Record<MemoryPlacement["place"], string> = {
-  vram: "#ff8a5c",
-  ram: "#5ec8ff",
-  disk: "#6be3d6",
-  browser: "#ffd36b",
-  remote: "#c9b6ff",
+  vram: "oklch(75.3% 0.155 42)",
+  ram: "oklch(79.2% 0.125 234)",
+  disk: "oklch(84.3% 0.110 186)",
+  browser: "oklch(88.5% 0.132 87)",
+  remote: "oklch(81.8% 0.103 296)",
 };
 
 export const LIFE_NAME: Record<MemoryPlacement["lifetime"], string> = {
@@ -437,11 +437,13 @@ export function buildSystem(
       if (depth === "simple" || code.some((r) => r.ref === ref) || code.length >= cap) return;
       code.push({ key: `c:${ref}`, ref, text, badge, color, y: 0 });
     };
-    for (const f of broken) if (files.has(f)) add(f, pathOf(ix, f), "broken", "#ff6b6b");
+    for (const f of broken)
+      if (files.has(f)) add(f, pathOf(ix, f), "broken", "oklch(71.2% 0.181 23)");
     if (svc.entryFile && files.has(svc.entryFile))
-      add(svc.entryFile, pathOf(ix, svc.entryFile), "starts here", "#7cf0a6");
+      add(svc.entryFile, pathOf(ix, svc.entryFile), "starts here", "oklch(86.8% 0.149 154)");
     for (const m of mem)
-      if (files.has(m.fileId)) add(m.fileId, pathOf(ix, m.fileId), "memory", "#ff6b6b");
+      if (files.has(m.fileId))
+        add(m.fileId, pathOf(ix, m.fileId), "memory", "oklch(71.2% 0.181 23)");
     for (const [f, n] of routesByFile)
       if (files.has(f))
         add(
@@ -450,13 +452,13 @@ export function buildSystem(
           ix.g.routes.some((r) => r.fileId === f && r.method === "IPC")
             ? `${n} command${n > 1 ? "s" : ""}`
             : `${n} route${n > 1 ? "s" : ""}`,
-          "#c9b6ff",
+          "oklch(81.8% 0.103 296)",
         );
     const aiFiles = new Map<string, number>();
     for (const st of ai?.stages ?? [])
       if (files.has(st.fileId)) aiFiles.set(st.fileId, (aiFiles.get(st.fileId) ?? 0) + 1);
     for (const [f, n] of [...aiFiles].sort((a, b) => b[1] - a[1]))
-      add(f, pathOf(ix, f), `${n} AI step${n > 1 ? "s" : ""}`, "#ff9ecf");
+      add(f, pathOf(ix, f), `${n} AI step${n > 1 ? "s" : ""}`, "oklch(81.2% 0.129 349)");
     // Run hops landing here pull their files in too.
     for (const h of run?.hops ?? []) {
       const f = ix.fileOf(h.node) ?? (h.node.startsWith("file:") ? h.node : undefined);
@@ -465,7 +467,7 @@ export function buildSystem(
     if (depth === "deep")
       for (const f of [...files].sort()) {
         const fe = ix.files.get(f);
-        add(f, pathOf(ix, f), fe?.file.role ?? undefined, "#9ad0ff");
+        add(f, pathOf(ix, f), fe?.file.role ?? undefined, "oklch(83.7% 0.087 245)");
       }
     const pipeline: Row[] = [];
     const inRun = (run?.hops ?? []).filter(

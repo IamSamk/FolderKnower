@@ -54,7 +54,7 @@ export function Features() {
         <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {FEATURES.map(({ icon: Icon, title, desc }) => (
             <li key={title} className="ak-card p-6">
-              <Icon size={24} strokeWidth={2.25} className="text-[var(--accent)] mb-4" />
+              <Icon size={24} strokeWidth={2.4} className="text-[var(--accent)] mb-4" />
               <h3 className="text-lg font-extrabold text-[var(--ink)] mb-2">{title}</h3>
               <p className="text-sm text-[var(--ink-2)] leading-relaxed font-medium">{desc}</p>
             </li>

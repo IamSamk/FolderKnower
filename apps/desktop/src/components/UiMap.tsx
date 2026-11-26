@@ -61,8 +61,8 @@ function Mock({
             exit={{ opacity: 0 }}
             className="ak-devtip"
           >
-            <span className="text-[#F472B6]">{el.tag}</span>
-            {el.event && <span className="text-[#93C5FD]">.{el.event}</span>}
+            <span className="text-[oklch(72.5% 0.175 350)]">{el.tag}</span>
+            {el.event && <span className="text-[oklch(80.9% 0.096 252)]">.{el.event}</span>}
             <span className="ak-muted"> → </span>
             <span>{el.handler ? el.handler.split("#").pop() : "unresolved"}</span>
             <span className="ak-muted"> · L{el.line}</span>
@@ -250,9 +250,9 @@ export function UiMap() {
               transition={{ delay: gi * 0.05, type: "spring", stiffness: 240, damping: 26 }}
             >
               <div className="ak-uicard-bar">
-                <span className="ak-dot" style={{ background: "#F87171" }} />
-                <span className="ak-dot" style={{ background: "#FBBF24" }} />
-                <span className="ak-dot" style={{ background: "#34D399" }} />
+                <span className="ak-dot" style={{ background: "oklch(71.1% 0.166 22)" }} />
+                <span className="ak-dot" style={{ background: "oklch(83.7% 0.164 84)" }} />
+                <span className="ak-dot" style={{ background: "oklch(77.3% 0.153 163)" }} />
                 <button type="button" className="ak-uicard-title" onClick={() => select(g.id)}>
                   &lt;{g.name} /&gt;
                 </button>

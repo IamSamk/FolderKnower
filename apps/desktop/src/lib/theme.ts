@@ -2,12 +2,12 @@ import type { BigO, OntologyLayer, Protocol, TierLabel } from "../gen";
 
 // Tier colours are fills: they always carry ink-coloured text, in both themes.
 export const TIER_COLOR: Record<TierLabel, string> = {
-  Frontend: "#8FB0FF",
-  Gateway: "#FFD25E",
-  Backend: "#BFA6FF",
-  Storage: "#7FE0B4",
-  Workers: "#FF9C8F",
-  Shared: "#C9CDDC",
+  Frontend: "oklch(76.4% 0.120 266)",
+  Gateway: "oklch(88.1% 0.142 88)",
+  Backend: "oklch(78.0% 0.127 296)",
+  Storage: "oklch(83.5% 0.112 163)",
+  Workers: "oklch(79.1% 0.121 28)",
+  Shared: "oklch(85.0% 0.021 274)",
 };
 
 export const TIER_BLURB: Record<TierLabel, string> = {
@@ -29,30 +29,30 @@ export const TIER_ORDER: TierLabel[] = [
 ];
 
 export const PROTOCOL_COLOR: Record<Protocol, string> = {
-  "HTTP/REST": "#3D5AFE",
-  WebSocket: "#2196F3",
-  gRPC: "#7C4DFF",
-  SQL: "#0E9F6E",
-  IPC: "#E0A100",
-  Queue: "#E5484D",
+  "HTTP/REST": "oklch(55.5% 0.243 269)",
+  WebSocket: "oklch(65.8% 0.169 249)",
+  gRPC: "oklch(57.9% 0.247 288)",
+  SQL: "oklch(62.2% 0.133 162)",
+  IPC: "oklch(75.0% 0.155 80)",
+  Queue: "oklch(62.6% 0.193 23)",
 };
 
 export const LAYER_COLOR: Record<OntologyLayer, string> = {
-  os: "#FFB547",
-  network: "#7AB8FF",
-  cloud: "#C9A7FF",
-  data: "#6EDCA8",
+  os: "oklch(82.4% 0.149 73)",
+  network: "oklch(76.9% 0.121 253)",
+  cloud: "oklch(79.1% 0.127 301)",
+  data: "oklch(81.5% 0.127 161)",
 };
 
 export const BIGO_COLOR: Record<BigO, string> = {
-  "O(1)": "#7FE0B4",
-  "O(log N)": "#A6EBA0",
-  "O(N)": "#D9F27A",
-  "O(N log N)": "#FFE07A",
-  "O(N^2)": "#FFB870",
-  "O(N^k)": "#FF9C8F",
-  "O(2^N)": "#FF7A7A",
-  unknown: "#C9CDDC",
+  "O(1)": "oklch(83.5% 0.112 163)",
+  "O(log N)": "oklch(87.6% 0.123 143)",
+  "O(N)": "oklch(91.8% 0.148 119)",
+  "O(N log N)": "oklch(91.2% 0.126 93)",
+  "O(N^2)": "oklch(83.4% 0.121 65)",
+  "O(N^k)": "oklch(79.1% 0.121 28)",
+  "O(2^N)": "oklch(73.5% 0.163 22)",
+  unknown: "oklch(85.0% 0.021 274)",
 };
 
 export const BASIS_TEXT: Record<string, string> = {

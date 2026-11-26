@@ -37,7 +37,7 @@ export function Header() {
           className="flex items-center gap-2.5 font-black text-xl tracking-tight text-[var(--ink)]"
         >
           <span className="w-8 h-8 rounded-[var(--r-sm)] bg-[var(--accent)] border-2 border-[var(--line)] flex items-center justify-center">
-            <Layers size={18} strokeWidth={2.5} className="text-[var(--on-accent)]" />
+            <Layers size={18} strokeWidth={2.4} className="text-[var(--on-accent)]" />
           </span>
           <span>FolderKnower</span>
         </a>

@@ -37,11 +37,11 @@ export function Hero() {
 
           <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-semibold text-[var(--ink-2)]">
             <li className="flex items-center gap-2">
-              <Lock size={16} strokeWidth={2.25} className="text-[var(--ok)]" />
+              <Lock size={16} strokeWidth={2.4} className="text-[var(--ok)]" />
               Your code stays on your computer
             </li>
             <li className="flex items-center gap-2">
-              <ShieldCheck size={16} strokeWidth={2.25} className="text-[var(--ok)]" />
+              <ShieldCheck size={16} strokeWidth={2.4} className="text-[var(--ok)]" />
               Free and open source
             </li>
           </ul>

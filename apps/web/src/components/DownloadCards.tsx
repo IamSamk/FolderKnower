@@ -32,7 +32,7 @@ export function DownloadCards({ platforms, ready }: { platforms: Platform[]; rea
           >
             <div>
               <div className="flex items-center justify-between mb-4">
-                <Icon size={28} strokeWidth={2.25} className="text-[var(--ink)]" />
+                <Icon size={28} strokeWidth={2.4} className="text-[var(--ink)]" />
                 {isMine && (
                   <span className="font-mono text-xs font-bold text-[var(--accent)]">
                     Your system

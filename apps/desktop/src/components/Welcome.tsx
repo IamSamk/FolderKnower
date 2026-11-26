@@ -49,7 +49,7 @@ function Stack() {
             display: "grid",
             placeItems: "center",
             fontWeight: 750,
-            color: "#1f1d36",
+            color: "oklch(24.6% 0.047 286)",
             fontSize: 15,
             position: "relative",
             zIndex: 1,
@@ -136,7 +136,7 @@ export function Welcome() {
           }}
           whileTap={{ scale: 0.985 }}
         >
-          <FolderOpen size={32} strokeWidth={2.2} />
+          <FolderOpen size={32} strokeWidth={2.4} />
           <div className="ak-drop-title">
             {hover
               ? "Let go to open it"

@@ -25,7 +25,7 @@ export function FlowEdge(props: EdgeProps) {
     curvature: 0.32,
   });
   const kind = data?.kind ?? "call";
-  const color = data?.color ?? "#71717A";
+  const color = data?.color ?? "oklch(55.2% 0.014 286)";
   const dim = (data as { dim?: boolean } | undefined)?.dim;
   const strong = kind === "http" || kind === "sql";
   const width = Math.min(2 + Math.log2((data?.count ?? 1) + 1) * 0.9, 6) + (strong ? 1.2 : 0);
@@ -52,7 +52,12 @@ export function FlowEdge(props: EdgeProps) {
       )}
       {travelling && (
         <g>
-          <circle r={13} fill="#ffe14d" stroke="#1f1d36" strokeWidth={2.5}>
+          <circle
+            r={13}
+            fill="oklch(90.9% 0.163 97)"
+            stroke="oklch(24.6% 0.047 286)"
+            strokeWidth={2.5}
+          >
             <animateMotion
               dur="0.7s"
               repeatCount="1"
@@ -64,7 +69,7 @@ export function FlowEdge(props: EdgeProps) {
               keySplines="0.4 0 0.2 1"
             />
           </circle>
-          <circle r={4} fill="#1f1d36">
+          <circle r={4} fill="oklch(24.6% 0.047 286)">
             <animateMotion
               dur="0.7s"
               repeatCount="1"

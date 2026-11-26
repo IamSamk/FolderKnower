@@ -26,10 +26,10 @@ export interface Built {
 const KIND_COLOR: Record<FlowKind, string> = {
   http: PROTOCOL_COLOR["HTTP/REST"],
   sql: PROTOCOL_COLOR.SQL,
-  call: "#7B7899",
-  import: "#A6A4BF",
-  relation: "#0E9F6E",
-  mirror: "#7C4DFF",
+  call: "oklch(58.7% 0.050 289)",
+  import: "oklch(72.9% 0.039 289)",
+  relation: "oklch(62.2% 0.133 162)",
+  mirror: "oklch(57.9% 0.247 288)",
 };
 
 export const SIZE: Record<string, { w: number; h: number }> = {
@@ -461,7 +461,7 @@ export function buildEr(ix: Indexed): Built {
 }
 
 export function tierColor(t: TierLabel | undefined): string {
-  return t ? TIER_COLOR[t] : "#64748B";
+  return t ? TIER_COLOR[t] : "oklch(55.4% 0.041 257)";
 }
 
 export function estimateHeight(n: Node): number {

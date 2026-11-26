@@ -81,27 +81,27 @@ const BREAKDOWN: {
   {
     k: "anonymous",
     label: "Heap and private",
-    c: "#8FB0FF",
+    c: "oklch(76.4% 0.120 266)",
     explain:
       "Memory the program asked for itself: Python objects, arrays, tensors. Only this process has it.",
   },
   {
     k: "fileBacked",
     label: "Mapped files",
-    c: "#7FE0B4",
+    c: "oklch(83.5% 0.112 163)",
     explain:
       "Files mapped into memory: shared libraries and, for model servers, the model weights (mmap). The OS can drop and re-read these.",
   },
   {
     k: "shmem",
     label: "Shared memory",
-    c: "#FFD25E",
+    c: "oklch(88.1% 0.142 88)",
     explain: "Pages several processes see at once, used to pass data between them without copying.",
   },
   {
     k: "swap",
     label: "Swapped out",
-    c: "#FF9C8F",
+    c: "oklch(79.1% 0.121 28)",
     explain: "Pages pushed to disk. Touching them again costs a disk read.",
   },
 ];
@@ -223,8 +223,8 @@ function RuntimeCard({ r }: { r: RuntimeStatus }) {
           <Meter
             total={m.sizeBytes}
             parts={[
-              { v: m.vramBytes, c: "#BFA6FF", label: "GPU memory" },
-              { v: m.sizeBytes - m.vramBytes, c: "#C9CDDC", label: "system RAM" },
+              { v: m.vramBytes, c: "oklch(78.0% 0.127 296)", label: "GPU memory" },
+              { v: m.sizeBytes - m.vramBytes, c: "oklch(85.0% 0.021 274)", label: "system RAM" },
             ]}
           />
         </div>
@@ -240,7 +240,7 @@ function RuntimeCard({ r }: { r: RuntimeStatus }) {
             parts={[
               {
                 v: r.kvCacheUsage,
-                c: r.kvCacheUsage > 0.85 ? "var(--danger)" : "#67E8F9",
+                c: r.kvCacheUsage > 0.85 ? "var(--danger)" : "oklch(86.5% 0.115 207)",
                 label: "KV cache",
               },
             ]}

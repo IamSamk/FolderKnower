@@ -91,7 +91,7 @@ export async function DownloadSection() {
         <div className="ak-card mt-12 p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
             <div className="shrink-0 w-12 h-12 rounded-[var(--r-sm)] bg-[var(--surface-2)] border-2 border-[var(--line)] flex items-center justify-center">
-              <Terminal size={22} strokeWidth={2.5} />
+              <Terminal size={22} strokeWidth={2.4} />
             </div>
             <div>
               <h3 className="font-extrabold text-lg text-[var(--ink)]">Use it from a terminal</h3>

@@ -46,10 +46,10 @@ const PLACE_ICON: Record<MemoryPlacement["place"], React.ReactNode> = {
 };
 
 const LIFE_COLOR: Record<MemoryPlacement["lifetime"], string> = {
-  request: "#ffd36b",
-  session: "#ff9ecf",
-  process: "#9ad0ff",
-  persistent: "#7cf0a6",
+  request: "oklch(88.5% 0.132 87)",
+  session: "oklch(81.2% 0.129 349)",
+  process: "oklch(83.7% 0.087 245)",
+  persistent: "oklch(86.8% 0.149 154)",
 };
 
 export function MemoryMap({ feature, depth }: { feature?: Feature; depth: Depth }) {

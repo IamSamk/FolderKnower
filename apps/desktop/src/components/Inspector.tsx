@@ -36,7 +36,7 @@ function Ref({ id, ix, sub }: { id: string; ix: Indexed; sub?: string }) {
       type="button"
       className="ak-ref"
       onClick={() => reveal(id)}
-      style={{ "--c": t ? TIER_COLOR[t] : "#64748B" } as React.CSSProperties}
+      style={{ "--c": t ? TIER_COLOR[t] : "oklch(55.4% 0.041 257)" } as React.CSSProperties}
     >
       <span className="ak-ref-dot" />
       <span className="ak-mono truncate">{ix.label(id)}</span>
@@ -224,18 +224,18 @@ function Details({ id, ix }: { id: string; ix: Indexed }) {
           </button>
         )}
         <div className="ak-sig ak-mono">
-          <span className="text-[#C4B5FD]">{f.name}</span>(
+          <span className="text-[oklch(81.1% 0.101 294)]">{f.name}</span>(
           {f.signature.parameters.map((p, i) => (
             <span key={p.name + String(i)}>
               {i > 0 && ", "}
               <span>{p.name}</span>
-              {p.type && <span className="text-[#67E8F9]">: {p.type}</span>}
+              {p.type && <span className="text-[oklch(86.5% 0.115 207)]">: {p.type}</span>}
               {p.defaultValue && <span className="ak-muted"> = {p.defaultValue}</span>}
             </span>
           ))}
           )
           {f.signature.returnType && (
-            <span className="text-[#67E8F9]"> → {f.signature.returnType}</span>
+            <span className="text-[oklch(86.5% 0.115 207)]"> → {f.signature.returnType}</span>
           )}
         </div>
         {routes.map((r) => (
@@ -256,7 +256,7 @@ function Details({ id, ix }: { id: string; ix: Indexed }) {
           <ul className="mt-2 space-y-1">
             {f.complexity.basis.map((b) => (
               <li key={b} className="ak-basis">
-                <span className="ak-mono text-[10.5px] text-[#A1A1AA]">{b}</span>
+                <span className="ak-mono text-[10.5px] text-[oklch(71.2% 0.013 286)]">{b}</span>
                 <span>{BASIS_TEXT[b] ?? ""}</span>
               </li>
             ))}
@@ -264,7 +264,7 @@ function Details({ id, ix }: { id: string; ix: Indexed }) {
           {f.complexity.memoryFlags.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {f.complexity.memoryFlags.map((m) => (
-                <span key={m} className="ak-chip" style={{ borderColor: "#FB923C" }}>
+                <span key={m} className="ak-chip" style={{ borderColor: "oklch(75.8% 0.159 56)" }}>
                   {m}
                 </span>
               ))}
@@ -329,7 +329,7 @@ function Details({ id, ix }: { id: string; ix: Indexed }) {
     return (
       <>
         <Head
-          color={m.kind === "schema" ? "#A78BFA" : "#10B981"}
+          color={m.kind === "schema" ? "oklch(70.9% 0.159 294)" : "oklch(69.6% 0.149 162)"}
           kind={`${m.framework} ${m.kind}`}
           title={m.name}
           sub={m.table ? `table ${m.table}` : m.fileId.slice(5)}
@@ -428,7 +428,7 @@ function TraceList({ ix }: { ix: Indexed }) {
                       ? PROTOCOL_COLOR["HTTP/REST"]
                       : h.via === "sql"
                         ? PROTOCOL_COLOR.SQL
-                        : "#A1A1AA",
+                        : "oklch(71.2% 0.013 286)",
                 }}
               >
                 {h.via === "http"

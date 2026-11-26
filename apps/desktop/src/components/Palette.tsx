@@ -56,7 +56,7 @@ export function Palette() {
         label: m.name,
         sub: `${m.framework} ${m.kind}`,
         kind: "model",
-        color: "#10B981",
+        color: "oklch(69.6% 0.149 162)",
       });
     for (const r of ix.g.routes)
       out.push({
@@ -64,7 +64,7 @@ export function Palette() {
         label: `${r.method} ${r.path}`,
         sub: r.fileId.slice(5),
         kind: "route",
-        color: "#22D3EE",
+        color: "oklch(79.7% 0.134 212)",
       });
     return out;
   }, [ix]);
