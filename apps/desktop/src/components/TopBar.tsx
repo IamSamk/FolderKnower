@@ -11,6 +11,7 @@ import {
   Moon,
   MousePointer2,
   Network,
+  Package,
   RefreshCw,
   Route,
   Search,
@@ -103,6 +104,15 @@ export function TopBar() {
   const views: { k: View; label: string; icon: React.ReactNode }[] = [
     { k: "system", label: "System", icon: <Container size={15} strokeWidth={2.4} /> },
     { k: "architecture", label: "Code map", icon: <Network size={15} strokeWidth={2.4} /> },
+    ...((ix.g.insights?.packages?.length ?? 0) > 1
+      ? [
+          {
+            k: "packages" as View,
+            label: "Packages",
+            icon: <Package size={15} strokeWidth={2.4} />,
+          },
+        ]
+      : []),
     { k: "ui", label: "UI map", icon: <Boxes size={15} strokeWidth={2.4} /> },
     { k: "er", label: "Data", icon: <Database size={15} strokeWidth={2.4} /> },
     { k: "insights", label: "How it works", icon: <Brain size={15} strokeWidth={2.4} /> },

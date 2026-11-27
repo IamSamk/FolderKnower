@@ -4,6 +4,7 @@ import { Inspector } from "./components/Inspector";
 import { InsightsView } from "./components/insights/InsightsView";
 import { WorkflowDrawer } from "./components/insights/Workflow";
 import { LiveView } from "./components/live/LiveView";
+import { PackagesView } from "./components/PackagesView";
 import { Palette } from "./components/Palette";
 import { Lens, PortalScene } from "./components/Portal";
 import { Setup } from "./components/Setup";
@@ -24,11 +25,14 @@ function Workspace() {
     <div className="ak-shell">
       <TopBar />
       <div className="ak-body">
-        {view !== "insights" && view !== "live" && view !== "system" && <Sidebar />}
+        {view !== "insights" && view !== "live" && view !== "system" && view !== "packages" && (
+          <Sidebar />
+        )}
         <main className="ak-main">
           <PortalScene sceneKey={view}>
             {view === "system" && <SystemView />}
             {view === "architecture" && <ArchitectureView />}
+            {view === "packages" && <PackagesView />}
             {view === "er" && <ErView />}
             {view === "ui" && <UiMap />}
             {view === "insights" && <InsightsView />}
@@ -39,7 +43,9 @@ function Workspace() {
           <ToolsDrawer />
           <HealthDrawer />
         </main>
-        {view !== "live" && view !== "insights" && view !== "system" && <Inspector />}
+        {view !== "live" && view !== "insights" && view !== "system" && view !== "packages" && (
+          <Inspector />
+        )}
       </div>
       <Palette />
     </div>
