@@ -304,6 +304,8 @@ pub fn build(input: &StructureInput) -> Structure {
     for (path, src) in input.schema_sources {
         if path.ends_with(".prisma") {
             raw.extend(models::prisma_models(path, src));
+        } else if path.ends_with(".proto") {
+            raw.extend(models::proto_models(path, src));
         } else if path.to_ascii_lowercase().ends_with(".sql") {
             raw.extend(models::sql_models(path, src));
         }

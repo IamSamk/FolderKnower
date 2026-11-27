@@ -161,7 +161,11 @@ impl OtherKind {
         ) {
             return Some(Self::Manifest);
         }
-        if name.ends_with(".prisma") || name.ends_with(".sql") || name.ends_with(".graphql") {
+        if name.ends_with(".prisma")
+            || name.ends_with(".sql")
+            || name.ends_with(".graphql")
+            || name.ends_with(".proto")
+        {
             return Some(if lower.contains("migration") {
                 Self::Migration
             } else {

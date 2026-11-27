@@ -163,3 +163,15 @@ fn overrides_and_determinism() {
     });
     assert_eq!(format!("{:?}", a.tiers), format!("{:?}", b.tiers));
 }
+
+#[test]
+fn proto_messages_become_schema_models() {
+    let src = "syntax = \"proto3\";\nmessage Money {\n  string currency_code = 1;\n  int64 units = 2;\n}\nmessage CartItem {\n  string product_id = 1;\n  repeated Money prices = 2;\n  message Inner { int32 x = 1; }\n  optional string note = 3;\n}\n";
+    let m = crate::models::proto_models("pb/demo.proto", src);
+    assert_eq!(m.len(), 3);
+    let cart = &m.iter().find(|(d, _)| d.name == "CartItem").unwrap().0;
+    assert_eq!(cart.fields.len(), 2);
+    assert!(cart.fields.iter().any(|f| f.name == "note" && f.nullable));
+    let rels = &m.iter().find(|(d, _)| d.name == "CartItem").unwrap().1;
+    assert_eq!(rels[0].0, "Money");
+}

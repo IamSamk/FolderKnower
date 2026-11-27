@@ -441,6 +441,102 @@ pub fn prisma_models(
     out
 }
 
+/// Protobuf `message X { ... }` blocks (top level and nested, flattened).
+pub fn proto_models(
+    path: &str,
+    src: &str,
+) -> Vec<(DataModel, Vec<(String, RelationKind, String)>)> {
+    let head = Regex::new(r"(?m)^\s*message\s+(\w+)\s*\{").expect("regex");
+    let field = Regex::new(r"^(?:(repeated|optional)\s+)?([\w.]+|map<[^>]+>)\s+(\w+)\s*=\s*\d+")
+        .expect("regex");
+    let scalar = [
+        "double", "float", "int32", "int64", "uint32", "uint64", "sint32", "sint64", "fixed32",
+        "fixed64", "sfixed32", "sfixed64", "bool", "string", "bytes",
+    ];
+    let mut out = Vec::new();
+    for cap in head.captures_iter(src) {
+        let start = cap.get(0).map(|m| m.end()).unwrap_or(0);
+        let mut depth = 1usize;
+        let mut end = start;
+        for (i, ch) in src[start..].char_indices() {
+            match ch {
+                '{' => depth += 1,
+                '}' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        end = start + i;
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+        if depth != 0 {
+            continue;
+        }
+        let name = cap[1].to_owned();
+        let line = src[..cap.get(0).map(|m| m.start()).unwrap_or(0)]
+            .lines()
+            .count() as u32
+            + 1;
+        let mut fields = Vec::new();
+        let mut rels = Vec::new();
+        let mut nest = 0usize;
+        for l in src[start..end].lines() {
+            let l = l.trim();
+            if l.starts_with("//") || l.is_empty() {
+                continue;
+            }
+            // Skip lines inside nested message/enum/oneof-free blocks.
+            let opens = l.matches('{').count();
+            let closes = l.matches('}').count();
+            if nest > 0 || (opens > closes && !l.starts_with("oneof")) {
+                nest = (nest + opens).saturating_sub(closes);
+                continue;
+            }
+            let Some(f) = field.captures(l) else { continue };
+            let ty = f[2].to_owned();
+            let repeated = f.get(1).is_some_and(|m| m.as_str() == "repeated");
+            let base = ty.rsplit('.').next().unwrap_or(&ty).to_owned();
+            let is_ref = !scalar.contains(&ty.as_str())
+                && !ty.starts_with("map<")
+                && base.chars().next().is_some_and(|c| c.is_uppercase());
+            if is_ref {
+                let kind = if repeated {
+                    RelationKind::OneToMany
+                } else {
+                    RelationKind::ManyToOne
+                };
+                rels.push((base, kind, f[3].to_owned()));
+                continue;
+            }
+            fields.push(DataField {
+                name: f[3].to_owned(),
+                ty: Some(ty),
+                primary_key: false,
+                nullable: f.get(1).is_some_and(|m| m.as_str() == "optional"),
+                references: None,
+            });
+        }
+        out.push((
+            DataModel {
+                id: model_id(path, &name),
+                name,
+                kind: DataModelKind::Schema,
+                framework: "protobuf".to_owned(),
+                file_id: file_id(path),
+                line,
+                table: None,
+                fields,
+                relations: Vec::new(),
+                mirrors: Vec::new(),
+            },
+            rels,
+        ));
+    }
+    out
+}
+
 /// `CREATE TABLE x (...)` statements.
 pub fn sql_models(path: &str, src: &str) -> Vec<(DataModel, Vec<(String, RelationKind, String)>)> {
     let re = Regex::new(r#"(?is)create\s+table\s+(?:if\s+not\s+exists\s+)?[`"\[]?(?:\w+\.)?(\w+)[`"\]]?\s*\((.*?)\)\s*;"#)

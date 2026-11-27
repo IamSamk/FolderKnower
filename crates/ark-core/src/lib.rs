@@ -265,7 +265,9 @@ pub fn analyze(
         if matches!(
             f.other,
             Some(OtherKind::Schema) | Some(OtherKind::Migration)
-        ) && (name.ends_with(".prisma") || name.to_ascii_lowercase().ends_with(".sql"))
+        ) && (name.ends_with(".prisma")
+            || name.ends_with(".proto")
+            || name.to_ascii_lowercase().ends_with(".sql"))
             && let Ok(s) = fs::read_to_string(root.join(&f.path))
         {
             schema_sources.push((f.path.clone(), s));
