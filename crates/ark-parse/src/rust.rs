@@ -235,6 +235,117 @@ impl X<'_, '_> {
         });
     }
 
+    /// The path (with scope prefixes), handler and verbs of an actix
+    /// `resource("/x").route(web::get().to(h))` call; `None` when the receiver chain does
+    /// not start at `resource(...)`.
+    fn actix_resource(
+        &self,
+        route_call: Node,
+        arg: Node,
+    ) -> Option<(String, Option<String>, Vec<String>)> {
+        // verbs: web::get() / web::post().to(h) anywhere inside the argument chain
+        let mut methods = Vec::new();
+        let mut handler = None;
+        let mut stack = vec![arg];
+        while let Some(n) = stack.pop() {
+            if n.kind() == "call_expression"
+                && let Some(name) = ark_metrics::callee_name(Language::Rust, n, self.src)
+            {
+                if is_http_method(name) {
+                    methods.push(name.to_ascii_uppercase());
+                } else if name == "to"
+                    && let Some(h) = n
+                        .child_by_field_name("arguments")
+                        .and_then(|a| named_children(a).into_iter().next())
+                {
+                    let t = self.t(h);
+                    // SeqHandler(list) -> list; plain paths keep their last segment
+                    let inner = t
+                        .split_once('(')
+                        .map(|(_, r)| r.trim_end_matches(')'))
+                        .unwrap_or(t);
+                    handler = Some(inner.rsplit("::").next().unwrap_or(inner).to_owned());
+                }
+            }
+            stack.extend(named_children(n));
+        }
+        if methods.is_empty() {
+            return None;
+        }
+        // walk the receiver chain down to resource("/x")
+        let mut cur = route_call
+            .child_by_field_name("function")?
+            .child_by_field_name("value");
+        let mut resource: Option<Node> = None;
+        while let Some(n) = cur {
+            if n.kind() == "call_expression" {
+                if ark_metrics::callee_name(Language::Rust, n, self.src) == Some("resource") {
+                    resource = Some(n);
+                    break;
+                }
+                cur = n
+                    .child_by_field_name("function")
+                    .filter(|f| f.kind() == "field_expression")
+                    .and_then(|f| f.child_by_field_name("value"));
+            } else {
+                break;
+            }
+        }
+        let resource = resource?;
+        let mut path = resource
+            .child_by_field_name("arguments")
+            .and_then(|a| named_children(a).into_iter().next())
+            .filter(|a| a.kind() == "string_literal")
+            .and_then(|a| unquote(self.t(a)))?;
+        // prefixes from enclosing web::scope("/p").service(...) calls
+        let mut up = resource.parent();
+        while let Some(n) = up {
+            if n.kind() == "call_expression"
+                && matches!(
+                    ark_metrics::callee_name(Language::Rust, n, self.src),
+                    Some("service")
+                )
+            {
+                let mut c = n
+                    .child_by_field_name("function")
+                    .and_then(|f| f.child_by_field_name("value"));
+                while let Some(x) = c {
+                    if x.kind() != "call_expression" {
+                        break;
+                    }
+                    if ark_metrics::callee_name(Language::Rust, x, self.src) == Some("scope") {
+                        if let Some(p) = x
+                            .child_by_field_name("arguments")
+                            .and_then(|a| named_children(a).into_iter().next())
+                            .filter(|a| a.kind() == "string_literal")
+                            .and_then(|a| unquote(self.t(a)))
+                        {
+                            path = format!(
+                                "{}{}",
+                                p.trim_end_matches('/'),
+                                if path.starts_with('/') || path.is_empty() {
+                                    path.clone()
+                                } else {
+                                    format!("/{path}")
+                                }
+                            );
+                        }
+                        break;
+                    }
+                    c = x
+                        .child_by_field_name("function")
+                        .filter(|f| f.kind() == "field_expression")
+                        .and_then(|f| f.child_by_field_name("value"));
+                }
+            }
+            up = n.parent();
+        }
+        if !path.starts_with('/') {
+            path.insert(0, '/');
+        }
+        Some((path, handler, methods))
+    }
+
     fn call(&mut self, node: Node) {
         let Some(func) = node.child_by_field_name("function") else {
             return;
@@ -295,6 +406,25 @@ impl X<'_, '_> {
                     });
                 }
                 stack.extend(named_children(n));
+            }
+        }
+
+        // actix-web: web::resource("/x").route(web::get().to(handler)), nested in
+        // web::scope("/prefix").service(...) chains
+        if callee == "route"
+            && receiver.is_some()
+            && let Some(m) = args.first()
+            && m.kind() == "call_expression"
+            && let Some((path, handler, methods)) = self.actix_resource(node, *m)
+        {
+            for method in methods {
+                self.facts.routes.push(RouteFact {
+                    method,
+                    path: path.clone(),
+                    framework: "actix".to_owned(),
+                    line: line(node),
+                    handler: handler.clone(),
+                });
             }
         }
 

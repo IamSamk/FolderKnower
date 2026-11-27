@@ -306,6 +306,43 @@ impl X<'_, '_> {
                 });
             }
         }
+        // Flask-RESTX / Flask-RESTful resources: `@ns.route("/apps")` on a class whose
+        // `get`/`post`/... methods are the handlers.
+        let verbs = self.resource_methods(node);
+        for d in decorators {
+            let Some(call) = named_children(*d).into_iter().find(|c| c.kind() == "call") else {
+                continue;
+            };
+            let is_route = call
+                .child_by_field_name("function")
+                .filter(|f| f.kind() == "attribute")
+                .and_then(|f| f.child_by_field_name("attribute"))
+                .is_some_and(|a| self.t(a) == "route");
+            if !is_route {
+                continue;
+            }
+            let paths: Vec<String> = call
+                .child_by_field_name("arguments")
+                .map(named_children)
+                .unwrap_or_default()
+                .into_iter()
+                .filter(|a| a.kind() == "string")
+                .filter_map(|a| unquote(self.t(a)))
+                .collect();
+            for path in paths {
+                if verbs.is_empty() {
+                    self.push_resource_route("ANY", &path, &name, line(*d));
+                }
+                for v in &verbs {
+                    self.push_resource_route(
+                        &v.to_ascii_uppercase(),
+                        &path,
+                        &format!("{name}.{v}"),
+                        line(*d),
+                    );
+                }
+            }
+        }
         self.facts.classes.push(ClassFact {
             name: name.clone(),
             bases,
@@ -320,6 +357,42 @@ impl X<'_, '_> {
             }
         }
         self.class_stack.pop();
+    }
+
+    /// HTTP verbs a resource class defines as methods (`get`, `post`, ...).
+    fn resource_methods(&self, class: Node) -> Vec<String> {
+        let Some(body) = class.child_by_field_name("body") else {
+            return Vec::new();
+        };
+        let mut out = Vec::new();
+        for stmt in named_children(body) {
+            let f = if stmt.kind() == "decorated_definition" {
+                named_children(stmt)
+                    .into_iter()
+                    .find(|c| c.kind() == "function_definition")
+            } else if stmt.kind() == "function_definition" {
+                Some(stmt)
+            } else {
+                None
+            };
+            if let Some(n) = f.and_then(|f| f.child_by_field_name("name")) {
+                let n = self.t(n);
+                if is_http_method(n) && !out.iter().any(|o| o == n) {
+                    out.push(n.to_owned());
+                }
+            }
+        }
+        out
+    }
+
+    fn push_resource_route(&mut self, method: &str, path: &str, handler: &str, line: u32) {
+        self.facts.routes.push(RouteFact {
+            method: method.to_owned(),
+            path: path.to_owned(),
+            framework: "flask-restx".to_owned(),
+            line,
+            handler: Some(handler.to_owned()),
+        });
     }
 
     fn call(&mut self, node: Node) {
@@ -364,6 +437,18 @@ impl X<'_, '_> {
                     .first()
                     .map(|h| h.rsplit('.').next().unwrap_or(h).to_owned()),
             });
+        }
+
+        // Flask-RESTful: api.add_resource(TodoList, "/todos", "/todos/<id>")
+        if callee == "add_resource" && receiver.is_some() {
+            let handler = ident_args
+                .first()
+                .map(|h| h.rsplit('.').next().unwrap_or(h).to_owned());
+            for a in args.iter().skip(1).filter(|a| a.kind() == "string") {
+                if let (Some(p), Some(h)) = (unquote(self.t(*a)), &handler) {
+                    self.push_resource_route("ANY", &p, h, line(node));
+                }
+            }
         }
 
         // HTTP clients: requests.get(url), httpx.post(url), self.session.get(url)

@@ -781,12 +781,37 @@ pub fn system_headline(g: &mut SystemArchitectureGraph) {
     let Some(d) = ins.deployment.as_ref().filter(|d| !d.services.is_empty()) else {
         return;
     };
+    // Test doubles and load generators are in the compose files but are not the system.
+    let support = |n: &str| {
+        let n = n.to_ascii_lowercase();
+        n.split(|c: char| !c.is_ascii_alphanumeric()).any(|w| {
+            matches!(
+                w,
+                "mock"
+                    | "test"
+                    | "loadtest"
+                    | "loadgenerator"
+                    | "e2e"
+                    | "bench"
+                    | "prepull"
+                    | "copy"
+            )
+        })
+    };
     let name = |k: ServiceKind| {
-        d.services
+        let all: Vec<&str> = d
+            .services
             .iter()
-            .filter(|s| s.kind == k)
+            .filter(|s| s.kind == k && !support(&s.name))
             .map(|s| s.name.as_str())
-            .collect::<Vec<_>>()
+            .collect();
+        if all.len() > 5 {
+            let mut v: Vec<&str> = all[..4].to_vec();
+            v.push("more");
+            v
+        } else {
+            all
+        }
     };
     let group = |kinds: &[(ServiceKind, &str)]| -> Vec<String> {
         kinds
@@ -822,11 +847,31 @@ pub fn system_headline(g: &mut SystemArchitectureGraph) {
     }
     let ai = ins.ai.as_ref().map(|a| a.headline.clone());
     let gpu = d.services.iter().filter(|s| s.gpu).count();
+    // "AI system" needs real weight: a single assistant endpoint in a shop is a feature.
+    let ai_files = ins
+        .ai
+        .as_ref()
+        .map(|a| {
+            a.stages
+                .iter()
+                .map(|s| s.file_id.as_str())
+                .collect::<std::collections::BTreeSet<_>>()
+                .len()
+        })
+        .unwrap_or(0);
+    let total_files: usize = g
+        .tiers
+        .iter()
+        .flat_map(|t| t.clusters.iter())
+        .map(|c| c.files.len())
+        .sum::<usize>()
+        .max(1);
     let lead = match &ai {
-        Some(_) => "AI system",
+        Some(_) if ai_files >= 8 || ai_files * 10 >= total_files => "AI system",
+        Some(_) => "App with an AI feature",
         None => "Containerized app",
     };
-    let n = d.services.len();
+    let n = d.services.iter().filter(|s| !support(&s.name)).count();
     let noun = if n == 1 { "container" } else { "containers" };
     g.summary.headline = format!("{lead} in {n} {noun}: {parts}.");
     let limited: u64 = d.services.iter().filter_map(|s| s.memory_limit).sum();

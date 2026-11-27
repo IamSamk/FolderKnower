@@ -383,3 +383,63 @@ const label = t("/api/not-a-call-but-a-key");
         "{calls:?}"
     );
 }
+
+#[test]
+fn python_flask_restx_class_routes() {
+    let src = r#"
+from flask_restx import Resource, Namespace
+
+ns = Namespace("console")
+
+@ns.route("/apps", "/apps/list")
+class AppListApi(Resource):
+    def get(self):
+        return []
+
+    @ns.doc("create")
+    def post(self):
+        return {}
+
+class Legacy(Resource):
+    def delete(self, id):
+        return {}
+
+api.add_resource(Legacy, "/legacy/<int:id>")
+"#;
+    let f = parse_file(Language::Python, "controllers/apps.py", src);
+    let got: Vec<(&str, &str)> = f
+        .routes
+        .iter()
+        .map(|r| (r.method.as_str(), r.path.as_str()))
+        .collect();
+    assert!(got.contains(&("GET", "/apps")), "{got:?}");
+    assert!(got.contains(&("POST", "/apps/list")), "{got:?}");
+    assert!(got.contains(&("ANY", "/legacy/<int:id>")), "{got:?}");
+    assert!(
+        f.routes
+            .iter()
+            .any(|r| r.handler.as_deref() == Some("AppListApi.post"))
+    );
+}
+
+#[test]
+fn rust_actix_resource_with_scope() {
+    let src = r#"
+use actix_web::web;
+
+pub fn configure(cfg: &mut web::ServiceConfig) {
+    cfg.service(
+        web::scope("/indexes")
+            .service(web::resource("/{uid}").route(web::get().to(show)).route(web::delete().to(remove))),
+    );
+}
+"#;
+    let f = parse_file(Language::Rust, "src/routes.rs", src);
+    let got: Vec<(&str, &str)> = f
+        .routes
+        .iter()
+        .map(|r| (r.method.as_str(), r.path.as_str()))
+        .collect();
+    assert!(got.contains(&("GET", "/indexes/:param")), "{got:?}");
+    assert!(got.contains(&("DELETE", "/indexes/:param")), "{got:?}");
+}

@@ -589,6 +589,40 @@ fn slug(s: &str) -> String {
     out.trim_end_matches('-').to_owned()
 }
 
+/// A second cluster with the same name is told apart by where it lives: the last two
+/// meaningful folders its files share (`backend/onyx/background/celery` -> `background-celery`),
+/// not by a counter that says nothing.
+fn qualify_name(paths: &[&str]) -> Option<String> {
+    let dirs: Vec<Vec<&str>> = paths
+        .iter()
+        .map(|p| {
+            let mut v: Vec<&str> = p.split('/').collect();
+            v.pop();
+            v
+        })
+        .collect();
+    let first = dirs.first()?;
+    let mut common = 0;
+    while common < first.len() && dirs.iter().all(|d| d.get(common) == Some(&first[common])) {
+        common += 1;
+    }
+    let segs: Vec<String> = first[..common]
+        .iter()
+        .filter(|s| {
+            !GENERIC.contains(&s.to_ascii_lowercase().as_str())
+                && !s.starts_with('(')
+                && !s.starts_with('[')
+        })
+        .map(|s| slug(s))
+        .filter(|s| !s.is_empty())
+        .collect();
+    if segs.is_empty() {
+        return None;
+    }
+    let take = segs.len().min(2);
+    Some(segs[segs.len() - take..].join("-"))
+}
+
 fn cluster_name(paths: &[&str], sizes: &BTreeMap<&str, usize>) -> String {
     // One file: its deepest meaningful folder (`crates/ark-store/src/lib.rs` -> ark-store).
     if let [only] = paths {
@@ -775,6 +809,12 @@ fn cluster_tier(
             let mut name = cluster_name(&paths, &sizes);
             if name.is_empty() {
                 name = "root".to_owned();
+            }
+            if used.contains_key(&name)
+                && let Some(q) = qualify_name(&paths)
+                && !used.contains_key(&q)
+            {
+                name = q;
             }
             let n = used.entry(name.clone()).or_insert(0);
             *n += 1;
