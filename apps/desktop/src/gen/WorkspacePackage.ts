@@ -10,7 +10,7 @@ export type WorkspacePackage = { id: string, name: string,
  */
 root: string, 
 /**
- * `npm`, `cargo`, `python` or `go`.
+ * `npm`, `cargo`, `python`, `go`, `maven`, `gradle`, `sbt` or `dotnet`.
  */
 ecosystem: string, files: number, lines: number, 
 /**

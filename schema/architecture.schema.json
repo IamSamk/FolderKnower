@@ -2352,7 +2352,7 @@
           }
         },
         "ecosystem": {
-          "description": "`npm`, `cargo`, `python` or `go`.",
+          "description": "`npm`, `cargo`, `python`, `go`, `maven`, `gradle`, `sbt` or `dotnet`.",
           "type": "string"
         },
         "files": {
