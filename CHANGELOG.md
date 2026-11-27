@@ -4,6 +4,9 @@ Notes for each version are shown in the in-app update pop-up and on the website'
 
 ## [Unreleased]
 
+- Packages tab: workspace packages drawn as cards with tier bars and dependency chips.
+- `.proto` messages are read as data models (protobuf), replacing generated stub noise.
+
 ### Checked on large real repositories
 - Flask-RESTX and Flask-RESTful class routes are read (Dify's API: 53 routes found before, 1,499 now). actix `web::resource` routes with `web::scope` prefixes are read.
 - The container list is truer: copies of a compose file no longer hide the real one, services with no catalog image are told apart by start command, `MODE` and name, editor-tooling Dockerfiles and test doubles are left out of the headline.

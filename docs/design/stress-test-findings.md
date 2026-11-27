@@ -41,14 +41,14 @@ Status: **fixed** in this milestone, **open** (logged, not done).
 | D4 | Headline counted test doubles and load generators (`mock_llm`, `loadtest`) as part of the running system and listed every name. | onyx | **fixed** (support names left out, lists capped at 4 plus "more") |
 | D5 | Headline said "AI system" for any repo with one RAG stage. Online Boutique (one assistant endpoint in 11 services) and Meilisearch were called AI systems. | boutique, meilisearch | **fixed** ("AI system" needs 8+ files with AI stages or 10% of source; else "App with an AI feature") |
 | D6 | Dify lists ten alternative vector/search stores as peers; they are profile-selected options. Redis cluster nodes (`redis-node-0..5`) listed as six services. | dify, langfuse | open |
-| D7 | gRPC service-to-service edges (frontend to checkout, checkout to payment, ...) were missing: Online Boutique declares them in Kubernetes manifests (`PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550`), and only compose files were read. Kubernetes Deployments/StatefulSets/DaemonSets are now read: 14 services, 17 env-proven links, matching the published diagram, plus Redis. `.proto` service definitions are still not read. | boutique | **fixed** (k8s), open (proto) |
+| D7 | gRPC service-to-service edges (frontend to checkout, checkout to payment, ...) were missing: Online Boutique declares them in Kubernetes manifests (`PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550`), and only compose files were read. Kubernetes Deployments/StatefulSets/DaemonSets are now read: 14 services, 17 env-proven links, matching the published diagram, plus Redis. `.proto` message definitions are now read as models; service/rpc definitions are not. | boutique | **fixed** (k8s), partly fixed (proto: messages) |
 
 ### Structure and naming
 
 | # | Miss | Repo | Status |
 |---|---|---|---|
 | S1 | Cluster names were folder basenames with a counter (`onyx-2`, `tasks-6`, `features-4`). Colliding names now take the last two folders their files share (`onyx-background`, `celery-tasks`). Some `-N` remain where files share only generic folders. | onyx, langfuse, dify | **partly fixed** |
-| S2 | **Fixed in the data and the Markdown export, not yet drawn in the app.** Was: no workspace-package level: `web/`, `worker/`, `packages/shared`, `ai-gateway/` (Langfuse), crates (Meilisearch), `api/` vs `web/` (Dify) are what the maintainers draw first, but the tool groups by tier then by Louvain cluster. `insights.packages` now lists every npm/Cargo/Python/Go package with its files, tiers and which package imports or declares a dependency on which (Langfuse: web, worker, shared, ai-gateway; Meilisearch: 24 crates). The canvas does not show it yet. | all | **fixed** (data), open (canvas) |
+| S2 | **Fixed in the data, the Markdown export and the Packages tab on the canvas.** Was: no workspace-package level: `web/`, `worker/`, `packages/shared`, `ai-gateway/` (Langfuse), crates (Meilisearch), `api/` vs `web/` (Dify) are what the maintainers draw first, but the tool groups by tier then by Louvain cluster. `insights.packages` now lists every npm/Cargo/Python/Go package with its files, tiers and which package imports or declares a dependency on which (Langfuse: web, worker, shared, ai-gateway; Meilisearch: 24 crates). | all | **fixed** |
 | S3 | Cross-tier edges labelled "HTTP/REST xN" where files merely import shared packages (Langfuse Workers to Backend x28). Needs evidence check before labelling. | langfuse | open |
 | S4 | Meilisearch's storage layer (milli over LMDB via heed) is 3 files in Storage; the engine crate sits in Backend. | meilisearch | open |
 
@@ -57,7 +57,7 @@ Status: **fixed** in this milestone, **open** (logged, not done).
 | # | Miss | Repo | Status |
 |---|---|---|---|
 | C1 | C# (cartservice) and Java (adservice) are not parsed, silently. Now the summary says "Not read: 10 source files in languages without a parser yet (C# 8, Java 2)". Parsers still open. | boutique | **partly fixed** (honest, parsers open) |
-| C2 | Generated protobuf stubs were indexed: Online Boutique reported 90 "data models" (the same 22 messages copied per service). Now `*.pb.go`, `*_pb2*.py`, `*.pb.ts` etc. are skipped (models 90 to 2). The `.proto` files themselves should become the models (open). | boutique | **fixed** (stubs), open (proto) |
+| C2 | Generated protobuf stubs were indexed: Online Boutique reported 90 "data models" (the same 22 messages copied per service). Now `*.pb.go`, `*_pb2*.py`, `*.pb.ts` etc. are skipped (models 90 to 2). The `.proto` messages are now the models. | boutique | **fixed** |
 | C3 | Vendored code (`external-crates/`, `third_party/`) and its examples produced routes and a hybrid-RAG pipeline claim. | meilisearch | **fixed** (denied dirs) |
 | C4 | Data model counts are dominated by zod/DTO schemas (Dify 8,302, 4,903 from one `contracts` package; Onyx 2,339). Needs ranking or a collapse to tables first. | dify, onyx | open |
 | C5 | `architecture.json` was always pretty-printed: 168 MB for Dify. Repos over 1,500 files now write compact JSON (79 MB; `--pretty` to indent). | dify, langfuse, onyx | **fixed** |
@@ -73,8 +73,8 @@ Status: **fixed** in this milestone, **open** (logged, not done).
 
 ## Next
 
-1. S2: draw `insights.packages` on the canvas as the first zoom level.
-2. D7: `.proto` service definitions.
+1. D7: `.proto` service/rpc definitions.
+2. (done) S2 packages view on the canvas; C2 proto models.
 3. R3/R4: route DSLs and tRPC.
 4. C1: Java and C# parsers.
 5. C5: compact JSON.
