@@ -75,6 +75,7 @@ impl X<'_, '_> {
             "variable_declarator" => self.zod_schema(node),
             "call_expression" => self.call(node),
             "jsx_element" | "jsx_self_closing_element" => self.jsx(node),
+            "string" => self.verb_check(node),
             _ => {}
         }
         if is_fn(kind)
@@ -85,6 +86,23 @@ impl X<'_, '_> {
         }
         for c in named_children(node) {
             self.visit(c);
+        }
+    }
+
+    /// Record `"POST"` in `req.method === "POST"`, `case "POST":` or `["GET", "POST"].includes(..)`.
+    fn verb_check(&mut self, node: Node) {
+        let v = self.t(node).trim_matches(['"', '\'']);
+        if !matches!(
+            v,
+            "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS"
+        ) {
+            return;
+        }
+        let ok = node
+            .parent()
+            .is_some_and(|p| matches!(p.kind(), "binary_expression" | "switch_case" | "array"));
+        if ok && !self.facts.verbs_checked.iter().any(|x| x == v) {
+            self.facts.verbs_checked.push(v.to_owned());
         }
     }
 

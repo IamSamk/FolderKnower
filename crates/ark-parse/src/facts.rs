@@ -15,6 +15,9 @@ pub struct FileFacts {
     /// Calls at module level (e.g. `app.use(cors())`, `urlpatterns = [path(...)]`).
     pub top_calls: Vec<CallFact>,
     pub diagnostics: Vec<String>,
+    /// HTTP verbs the file compares against, e.g. `req.method === "POST"` or `case "GET"`.
+    #[serde(default)]
+    pub verbs_checked: Vec<String>,
     /// Where the parser had to recover: (line, the text there), first few only.
     #[serde(default)]
     pub syntax_errors: Vec<SyntaxErrorFact>,

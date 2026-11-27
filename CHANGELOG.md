@@ -4,6 +4,8 @@ Notes for each version are shown in the in-app update pop-up and on the website'
 
 ## [Unreleased]
 
+- Next.js `pages/api` routes take their verbs from `req.method` checks instead of always `ANY`.
+
 - Packages tab: workspace packages drawn as cards with tier bars and dependency chips.
 - `.proto` messages are read as data models (protobuf), replacing generated stub noise.
 
