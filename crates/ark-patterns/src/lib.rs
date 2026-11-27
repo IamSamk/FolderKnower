@@ -47,6 +47,7 @@ pub fn analyze(
         libraries: ai.libraries,
         memory_techniques: ai.memory,
         deployment,
+        packages: Vec::new(),
     };
     (!ins.is_empty()).then_some(ins)
 }

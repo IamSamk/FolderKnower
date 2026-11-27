@@ -177,6 +177,10 @@ impl OtherKind {
             || lower.contains(".github/workflows/")
             || lower.starts_with("k8s/")
             || lower.contains("/k8s/")
+            || ((lower.ends_with(".yaml") || lower.ends_with(".yml"))
+                && lower
+                    .split('/')
+                    .any(|p| matches!(p, "kubernetes" | "kubernetes-manifests" | "kustomize")))
             || name == "vercel.json"
             || name == "netlify.toml"
             || name == "nginx.conf"

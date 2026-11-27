@@ -1274,7 +1274,51 @@
         ]
       }
     ],
-    "memoryTechniques": []
+    "memoryTechniques": [],
+    "packages": [
+      {
+        "id": "pkg:npm:.",
+        "name": "tauri-notes",
+        "root": "",
+        "ecosystem": "npm",
+        "files": 4,
+        "lines": 58,
+        "tiers": {
+          "Frontend": 3,
+          "Storage": 1
+        },
+        "dependsOn": []
+      },
+      {
+        "id": "pkg:cargo:crates/notes-core",
+        "name": "notes-core",
+        "root": "crates/notes-core",
+        "ecosystem": "cargo",
+        "files": 1,
+        "lines": 38,
+        "tiers": {
+          "Storage": 1
+        },
+        "dependsOn": []
+      },
+      {
+        "id": "pkg:cargo:src-tauri",
+        "name": "tauri-notes",
+        "root": "src-tauri",
+        "ecosystem": "cargo",
+        "files": 1,
+        "lines": 45,
+        "tiers": {
+          "Backend": 1
+        },
+        "dependsOn": [
+          {
+            "target": "pkg:cargo:crates/notes-core",
+            "imports": 1
+          }
+        ]
+      }
+    ]
   },
   "exampleRuns": [
     {

@@ -2432,7 +2432,35 @@
         ]
       }
     ],
-    "memoryTechniques": []
+    "memoryTechniques": [],
+    "packages": [
+      {
+        "id": "pkg:python:api",
+        "name": "todo-api",
+        "root": "api",
+        "ecosystem": "python",
+        "files": 7,
+        "lines": 162,
+        "tiers": {
+          "Backend": 4,
+          "Gateway": 1,
+          "Storage": 2
+        },
+        "dependsOn": []
+      },
+      {
+        "id": "pkg:npm:web",
+        "name": "todo-web",
+        "root": "web",
+        "ecosystem": "npm",
+        "files": 5,
+        "lines": 108,
+        "tiers": {
+          "Frontend": 5
+        },
+        "dependsOn": []
+      }
+    ]
   },
   "exampleRuns": [
     {

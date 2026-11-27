@@ -4,6 +4,7 @@ import type { Deployment } from "./Deployment";
 import type { DsaFinding } from "./DsaFinding";
 import type { KnownLibrary } from "./KnownLibrary";
 import type { MemoryTechnique } from "./MemoryTechnique";
+import type { WorkspacePackage } from "./WorkspacePackage";
 
 /**
  * Everything the pattern recognizers found. Deterministic: rule ids, sorted output.
@@ -12,4 +13,9 @@ export type Insights = { rulesetVersion: string, dataStructures: Array<DsaFindin
 /**
  * Containers and services from docker-compose / Dockerfiles, and how they connect.
  */
-deployment?: Deployment, };
+deployment?: Deployment, 
+/**
+ * Workspace packages (npm, Cargo, Python, Go modules) and which import which: the
+ * units maintainers draw first in a monorepo.
+ */
+packages?: Array<WorkspacePackage>, };

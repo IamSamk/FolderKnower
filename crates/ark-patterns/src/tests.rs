@@ -705,3 +705,63 @@ services:
     assert_eq!(kind("engine"), ServiceKind::Worker);
     assert_eq!(kind("web_server"), ServiceKind::Frontend);
 }
+
+#[test]
+fn kubernetes_workloads_link_by_env_host() {
+    use crate::deployment::{InfraFile, analyze};
+    use ark_schema::{LinkVia, ServiceKind};
+    let web = r#"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  template:
+    spec:
+      containers:
+        - name: server
+          image: registry.example/web:v1
+          env:
+            - name: CART_ADDR
+              value: "cart:7070"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+"#;
+    let cart = r#"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart
+spec:
+  template:
+    spec:
+      containers:
+        - name: cart
+          image: registry.example/cart:v1
+          command: ["uvicorn", "app:main"]
+        - name: cache
+          image: redis:alpine
+"#;
+    let infra = [
+        InfraFile {
+            path: "kubernetes-manifests/web.yaml",
+            text: web,
+        },
+        InfraFile {
+            path: "kubernetes-manifests/cart.yaml",
+            text: cart,
+        },
+    ];
+    let d = analyze(&infra, &[]).expect("deployment");
+    let kind = |n: &str| d.services.iter().find(|s| s.name == n).map(|s| s.kind);
+    assert_eq!(kind("cart"), Some(ServiceKind::Api));
+    assert_eq!(kind("cart/cache"), Some(ServiceKind::Cache));
+    assert!(
+        d.links
+            .iter()
+            .any(|l| l.from == "svc:web" && l.to == "svc:cart" && l.via == LinkVia::Env)
+    );
+}
