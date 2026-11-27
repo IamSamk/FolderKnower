@@ -271,12 +271,25 @@ pub fn markdown(g: &SystemArchitectureGraph) -> String {
         md.push('\n');
     }
 
-    // Data models.
+    // Data models. Persisted tables and collections come first; validation
+    // shapes (zod, DTOs, protobuf) are usually far more numerous and repeat them.
     if !g.data_models.is_empty() {
-        let _ = writeln!(md, "## Data models ({})\n", g.data_models.len());
+        let mut ranked: Vec<&ark_schema::DataModel> = g.data_models.iter().collect();
+        ranked.sort_by_key(|m| matches!(m.kind, ark_schema::DataModelKind::Schema));
+        let tables = ranked
+            .iter()
+            .filter(|m| !matches!(m.kind, ark_schema::DataModelKind::Schema))
+            .count();
+        let _ = writeln!(
+            md,
+            "## Data models ({}: {} tables or collections, {} schemas)\n",
+            ranked.len(),
+            tables,
+            ranked.len() - tables
+        );
         let _ = writeln!(md, "| Model | Fields | Where |");
         let _ = writeln!(md, "| --- | --- | --- |");
-        for m in g.data_models.iter().take(MAX_ROWS) {
+        for m in ranked.iter().take(MAX_ROWS) {
             let fields: Vec<&str> = m.fields.iter().map(|f| f.name.as_str()).collect();
             let _ = writeln!(
                 md,
@@ -286,6 +299,9 @@ pub fn markdown(g: &SystemArchitectureGraph) -> String {
                 path_of(&m.file_id),
                 m.line
             );
+        }
+        if ranked.len() > MAX_ROWS {
+            let _ = writeln!(md, "\n...and {} more.", ranked.len() - MAX_ROWS);
         }
         md.push('\n');
     }

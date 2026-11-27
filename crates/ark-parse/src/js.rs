@@ -72,7 +72,10 @@ impl X<'_, '_> {
                 self.class(node);
                 return;
             }
-            "variable_declarator" => self.zod_schema(node),
+            "variable_declarator" => {
+                self.zod_schema(node);
+                self.trpc_router(node);
+            }
             "call_expression" => self.call(node),
             "jsx_element" | "jsx_self_closing_element" => self.jsx(node),
             "string" => self.verb_check(node),
@@ -384,6 +387,70 @@ impl X<'_, '_> {
             self.visit(c);
         }
         self.class_stack.pop();
+    }
+
+    /// `export const userRouter = createTRPCRouter({ list: publicProcedure.query(..) })`:
+    /// each procedure is an endpoint named `/trpc/user.list`.
+    fn trpc_router(&mut self, node: Node) {
+        let (Some(name), Some(value)) = (
+            node.child_by_field_name("name"),
+            node.child_by_field_name("value"),
+        ) else {
+            return;
+        };
+        if value.kind() != "call_expression" {
+            return;
+        }
+        let Some(func) = value.child_by_field_name("function") else {
+            return;
+        };
+        let ft = self.t(func);
+        let last = ft.rsplit('.').next().unwrap_or(ft);
+        if !matches!(last, "createTRPCRouter" | "router" | "createRouter") {
+            return;
+        }
+        let Some(args) = value.child_by_field_name("arguments") else {
+            return;
+        };
+        let Some(obj) = named_children(args)
+            .into_iter()
+            .find(|a| a.kind() == "object")
+        else {
+            return;
+        };
+        let var = self.t(name);
+        let router = var
+            .strip_suffix("Router")
+            .or_else(|| var.strip_suffix("router"))
+            .unwrap_or(var)
+            .to_owned();
+        for p in named_children(obj) {
+            if p.kind() != "pair" {
+                continue;
+            }
+            let (Some(k), Some(v)) = (p.child_by_field_name("key"), p.child_by_field_name("value"))
+            else {
+                continue;
+            };
+            if v.kind() != "call_expression" {
+                continue;
+            }
+            let Some(vf) = v.child_by_field_name("function") else {
+                continue;
+            };
+            let verb = self.t(vf).rsplit('.').next().unwrap_or("").to_owned();
+            if !matches!(verb.as_str(), "query" | "mutation" | "subscription") {
+                continue;
+            }
+            let key = self.t(k).trim_matches(['"', '\'']).to_owned();
+            self.facts.routes.push(RouteFact {
+                method: verb.to_ascii_uppercase(),
+                path: format!("/trpc/{router}.{key}"),
+                framework: "trpc".to_owned(),
+                line: line(p),
+                handler: None,
+            });
+        }
     }
 
     /// `const Todo = z.object({ title: z.string() })` is a schema shape.

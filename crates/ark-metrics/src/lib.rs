@@ -25,6 +25,10 @@ fn is_function_kind(lang: Language, kind: &str) -> bool {
             kind,
             "function_declaration" | "method_declaration" | "func_literal"
         ),
+        Language::Java | Language::CSharp => matches!(
+            kind,
+            "method_declaration" | "constructor_declaration" | "lambda_expression"
+        ),
     }
 }
 
@@ -40,6 +44,14 @@ fn is_loop(lang: Language, kind: &str) -> bool {
             "for_expression" | "while_expression" | "loop_expression"
         ),
         Language::Go => kind == "for_statement",
+        Language::Java | Language::CSharp => matches!(
+            kind,
+            "for_statement"
+                | "enhanced_for_statement"
+                | "for_each_statement"
+                | "while_statement"
+                | "do_statement"
+        ),
     }
 }
 
@@ -62,6 +74,14 @@ fn is_branch(lang: Language, kind: &str) -> bool {
         Language::Go => matches!(
             kind,
             "if_statement" | "expression_case" | "type_case" | "communication_case"
+        ),
+        Language::Java | Language::CSharp => matches!(
+            kind,
+            "if_statement"
+                | "switch_label"
+                | "switch_section"
+                | "catch_clause"
+                | "conditional_expression"
         ),
     }
 }

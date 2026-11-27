@@ -90,7 +90,22 @@ impl<'a> Resolver<'a> {
             Language::Python => self.resolve_py(from, source, names),
             Language::Rust => self.resolve_rust(from, source).into_iter().collect(),
             Language::Go => self.resolve_go(source),
+            Language::Java => self.resolve_java(source),
+            Language::CSharp => Vec::new(),
         }
+    }
+
+    /// `com.acme.Foo` -> the file ending in `com/acme/Foo.java`.
+    fn resolve_java(&self, source: &str) -> Vec<usize> {
+        let tail = format!("{}.java", source.trim_end_matches(".*").replace('.', "/"));
+        self.by_path
+            .iter()
+            .filter(|(p, _)| {
+                p.ends_with(&tail)
+                    && (p.len() == tail.len() || p[..p.len() - tail.len()].ends_with('/'))
+            })
+            .map(|(_, i)| *i)
+            .collect()
     }
 
     fn resolve_js(&self, from: &str, source: &str) -> Option<usize> {
@@ -300,6 +315,7 @@ pub fn external_package(lang: Language, source: &str) -> Option<String> {
             }
             first.replace('_', "-")
         }
+        Language::Java | Language::CSharp => return None,
         Language::Go => {
             let parts: Vec<&str> = s.split('/').collect();
             if parts[0].contains('.') {
@@ -414,4 +430,75 @@ pub fn normalize_url_segments(url: &str) -> Vec<String> {
         segs.remove(0);
     }
     segs
+}
+
+/// Path prefix of each file whose routes are mounted by a parent's `sub(module::Api)`
+/// entry, composed down the module tree.
+pub fn mount_prefixes(files: &[ParsedFile]) -> BTreeMap<String, String> {
+    let by_path: BTreeMap<&str, &ParsedFile> =
+        files.iter().map(|f| (f.scan.path.as_str(), f)).collect();
+    let mut out: BTreeMap<String, String> = BTreeMap::new();
+    let mut work: Vec<(String, String)> = Vec::new();
+    let mut mounted: std::collections::BTreeSet<String> = Default::default();
+    // Children of every file with SUB entries.
+    let children = |path: &str, f: &ParsedFile| -> Vec<(String, String)> {
+        let (dir, file) = path.rsplit_once('/').unwrap_or(("", path));
+        let stem = file.rsplit_once('.').map(|(a, _)| a).unwrap_or(file);
+        let base = if matches!(stem, "mod" | "lib" | "main") {
+            dir.to_owned()
+        } else if dir.is_empty() {
+            stem.to_owned()
+        } else {
+            format!("{dir}/{stem}")
+        };
+        let mut v = Vec::new();
+        for r in f.facts.routes.iter().filter(|r| r.method == "SUB") {
+            let Some(m) = r.handler.as_deref() else {
+                continue;
+            };
+            let a = if base.is_empty() {
+                format!("{m}.rs")
+            } else {
+                format!("{base}/{m}.rs")
+            };
+            let b = if base.is_empty() {
+                format!("{m}/mod.rs")
+            } else {
+                format!("{base}/{m}/mod.rs")
+            };
+            for cand in [a, b] {
+                if by_path.contains_key(cand.as_str()) {
+                    v.push((cand, r.path.clone()));
+                    break;
+                }
+            }
+        }
+        v
+    };
+    for (p, f) in &by_path {
+        for (c, _) in children(p, f) {
+            mounted.insert(c);
+        }
+    }
+    for (p, f) in &by_path {
+        if !mounted.contains(*p) && f.facts.routes.iter().any(|r| r.method == "SUB") {
+            work.push(((*p).to_owned(), String::new()));
+        }
+    }
+    let mut guard = 0;
+    while let Some((p, pre)) = work.pop() {
+        guard += 1;
+        if guard > 10_000 {
+            break;
+        }
+        let Some(f) = by_path.get(p.as_str()) else {
+            continue;
+        };
+        for (child, sub) in children(&p, f) {
+            let full = format!("{pre}{sub}");
+            out.insert(child.clone(), full.clone());
+            work.push((child, full));
+        }
+    }
+    out
 }

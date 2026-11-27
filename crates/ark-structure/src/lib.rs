@@ -390,7 +390,13 @@ pub fn build(input: &StructureInput) -> Structure {
     for (i, f) in files.iter().enumerate() {
         let server_lang = matches!(
             f.scan.language,
-            Some(Language::Python | Language::Go | Language::Rust)
+            Some(
+                Language::Python
+                    | Language::Go
+                    | Language::Rust
+                    | Language::Java
+                    | Language::CSharp
+            )
         );
         if server_lang && !fact_sets[i].contains("component") {
             let fe = scores[i][ti(TierLabel::Frontend)];

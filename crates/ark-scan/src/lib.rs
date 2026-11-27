@@ -53,10 +53,8 @@ pub const DENY_DIRS: &[&str] = &[
 
 /// Source languages FolderKnower recognises by extension but cannot parse yet.
 const UNPARSED_EXTS: &[(&str, &str)] = &[
-    ("java", "Java"),
     ("kt", "Kotlin"),
     ("kts", "Kotlin"),
-    ("cs", "C#"),
     ("swift", "Swift"),
     ("rb", "Ruby"),
     ("php", "PHP"),
@@ -99,6 +97,8 @@ pub enum Language {
     Python,
     Rust,
     Go,
+    Java,
+    CSharp,
 }
 
 impl Language {
@@ -114,6 +114,8 @@ impl Language {
             "py" | "pyi" => Self::Python,
             "rs" => Self::Rust,
             "go" => Self::Go,
+            "java" => Self::Java,
+            "cs" => Self::CSharp,
             _ => return None,
         })
     }
@@ -126,6 +128,8 @@ impl Language {
             Self::Python => "python",
             Self::Rust => "rust",
             Self::Go => "go",
+            Self::Java => "java",
+            Self::CSharp => "csharp",
         }
     }
 }

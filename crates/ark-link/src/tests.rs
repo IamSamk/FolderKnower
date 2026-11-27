@@ -150,3 +150,27 @@ fn nextjs_pages_api_methods_come_from_checks() {
     let r = resolve::file_based_routes("web/pages/api/any.ts", &g.facts);
     assert_eq!(r[0].method, "ANY");
 }
+
+#[test]
+fn macro_routes_compose_through_sub_mounts() {
+    let files = vec![
+        pf(
+            "app/src/routes/mod.rs",
+            "#[routes::routes(routes(\n  \"/health\" => get(get_health),\n  \"/indexes\" => sub(indexes::IndexesApi),\n))]\npub struct Api;\nfn get_health() {}\n",
+        ),
+        pf(
+            "app/src/routes/indexes/mod.rs",
+            "#[routes::routes(routes(\n  \"\" => [get(list), post(create)],\n  \"/{uid}\" => get(one),\n))]\npub struct IndexesApi;\nfn list() {}\nfn create() {}\nfn one() {}\n",
+        ),
+    ];
+    let linked = link(&files, &LinkInputs::default());
+    let got: Vec<String> = linked
+        .routes
+        .iter()
+        .map(|r| format!("{} {}", r.method, r.path))
+        .collect();
+    assert!(got.contains(&"GET /health".to_owned()), "{got:?}");
+    assert!(got.contains(&"GET /indexes".to_owned()), "{got:?}");
+    assert!(got.contains(&"POST /indexes".to_owned()), "{got:?}");
+    assert!(got.contains(&"GET /indexes/{uid}".to_owned()), "{got:?}");
+}
