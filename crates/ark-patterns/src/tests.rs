@@ -675,3 +675,33 @@ fn every_search_leg_is_kept() {
         .expect("fusion");
     assert_eq!(ai.edges.iter().filter(|e| e.to == fusion.id).count(), 4);
 }
+#[test]
+fn image_only_services_are_told_apart_by_command_and_mode() {
+    use crate::deployment::{InfraFile, analyze};
+    use ark_schema::ServiceKind;
+    let compose = r#"
+services:
+  api_server:
+    image: example/backend:latest
+    command: uvicorn app.main:app --port 8080
+  background:
+    image: example/backend:latest
+    command: celery -A app worker
+  engine:
+    image: example/engine:latest
+    environment:
+      MODE: worker
+  web_server:
+    image: example/web-server:latest
+"#;
+    let infra = [InfraFile {
+        path: "deploy/docker-compose.yml",
+        text: compose,
+    }];
+    let d = analyze(&infra, &[]).expect("deployment");
+    let kind = |n: &str| d.services.iter().find(|s| s.name == n).unwrap().kind;
+    assert_eq!(kind("api_server"), ServiceKind::Api);
+    assert_eq!(kind("background"), ServiceKind::Worker);
+    assert_eq!(kind("engine"), ServiceKind::Worker);
+    assert_eq!(kind("web_server"), ServiceKind::Frontend);
+}

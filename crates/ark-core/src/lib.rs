@@ -523,6 +523,24 @@ pub fn analyze(
         rules: Vec::new(),
         health: None,
     };
+    // Be honest about what was not read: source in languages without a parser yet.
+    let unread: u32 = scanned.unparsed.values().sum();
+    if unread > 0 {
+        let mut langs: Vec<(&String, &u32)> = scanned.unparsed.iter().collect();
+        langs.sort_by(|a, b| b.1.cmp(a.1).then(a.0.cmp(b.0)));
+        let list = langs
+            .iter()
+            .take(4)
+            .map(|(l, n)| format!("{l} {n}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        graph.summary.findings.push(ark_schema::Finding {
+            text: format!(
+                "Not read: {unread} source files in languages without a parser yet ({list}). Services written in them show up from deployment files only."
+            ),
+            evidence: Vec::new(),
+        });
+    }
     graph.example_runs = story::example_runs(&graph);
     graph.features = features::build(&graph, &linked.externals, &app);
     graph.memory_map = memory::build(&graph, &app);

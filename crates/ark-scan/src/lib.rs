@@ -44,7 +44,50 @@ pub const DENY_DIRS: &[&str] = &[
     "__fixtures__",
     "testdata",
     "__snapshots__",
+    // Code that lives in the repo but is someone else's.
+    "third_party",
+    "third-party",
+    "thirdparty",
+    "external-crates",
 ];
+
+/// Source languages FolderKnower recognises by extension but cannot parse yet.
+const UNPARSED_EXTS: &[(&str, &str)] = &[
+    ("java", "Java"),
+    ("kt", "Kotlin"),
+    ("kts", "Kotlin"),
+    ("cs", "C#"),
+    ("swift", "Swift"),
+    ("rb", "Ruby"),
+    ("php", "PHP"),
+    ("c", "C"),
+    ("h", "C"),
+    ("cc", "C++"),
+    ("cpp", "C++"),
+    ("hpp", "C++"),
+    ("scala", "Scala"),
+    ("dart", "Dart"),
+    ("ex", "Elixir"),
+    ("exs", "Elixir"),
+    ("lua", "Lua"),
+    ("zig", "Zig"),
+    ("vue", "Vue"),
+    ("svelte", "Svelte"),
+];
+
+/// Machine-written code: protobuf stubs and the like. Reading it adds noise, the schema
+/// it came from is the source of truth.
+fn is_generated(name: &str) -> bool {
+    name.ends_with(".pb.go")
+        || name.ends_with("_pb2.py")
+        || name.ends_with("_pb2_grpc.py")
+        || name.ends_with("_pb2.pyi")
+        || name.ends_with(".pb.ts")
+        || name.ends_with(".pb.js")
+        || name.ends_with("_grpc.pb.go")
+        || name.ends_with(".generated.ts")
+        || name.ends_with(".gen.go")
+}
 
 /// Source languages the parser understands.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -180,6 +223,9 @@ pub struct ScanResult {
     pub root_hash: String,
     /// Files skipped because they exceed the size cap.
     pub skipped_large: Vec<String>,
+    /// Source files in languages that are recognised but not parsed yet, by language.
+    #[serde(default)]
+    pub unparsed: BTreeMap<String, u32>,
 }
 
 #[derive(Debug, Clone)]
@@ -246,6 +292,7 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanResult, ScanError> {
 
     let mut files = Vec::new();
     let mut skipped_large = Vec::new();
+    let mut unparsed: BTreeMap<String, u32> = BTreeMap::new();
     for entry in walker.flatten() {
         let Some(ft) = entry.file_type() else {
             continue;
@@ -262,10 +309,20 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanResult, ScanError> {
             .collect::<Vec<_>>()
             .join("/");
         let name = rel.rsplit('/').next().unwrap_or(&rel).to_ascii_lowercase();
-        if is_minified(&name) || is_lockfile(&name) {
+        if is_minified(&name) || is_lockfile(&name) || is_generated(&name) {
             continue;
         }
         let language = Language::from_path(&rel);
+        if language.is_none()
+            && let Some(ext) = name.rsplit_once('.').map(|(_, e)| e)
+            && let Some((_, lang)) = UNPARSED_EXTS.iter().find(|(e, _)| *e == ext)
+            && !rel
+                .to_ascii_lowercase()
+                .split('/')
+                .any(|p| matches!(p, "test" | "tests" | "example" | "examples"))
+        {
+            *unparsed.entry((*lang).to_owned()).or_insert(0) += 1;
+        }
         let other = if language.is_none() {
             OtherKind::from_path(&rel)
         } else {
@@ -295,6 +352,7 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanResult, ScanError> {
         files,
         root_hash,
         skipped_large,
+        unparsed,
     })
 }
 

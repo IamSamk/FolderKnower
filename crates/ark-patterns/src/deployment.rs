@@ -351,6 +351,77 @@ fn entry_file(command: &str, context: &str, code: &BTreeSet<&str>) -> Option<Str
     None
 }
 
+/// What a service is when no catalog image rule or source file says: its start command
+/// (`uvicorn`, `celery`, `next start`), a `MODE=worker` style variable, or its name.
+fn kind_from_hints(
+    name: &str,
+    image: Option<&str>,
+    command: Option<&str>,
+    env: &[(String, String)],
+) -> Option<ServiceKind> {
+    let cmd = command.unwrap_or("").to_ascii_lowercase();
+    let lname = name.to_ascii_lowercase();
+    let limage = image.unwrap_or("").to_ascii_lowercase();
+    let mode = env
+        .iter()
+        .find(|(k, _)| matches!(k.as_str(), "MODE" | "SERVICE_MODE" | "APP_MODE" | "ROLE"))
+        .map(|(_, v)| v.to_ascii_lowercase())
+        .unwrap_or_default();
+    if cmd.contains("celery") || cmd.contains("dramatiq") || cmd.contains("rq worker") {
+        return Some(ServiceKind::Worker);
+    }
+    if mode.contains("worker")
+        || mode.contains("beat")
+        || lname.contains("worker")
+        || lname.contains("background")
+    {
+        return Some(ServiceKind::Worker);
+    }
+    if [
+        "uvicorn",
+        "gunicorn",
+        "hypercorn",
+        "flask run",
+        "fastapi",
+        "granian",
+        "rails s",
+        "php-fpm",
+    ]
+    .iter()
+    .any(|c| cmd.contains(c))
+        || mode == "api"
+    {
+        return Some(ServiceKind::Api);
+    }
+    if cmd.contains("next start")
+        || cmd.contains("next dev")
+        || cmd.contains("npm run start")
+        || cmd.contains("vite preview")
+    {
+        return Some(ServiceKind::Frontend);
+    }
+    if lname.contains("agent") {
+        return Some(ServiceKind::Agent);
+    }
+    let tail = limage.rsplit('/').next().unwrap_or("");
+    let words = |t: &str| {
+        t.split(|c: char| !c.is_ascii_alphanumeric())
+            .any(|w| w == "web" || w == "frontend" || w == "ui" || w == "web-server")
+    };
+    if words(&lname) || words(tail) {
+        return Some(ServiceKind::Frontend);
+    }
+    if lname
+        .split(|c: char| !c.is_ascii_alphanumeric())
+        .any(|w| matches!(w, "api" | "backend" | "gateway"))
+        || tail.contains("-api")
+        || tail.contains("backend")
+    {
+        return Some(ServiceKind::Api);
+    }
+    None
+}
+
 fn kind_from_code(files: &[&CodeFile], command: Option<&str>, name: &str) -> ServiceKind {
     let lname = name.to_ascii_lowercase();
     let cmd = command.unwrap_or("").to_ascii_lowercase();
@@ -358,6 +429,7 @@ fn kind_from_code(files: &[&CodeFile], command: Option<&str>, name: &str) -> Ser
         || cmd.contains("rq worker")
         || cmd.contains("dramatiq")
         || lname.contains("worker")
+        || lname.contains("background")
     {
         return ServiceKind::Worker;
     }
@@ -627,15 +699,26 @@ pub fn analyze(infra: &[InfraFile], code: &[CodeFile]) -> Option<Deployment> {
                     (r.kind, named(r))
                 }
                 None if context.is_some() => {
-                    let k = kind_from_code(&files, command.as_deref(), &name);
+                    let mut k = kind_from_code(&files, command.as_deref(), &name);
+                    if k == ServiceKind::Other
+                        && let Some(h) =
+                            kind_from_hints(&name, image.as_deref(), command.as_deref(), &env)
+                    {
+                        k = h;
+                    }
                     (k, kind_explain(k, n_files))
                 }
                 None => match base_rule.filter(|r| r.kind != ServiceKind::Other) {
                     Some(r) => (r.kind, named(r)),
-                    None => (
-                        ServiceKind::Other,
-                        "A service declared in compose.".to_owned(),
-                    ),
+                    None => {
+                        match kind_from_hints(&name, image.as_deref(), command.as_deref(), &env) {
+                            Some(k) => (k, kind_explain(k, n_files)),
+                            None => (
+                                ServiceKind::Other,
+                                "A service declared in compose.".to_owned(),
+                            ),
+                        }
+                    }
                 },
             };
             let entry = match (&command, &context) {
@@ -672,7 +755,16 @@ pub fn analyze(infra: &[InfraFile], code: &[CodeFile]) -> Option<Deployment> {
                 declared_in: format!("{}:{}", f.path, line_of(f.text, &name)),
                 explain,
             };
-            // A later compose file (override) for the same service replaces it.
+            // A later compose file (override) for the same service replaces it, unless it
+            // sits in a different folder and ties the source to fewer files: a packaged copy
+            // of the compose file (CLI templates, embedded deploy files) must not hide the
+            // canonical one whose build context really resolves.
+            if drafts.get(&name).is_some_and(|old| {
+                old.svc.code_files > svc.code_files
+                    && !old.svc.declared_in.starts_with(dir_of(f.path))
+            }) {
+                continue;
+            }
             drafts.insert(
                 name,
                 Draft {
@@ -691,6 +783,10 @@ pub fn analyze(infra: &[InfraFile], code: &[CodeFile]) -> Option<Deployment> {
             continue;
         }
         let ctx = dir_of(path).to_owned();
+        // `.devcontainer/`, `.cursor/`: editor tooling, not a deployed service
+        if ctx.split('/').any(|p| p.starts_with('.')) {
+            continue;
+        }
         let d = parse_dockerfile(text);
         let name = if ctx.is_empty() {
             "app".to_owned()
