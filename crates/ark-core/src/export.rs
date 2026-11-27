@@ -112,6 +112,65 @@ pub fn markdown(g: &SystemArchitectureGraph) -> String {
         let _ = writeln!(md, "```\n");
     }
 
+    // Workspace packages.
+    if let Some(pk) = g
+        .insights
+        .as_ref()
+        .map(|i| &i.packages)
+        .filter(|p| !p.is_empty())
+    {
+        let _ = writeln!(md, "## Packages\n");
+        let ids: BTreeMap<&str, String> = pk
+            .iter()
+            .enumerate()
+            .map(|(i, p)| (p.id.as_str(), format!("p{i}")))
+            .collect();
+        let _ = writeln!(md, "```mermaid\nflowchart LR");
+        for p in pk.iter().take(40) {
+            let _ = writeln!(
+                md,
+                "  {}[\"{} ({})\"]",
+                ids[p.id.as_str()],
+                label(&p.name),
+                p.ecosystem
+            );
+        }
+        for p in pk.iter().take(40) {
+            for l in p.depends_on.iter().take(6) {
+                if let (Some(a), Some(b)) = (ids.get(p.id.as_str()), ids.get(l.target.as_str())) {
+                    if l.imports == 0 {
+                        let _ = writeln!(md, "  {a} -.->|\"declared\"| {b}");
+                    } else {
+                        let _ = writeln!(md, "  {a} -->|\"{}\"| {b}", l.imports);
+                    }
+                }
+            }
+        }
+        let _ = writeln!(md, "```\n");
+        let _ = writeln!(
+            md,
+            "| Package | Where | Files | Lines | Tiers |\n| --- | --- | ---: | ---: | --- |"
+        );
+        for p in pk.iter().take(40) {
+            let tiers = p
+                .tiers
+                .iter()
+                .map(|(t, n)| format!("{t} {n}"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            let _ = writeln!(
+                md,
+                "| {} | `{}` | {} | {} | {} |",
+                label(&p.name),
+                if p.root.is_empty() { "." } else { &p.root },
+                p.files,
+                p.lines,
+                tiers
+            );
+        }
+        let _ = writeln!(md);
+    }
+
     // Containers.
     if let Some(d) = g.insights.as_ref().and_then(|i| i.deployment.as_ref())
         && !d.services.is_empty()

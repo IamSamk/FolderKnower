@@ -37,6 +37,9 @@ enum Cmd {
         /// Do not print progress.
         #[arg(short, long)]
         quiet: bool,
+        /// Indent the JSON even for large repositories (default: compact above 1,500 files).
+        #[arg(long)]
+        pretty: bool,
     },
     /// Grounded example run: what happens, hop by hop, when a user uses a UI element.
     ///
@@ -124,6 +127,7 @@ fn main() -> ExitCode {
             cache,
             overrides,
             quiet,
+            pretty,
         } => {
             let mut map = BTreeMap::new();
             for o in overrides {
@@ -157,7 +161,18 @@ fn main() -> ExitCode {
             };
             match analyze(&path, &opts, &progress) {
                 Ok((graph, stats)) => {
-                    let json = ark_schema::to_canonical_json(&graph).expect("serializable");
+                    let files: usize = graph
+                        .tiers
+                        .iter()
+                        .flat_map(|t| t.clusters.iter())
+                        .map(|c| c.files.len())
+                        .sum();
+                    let json = if pretty || files <= 1500 {
+                        ark_schema::to_canonical_json(&graph)
+                    } else {
+                        ark_schema::to_compact_json(&graph)
+                    }
+                    .expect("serializable");
                     if out == "-" {
                         print!("{json}");
                     } else if let Err(e) = std::fs::write(&out, json) {

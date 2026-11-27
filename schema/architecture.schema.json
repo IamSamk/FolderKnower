@@ -1281,6 +1281,13 @@
             "$ref": "#/$defs/MemoryTechnique"
           }
         },
+        "packages": {
+          "description": "Workspace packages (npm, Cargo, Python, Go modules) and which import which: the\nunits maintainers draw first in a monorepo.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WorkspacePackage"
+          }
+        },
         "rulesetVersion": {
           "type": "string"
         }
@@ -1594,6 +1601,25 @@
         "concept",
         "layer",
         "ruleId"
+      ]
+    },
+    "PackageLink": {
+      "type": "object",
+      "properties": {
+        "imports": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "target": {
+          "description": "Id of the package imported.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "target",
+        "imports"
       ]
     },
     "Parameter": {
@@ -2312,6 +2338,63 @@
         "private",
         "protected",
         "internal"
+      ]
+    },
+    "WorkspacePackage": {
+      "description": "One package of a monorepo, from its manifest.",
+      "type": "object",
+      "properties": {
+        "dependsOn": {
+          "description": "Other packages whose files this one imports, with the number of import edges.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PackageLink"
+          }
+        },
+        "ecosystem": {
+          "description": "`npm`, `cargo`, `python` or `go`.",
+          "type": "string"
+        },
+        "files": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "id": {
+          "type": "string"
+        },
+        "lines": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "name": {
+          "type": "string"
+        },
+        "root": {
+          "description": "Folder of the manifest, relative to the repository root.",
+          "type": "string"
+        },
+        "tiers": {
+          "description": "Files per tier, e.g. `Backend: 120`.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "root",
+        "ecosystem",
+        "files",
+        "lines",
+        "tiers",
+        "dependsOn"
       ]
     }
   }

@@ -15,6 +15,7 @@ pub mod export;
 mod features;
 mod health;
 mod memory;
+mod packages;
 mod rules;
 mod story;
 
@@ -541,6 +542,10 @@ pub fn analyze(
             evidence: Vec::new(),
         });
     }
+    let pkgs = packages::build(root, &scanned.files, &graph);
+    if !pkgs.is_empty() {
+        graph.insights.get_or_insert_with(Default::default).packages = pkgs;
+    }
     graph.example_runs = story::example_runs(&graph);
     graph.features = features::build(&graph, &linked.externals, &app);
     graph.memory_map = memory::build(&graph, &app);
@@ -663,11 +668,16 @@ fn is_side_path(path: &str) -> bool {
 
 /// Texts of compose files, Dockerfiles and nginx configs (each capped at 512 KiB).
 fn read_infra(root: &Path, files: &[ark_scan::ScannedFile]) -> Vec<(String, String)> {
-    use ark_patterns::deployment::{is_compose, is_dockerfile, is_proxy_conf};
+    use ark_patterns::deployment::{is_compose, is_dockerfile, is_k8s_manifest, is_proxy_conf};
     files
         .iter()
         .filter(|f| f.size < 512 * 1024)
-        .filter(|f| is_compose(&f.path) || is_dockerfile(&f.path) || is_proxy_conf(&f.path))
+        .filter(|f| {
+            is_compose(&f.path)
+                || is_dockerfile(&f.path)
+                || is_proxy_conf(&f.path)
+                || is_k8s_manifest(&f.path)
+        })
         .filter_map(|f| {
             fs::read_to_string(root.join(&f.path))
                 .ok()

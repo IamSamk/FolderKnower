@@ -10,6 +10,9 @@ Notes for each version are shown in the in-app update pop-up and on the website'
 - The headline says "AI system" only when the AI parts are a real share of the repository.
 - Protobuf stubs, vendored and third-party folders are skipped. Source in languages without a parser (Java, C#, Kotlin, ...) is now reported as "Not read" instead of being silent.
 - Parts with the same name are told apart by their folders instead of a counter.
+- Kubernetes Deployments, StatefulSets and DaemonSets are read like compose services, and their env values link them (Online Boutique's whole service graph).
+- Monorepo packages: every npm, Cargo, Python and Go package with its files, tiers and what imports or depends on what (in `architecture.json` and the Markdown export).
+- Large repositories write compact JSON (Dify 168 MB to 79 MB); `--pretty` indents.
 - Findings and open gaps: docs/design/stress-test-findings.md.
 
 ## [0.14.1] - 2026-11-27

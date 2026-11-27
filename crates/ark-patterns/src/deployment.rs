@@ -90,6 +90,20 @@ pub fn is_compose(path: &str) -> bool {
         && (name.ends_with(".yml") || name.ends_with(".yaml"))
 }
 
+/// Kubernetes manifests live in folders named for it; helm templates are skipped (they are
+/// not valid YAML until rendered).
+pub fn is_k8s_manifest(path: &str) -> bool {
+    let lower = path.to_ascii_lowercase();
+    (lower.ends_with(".yaml") || lower.ends_with(".yml"))
+        && !lower.contains("/templates/")
+        && lower.split('/').any(|p| {
+            matches!(
+                p,
+                "k8s" | "kubernetes" | "kubernetes-manifests" | "manifests" | "kustomize"
+            )
+        })
+}
+
 pub fn is_dockerfile(path: &str) -> bool {
     let name = file_name(path).to_ascii_lowercase();
     name == "dockerfile" || name.starts_with("dockerfile.") || name.ends_with(".dockerfile")
@@ -777,9 +791,171 @@ pub fn analyze(infra: &[InfraFile], code: &[CodeFile]) -> Option<Deployment> {
         }
     }
 
+    // Kubernetes workloads: Deployment / StatefulSet / DaemonSet, one service per container.
+    // Their env values (`PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550`) are the
+    // service-to-service links.
+    let mut k8s_files: Vec<&InfraFile> = infra.iter().filter(|f| is_k8s_manifest(f.path)).collect();
+    k8s_files.sort_by_key(|f| f.path);
+    for f in k8s_files {
+        for part in f.text.split("\n---") {
+            let Ok(doc) = serde_yaml_ng::from_str::<Value>(part) else {
+                continue;
+            };
+            let kind = get(&doc, &["kind"]).and_then(as_str).unwrap_or_default();
+            if !matches!(kind.as_str(), "Deployment" | "StatefulSet" | "DaemonSet") {
+                continue;
+            }
+            let Some(wname) = get(&doc, &["metadata", "name"]).and_then(as_str) else {
+                continue;
+            };
+            let Some(containers) =
+                get(&doc, &["spec", "template", "spec", "containers"]).and_then(Value::as_sequence)
+            else {
+                continue;
+            };
+            for (ci, c) in containers.iter().enumerate() {
+                let cname = get(c, &["name"])
+                    .and_then(as_str)
+                    .unwrap_or_else(|| wname.clone());
+                // the first container carries the workload's name; sidecars keep their own
+                let name = if ci == 0 {
+                    wname.clone()
+                } else {
+                    format!("{wname}/{cname}")
+                };
+                if drafts.contains_key(&name) {
+                    continue;
+                }
+                let image = get(c, &["image"]).and_then(as_str).map(|s| interpolate(&s));
+                // source folder: a Dockerfile in a folder named like the container/workload
+                let ctx = contexts
+                    .iter()
+                    .find(|d| file_name(d) == cname || file_name(d) == wname)
+                    .or_else(|| {
+                        contexts
+                            .iter()
+                            .find(|d| d.split('/').any(|s| s == cname || s == wname))
+                    })
+                    .map(|d| (*d).to_owned());
+                let docker = ctx.as_ref().and_then(|ctx| {
+                    let p = join(ctx, "Dockerfile");
+                    dockerfiles.get(p.as_str()).map(|t| {
+                        used_dockerfiles.insert(p.clone());
+                        sources.insert(p);
+                        parse_dockerfile(t)
+                    })
+                });
+                let files = ctx.as_deref().map(in_context).unwrap_or_default();
+                let n_files = files.len() as u32;
+                let command = command_text(get(c, &["command"]))
+                    .or_else(|| command_text(get(c, &["args"])))
+                    .or_else(|| docker.as_ref().and_then(|d| d.command.clone()));
+                let env: Vec<(String, String)> = get(c, &["env"])
+                    .and_then(Value::as_sequence)
+                    .map(|items| {
+                        items
+                            .iter()
+                            .filter_map(|e| {
+                                Some((
+                                    get(e, &["name"]).and_then(as_str)?,
+                                    get(e, &["value"]).and_then(as_str)?,
+                                ))
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                let rule = image.as_deref().and_then(classify_image);
+                let base_rule = docker
+                    .as_ref()
+                    .and_then(|d| d.base.as_deref())
+                    .and_then(classify_image);
+                let (kind, explain) = match rule.filter(|r| r.kind != ServiceKind::Other) {
+                    Some(r) => (r.kind, named(r)),
+                    None if ctx.is_some() => {
+                        let mut k = kind_from_code(&files, command.as_deref(), &name);
+                        if k == ServiceKind::Other
+                            && let Some(h) =
+                                kind_from_hints(&name, image.as_deref(), command.as_deref(), &env)
+                        {
+                            k = h;
+                        }
+                        // built from a Dockerfile in this repository and nothing says otherwise:
+                        // a service of the app
+                        if k == ServiceKind::Other {
+                            k = ServiceKind::Api;
+                        }
+                        (k, kind_explain(k, n_files))
+                    }
+                    None => {
+                        match kind_from_hints(&name, image.as_deref(), command.as_deref(), &env)
+                            .or(base_rule.map(|r| r.kind))
+                        {
+                            Some(k) => (k, kind_explain(k, n_files)),
+                            None => (
+                                ServiceKind::Other,
+                                "A workload declared in Kubernetes.".to_owned(),
+                            ),
+                        }
+                    }
+                };
+                let ports: Vec<String> = get(c, &["ports"])
+                    .and_then(Value::as_sequence)
+                    .map(|ps| {
+                        ps.iter()
+                            .filter_map(|p| get(p, &["containerPort"]).and_then(as_str))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                let lim = |k: &str| {
+                    get(c, &["resources", "limits", k])
+                        .and_then(as_str)
+                        .map(|s| s.trim_end_matches('i').to_owned())
+                };
+                let memory_limit = lim("memory").and_then(|s| parse_bytes(&s));
+                let mut env_keys: Vec<String> = env.iter().map(|(k, _)| k.clone()).collect();
+                env_keys.sort();
+                env_keys.dedup();
+                sources.insert(f.path.to_owned());
+                let entry = command
+                    .as_deref()
+                    .and_then(|cm| entry_file(cm, ctx.as_deref().unwrap_or(""), &code_set));
+                drafts.insert(
+                    name.clone(),
+                    Draft {
+                        svc: Service {
+                            id: format!("svc:{name}"),
+                            name: name.clone(),
+                            kind,
+                            image: image.clone(),
+                            build_context: ctx,
+                            command,
+                            entry_file: entry,
+                            ports,
+                            memory_limit,
+                            memory_reservation: None,
+                            cpu_limit: lim("cpu"),
+                            gpu: false,
+                            volumes: Vec::new(),
+                            env_keys,
+                            code_files: n_files,
+                            declared_in: format!("{}:{}", f.path, line_of(f.text, &wname)),
+                            explain,
+                        },
+                        hosts: BTreeSet::from([if ci == 0 { wname.clone() } else { name.clone() }]),
+                        env,
+                        depends: Vec::new(),
+                    },
+                );
+            }
+        }
+    }
+
     // Dockerfiles not used by any compose service: one service per Dockerfile.
     for (path, text) in &dockerfiles {
-        if used_dockerfiles.contains(*path) {
+        if used_dockerfiles.contains(*path)
+            // `Dockerfile.debug` next to the one a service uses is a variant, not another service
+            || used_dockerfiles.iter().any(|u| dir_of(u) == dir_of(path))
+        {
             continue;
         }
         let ctx = dir_of(path).to_owned();

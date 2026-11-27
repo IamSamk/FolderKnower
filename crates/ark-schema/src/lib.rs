@@ -876,6 +876,39 @@ pub struct Insights {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub deployment: Option<Deployment>,
+    /// Workspace packages (npm, Cargo, Python, Go modules) and which import which: the
+    /// units maintainers draw first in a monorepo.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<WorkspacePackage>>", optional)]
+    pub packages: Vec<WorkspacePackage>,
+}
+
+/// One package of a monorepo, from its manifest.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct WorkspacePackage {
+    pub id: String,
+    pub name: String,
+    /// Folder of the manifest, relative to the repository root.
+    pub root: String,
+    /// `npm`, `cargo`, `python` or `go`.
+    pub ecosystem: String,
+    pub files: u32,
+    pub lines: u32,
+    /// Files per tier, e.g. `Backend: 120`.
+    pub tiers: std::collections::BTreeMap<String, u32>,
+    /// Other packages whose files this one imports, with the number of import edges.
+    pub depends_on: Vec<PackageLink>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(rename_all = "camelCase")]
+pub struct PackageLink {
+    /// Id of the package imported.
+    pub target: String,
+    pub imports: u32,
 }
 
 impl Insights {
@@ -885,6 +918,7 @@ impl Insights {
             && self.ai.is_none()
             && self.libraries.is_empty()
             && self.memory_techniques.is_empty()
+            && self.packages.is_empty()
     }
 }
 
@@ -1182,6 +1216,13 @@ pub fn json_schema_string() -> String {
     let mut s = serde_json::to_string_pretty(&schema).expect("schema serializes");
     s.push('\n');
     s
+}
+
+/// Same content without indentation: about half the size on large repositories.
+pub fn to_compact_json(graph: &SystemArchitectureGraph) -> serde_json::Result<String> {
+    let mut s = serde_json::to_string(graph)?;
+    s.push('\n');
+    Ok(s)
 }
 
 /// Serialize a graph the canonical way: pretty JSON with a trailing newline.
