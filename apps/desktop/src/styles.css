@@ -4116,3 +4116,121 @@ button.ak-sys-row:hover {
   overflow-x: hidden;
   overflow-wrap: anywhere;
 }
+
+/* Packages view */
+.pk-view {
+  height: 100%;
+  overflow: auto;
+  padding: 24px 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.pk-head h2 {
+  font-size: 22px;
+  margin: 0 0 4px;
+}
+.pk-head p {
+  margin: 0;
+  color: var(--muted, oklch(45% 0.03 280));
+  max-width: 62ch;
+}
+.pk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.pk-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  text-align: left;
+  padding: 16px;
+  border: var(--b) solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: inherit;
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    opacity 0.15s,
+    box-shadow 0.15s;
+}
+.pk-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 3px 3px 0 var(--line);
+}
+.pk-card.on {
+  outline: 3px solid var(--accent);
+}
+.pk-card.dim {
+  opacity: 0.35;
+}
+.pk-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+.pk-name {
+  overflow-wrap: anywhere;
+}
+.pk-eco {
+  font-size: 12px;
+  border: 1.5px solid oklch(from var(--line) l c h / 0.4);
+  border-radius: 6px;
+  padding: 0 6px;
+  height: fit-content;
+}
+.pk-root,
+.pk-stats {
+  font-size: 12px;
+  color: var(--muted, oklch(45% 0.03 280));
+  overflow-wrap: anywhere;
+}
+.pk-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1.5px solid oklch(from var(--line) l c h / 0.5);
+}
+.pk-bar i {
+  display: block;
+  min-width: 3px;
+}
+.pk-uses {
+  font-size: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.pk-uses em {
+  font-style: normal;
+  background: var(--surface-2);
+  border-radius: 6px;
+  padding: 0 6px;
+}
+.pk-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  align-items: center;
+}
+.pk-legend span {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.pk-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.pk-note {
+  color: var(--muted, oklch(45% 0.03 280));
+}
