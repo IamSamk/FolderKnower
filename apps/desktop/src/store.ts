@@ -12,7 +12,15 @@ import {
 } from "./lib/backend";
 import { type Hop, type Indexed, index, trace } from "./lib/graph";
 
-export type View = "system" | "architecture" | "packages" | "er" | "ui" | "insights" | "live";
+export type View =
+  | "system"
+  | "architecture"
+  | "packages"
+  | "er"
+  | "ui"
+  | "insights"
+  | "live"
+  | "about";
 export type Focus =
   | { level: "system" }
   | { level: "tier"; tier: TierLabel }

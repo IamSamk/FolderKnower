@@ -29,6 +29,7 @@ fn is_function_kind(lang: Language, kind: &str) -> bool {
             kind,
             "method_declaration" | "constructor_declaration" | "lambda_expression"
         ),
+        Language::Scala => matches!(kind, "function_definition" | "lambda_expression"),
     }
 }
 
@@ -52,6 +53,7 @@ fn is_loop(lang: Language, kind: &str) -> bool {
                 | "while_statement"
                 | "do_statement"
         ),
+        Language::Scala => matches!(kind, "for_expression" | "while_expression"),
     }
 }
 
@@ -83,6 +85,7 @@ fn is_branch(lang: Language, kind: &str) -> bool {
                 | "catch_clause"
                 | "conditional_expression"
         ),
+        Language::Scala => matches!(kind, "if_expression" | "case_clause" | "catch_clause"),
     }
 }
 

@@ -2715,6 +2715,20 @@
         "ops": []
       },
       {
+        "id": "dsa:fn:algorithms/structures.py#bfs:hashMap:dict",
+        "kind": "hashMap",
+        "fileId": "file:algorithms/structures.py",
+        "functionId": "fn:algorithms/structures.py#bfs",
+        "line": 19,
+        "subject": "dict",
+        "ruleId": "dsa.map.typed",
+        "confidence": 0.7,
+        "evidence": [
+          "uses dict"
+        ],
+        "ops": []
+      },
+      {
         "id": "dsa:fn:algorithms/structures.py#bfs:queue:queue",
         "kind": "queue",
         "fileId": "file:algorithms/structures.py",
@@ -2858,6 +2872,90 @@
         ]
       },
       {
+        "id": "dsa:fn:app/agent.py#call_model:hashMap:dict",
+        "kind": "hashMap",
+        "fileId": "file:app/agent.py",
+        "functionId": "fn:app/agent.py#call_model",
+        "line": 24,
+        "subject": "dict",
+        "ruleId": "dsa.map.typed",
+        "confidence": 0.7,
+        "evidence": [
+          "uses dict"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:app/agent.py#should_continue:hashMap:dict",
+        "kind": "hashMap",
+        "fileId": "file:app/agent.py",
+        "functionId": "fn:app/agent.py#should_continue",
+        "line": 30,
+        "subject": "dict",
+        "ruleId": "dsa.map.typed",
+        "confidence": 0.7,
+        "evidence": [
+          "uses dict"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:app/api.py#ask:hashMap:dict",
+        "kind": "hashMap",
+        "fileId": "file:app/api.py",
+        "functionId": "fn:app/api.py#ask",
+        "line": 17,
+        "subject": "dict",
+        "ruleId": "dsa.map.typed",
+        "confidence": 0.7,
+        "evidence": [
+          "uses dict"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:app/api.py#get_history:hashMap:dict",
+        "kind": "hashMap",
+        "fileId": "file:app/api.py",
+        "functionId": "fn:app/api.py#get_history",
+        "line": 41,
+        "subject": "dict",
+        "ruleId": "dsa.map.typed",
+        "confidence": 0.7,
+        "evidence": [
+          "uses dict"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:app/api.py#ingest:hashMap:dict",
+        "kind": "hashMap",
+        "fileId": "file:app/api.py",
+        "functionId": "fn:app/api.py#ingest",
+        "line": 35,
+        "subject": "dict",
+        "ruleId": "dsa.map.typed",
+        "confidence": 0.7,
+        "evidence": [
+          "uses dict"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:app/memory.py#history:hashMap:dict",
+        "kind": "hashMap",
+        "fileId": "file:app/memory.py",
+        "functionId": "fn:app/memory.py#history",
+        "line": 20,
+        "subject": "dict",
+        "ruleId": "dsa.map.typed",
+        "confidence": 0.7,
+        "evidence": [
+          "uses dict"
+        ],
+        "ops": []
+      },
+      {
         "id": "dsa:fn:app/memory.py#normalize:memoization:normalize",
         "kind": "memoization",
         "fileId": "file:app/memory.py",
@@ -2868,6 +2966,20 @@
         "confidence": 0.9,
         "evidence": [
           "@lru_cache(maxsize=1024)"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:app/retrieve.py#hybrid_search:sorting:sorted",
+        "kind": "sorting",
+        "fileId": "file:app/retrieve.py",
+        "functionId": "fn:app/retrieve.py#hybrid_search",
+        "line": 11,
+        "subject": "sorted",
+        "ruleId": "dsa.sort.library",
+        "confidence": 0.8,
+        "evidence": [
+          "sorted (line 18)"
         ],
         "ops": []
       }

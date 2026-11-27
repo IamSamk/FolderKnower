@@ -135,6 +135,35 @@ pub fn analyze(files: &[ParsedFile]) -> Vec<DsaFinding> {
     }
     out.sort_by(|a, b| a.id.cmp(&b.id));
     out.dedup_by(|a, b| a.id == b.id);
+    // A module-level `stack` pushed in one function and popped in another is one structure,
+    // not one per function: keep the strongest finding per (file, kind, variable).
+    let mut best: BTreeMap<(String, String, String), usize> = BTreeMap::new();
+    for (i, d) in out.iter().enumerate() {
+        if d.rule_id.starts_with("dsa.stack.")
+            || d.rule_id.starts_with("dsa.queue.")
+            || d.rule_id.starts_with("dsa.heap.")
+        {
+            let key = (
+                d.file_id.clone(),
+                kind_slug(d.kind).to_owned(),
+                d.subject.clone().unwrap_or_default(),
+            );
+            let keep = best.entry(key).or_insert(i);
+            if out[*keep].confidence < d.confidence {
+                *keep = i;
+            }
+        }
+    }
+    let keep: BTreeSet<usize> = best.values().copied().collect();
+    let mut i = 0;
+    out.retain(|d| {
+        let idx = i;
+        i += 1;
+        let grouped = d.rule_id.starts_with("dsa.stack.")
+            || d.rule_id.starts_with("dsa.queue.")
+            || d.rule_id.starts_with("dsa.heap.");
+        !grouped || keep.contains(&idx)
+    });
     out
 }
 
@@ -178,6 +207,14 @@ fn classify_use(c: &CallFact, receiver: &str) -> (String, Option<&'static str>) 
         Some("pop_front") // queue.Queue.get()
     } else if PEEK.contains(&callee) && c.n_args == 0 {
         Some("peek")
+    } else if matches!(callee, "set" | "insert") && c.n_args == 2 {
+        Some("map_set") // Map.set(k, v) / HashMap.insert(k, v)
+    } else if callee == "get" && c.n_args == 1 {
+        Some("map_get")
+    } else if matches!(callee, "has" | "contains" | "containsKey" | "contains_key") {
+        Some("has")
+    } else if matches!(callee, "add" | "insert") && c.n_args == 1 {
+        Some("set_add") // Set.add(x) / HashSet.insert(x)
     } else if matches!(callee, "find" | "union" | "unite") {
         Some(if callee == "find" { "find" } else { "union" })
     } else {
@@ -226,6 +263,10 @@ fn container_finding(
         (DsaKind::Stack, "dsa.stack.named", 0.6, base.to_owned())
     } else if (has("push") || has("pop_front")) && (lname.contains("queue") || lname == "q") {
         (DsaKind::Queue, "dsa.queue.named", 0.6, base.to_owned())
+    } else if has("map_set") && (has("map_get") || has("has")) {
+        (DsaKind::HashMap, "dsa.map.methods", 0.65, base.to_owned())
+    } else if has("set_add") && has("has") {
+        (DsaKind::HashSet, "dsa.set.methods", 0.65, base.to_owned())
     } else if has("find") && has("union") {
         (
             DsaKind::UnionFind,
@@ -241,6 +282,10 @@ fn container_finding(
     let ops: Vec<DsaOp> = uses
         .iter()
         .filter(|u| u.op != "pop_arg" || kind == DsaKind::Queue)
+        .filter(|u| {
+            matches!(kind, DsaKind::HashMap | DsaKind::HashSet)
+                || !matches!(u.op, "map_set" | "map_get" | "has" | "set_add")
+        })
         .take(64)
         .map(|u| DsaOp {
             op: match (kind, u.op) {
@@ -551,6 +596,12 @@ fn shape_findings(path: &str, f: &FnFact) -> Vec<DsaFinding> {
         "OrderedDict",
         "LinkedHashMap",
         "TreeMap",
+        "Map",
+        "WeakMap",
+        "dict",
+        "Dictionary",
+        "ConcurrentHashMap",
+        "IndexMap",
     ]) {
         push(
             DsaKind::HashMap,
@@ -561,7 +612,15 @@ fn shape_findings(path: &str, f: &FnFact) -> Vec<DsaFinding> {
             Vec::new(),
         );
     }
-    if let Some(t) = any(&["HashSet", "BTreeSet", "TreeSet", "frozenset"]) {
+    if let Some(t) = any(&[
+        "HashSet",
+        "BTreeSet",
+        "TreeSet",
+        "frozenset",
+        "Set",
+        "WeakSet",
+        "IndexSet",
+    ]) {
         push(
             DsaKind::HashSet,
             "dsa.set.typed",
@@ -572,6 +631,31 @@ fn shape_findings(path: &str, f: &FnFact) -> Vec<DsaFinding> {
         );
     }
 
+    // Library sorts: `items.sort(...)`, `sorted(xs)`, `v.sort_by_key(...)`, `toSorted()`.
+    let lib_sort = f.calls.iter().find(|c| {
+        matches!(
+            c.callee.as_str(),
+            "sort"
+                | "sorted"
+                | "sort_by"
+                | "sort_by_key"
+                | "sort_unstable"
+                | "sort_unstable_by"
+                | "toSorted"
+                | "sortBy"
+                | "orderBy"
+        ) && c.receiver.as_deref() != Some("os")
+    });
+    if let Some(c) = lib_sort {
+        push(
+            DsaKind::Sorting,
+            "dsa.sort.library",
+            0.8,
+            Some(&c.callee),
+            vec![format!("{} (line {})", call_text(c), c.line)],
+            Vec::new(),
+        );
+    }
     let lname = f.name.to_ascii_lowercase();
     if (lname.contains("sort") && !lname.contains("sorted_") && f.complexity.max_nesting >= 1)
         || all(&["pivot", "partition"])

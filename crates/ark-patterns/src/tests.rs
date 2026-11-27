@@ -765,3 +765,27 @@ spec:
             .any(|l| l.from == "svc:web" && l.to == "svc:cart" && l.via == LinkVia::Env)
     );
 }
+
+#[test]
+fn finds_js_maps_module_level_stacks_and_library_sorts() {
+    let src = r#"
+const cache = new Map();
+const stack = [];
+export function load(id) {
+  if (cache.has(id)) return cache.get(id);
+  cache.set(id, 1);
+  return 1;
+}
+export function push(x) { stack.push(x); }
+export function pop() { return stack.pop(); }
+export function order(users) { return users.sort((a, b) => a.age - b.age); }
+"#;
+    let files = vec![pf("a.ts", Language::TypeScript, src)];
+    let found = crate::dsa::analyze(&files);
+    let kinds: Vec<DsaKind> = found.iter().map(|d| d.kind).collect();
+    assert!(kinds.contains(&DsaKind::HashMap), "{kinds:?}");
+    assert!(kinds.contains(&DsaKind::Sorting), "{kinds:?}");
+    // the stack used from two functions is one finding, and Map.set is not a hash set
+    assert_eq!(kinds.iter().filter(|k| **k == DsaKind::Stack).count(), 1);
+    assert!(!kinds.contains(&DsaKind::HashSet), "{kinds:?}");
+}

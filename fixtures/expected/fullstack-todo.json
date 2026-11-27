@@ -2395,7 +2395,22 @@
   "questions": [],
   "insights": {
     "rulesetVersion": "patterns 0.1.0 / catalog 0.1.0 / services 0.1.0",
-    "dataStructures": [],
+    "dataStructures": [
+      {
+        "id": "dsa:fn:api/app/routers/todos.py#rank_todos:sorting:sorted",
+        "kind": "sorting",
+        "fileId": "file:api/app/routers/todos.py",
+        "functionId": "fn:api/app/routers/todos.py#rank_todos",
+        "line": 36,
+        "subject": "sorted",
+        "ruleId": "dsa.sort.library",
+        "confidence": 0.8,
+        "evidence": [
+          "sorted (line 42)"
+        ],
+        "ops": []
+      }
+    ],
     "libraries": [
       {
         "name": "FastAPI",

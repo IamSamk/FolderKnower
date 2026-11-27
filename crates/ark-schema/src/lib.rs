@@ -892,7 +892,7 @@ pub struct WorkspacePackage {
     pub name: String,
     /// Folder of the manifest, relative to the repository root.
     pub root: String,
-    /// `npm`, `cargo`, `python` or `go`.
+    /// `npm`, `cargo`, `python`, `go`, `maven`, `gradle`, `sbt` or `dotnet`.
     pub ecosystem: String,
     pub files: u32,
     pub lines: u32,

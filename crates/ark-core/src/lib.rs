@@ -101,6 +101,7 @@ fn grammar_tag(lang: Language) -> &'static str {
         Language::Go => "tree-sitter-go@0.25.0",
         Language::Java => "tree-sitter-java@0.23.5",
         Language::CSharp => "tree-sitter-c-sharp@0.23.5",
+        Language::Scala => "tree-sitter-scala@0.26.14",
     }
 }
 

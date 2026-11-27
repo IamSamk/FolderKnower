@@ -774,15 +774,165 @@ pub fn example_runs(g: &SystemArchitectureGraph) -> Vec<ExampleRun> {
 
 /// When the deployment or AI pipeline is known, the headline describes the running
 /// system instead of only its tiers.
+/// Folders that hold tooling, samples and tests rather than the shipped system.
+pub(crate) fn is_support_path(declared_in: &str) -> bool {
+    let path = declared_in
+        .rsplit_once(':')
+        .map(|(p, _)| p)
+        .unwrap_or(declared_in);
+    let mut parts: Vec<&str> = path.split('/').collect();
+    parts.pop();
+    parts.iter().any(|seg| {
+        let seg_l = seg.to_ascii_lowercase();
+        if seg_l.ends_with("-tests")
+            || seg_l.ends_with("-test")
+            || seg_l.ends_with("-testing")
+            || seg_l.ends_with("-examples")
+            || seg_l.ends_with("-test-image")
+        {
+            return true;
+        }
+        matches!(
+            seg.to_ascii_lowercase().as_str(),
+            "dev"
+                | "devctr"
+                | "examples"
+                | "example"
+                | "samples"
+                | "sample"
+                | "demo"
+                | "demos"
+                | "test"
+                | "tests"
+                | "testing"
+                | "e2e"
+                | "integration-tests"
+                | "ci"
+                | "tools"
+                | "hack"
+                | "docs"
+                | "benchmarks"
+                | "bench"
+                | "scripts"
+                | "release"
+        )
+    })
+}
+
+/// Programs the repository builds: Go `cmd/<name>/*.go`, Rust `src/main.rs` and `src/bin/*.rs`.
+/// Top-level ones first, biggest first.
+fn entrypoints(g: &SystemArchitectureGraph) -> Vec<String> {
+    // (depth, name, root folder whose files measure its size)
+    let mut found: Vec<(usize, String, String)> = Vec::new();
+    let mut paths: Vec<&str> = Vec::new();
+    for f in g
+        .tiers
+        .iter()
+        .flat_map(|t| t.clusters.iter())
+        .flat_map(|c| c.files.iter())
+    {
+        let p = f.path.as_str();
+        if is_support_path(&format!("{p}:0")) {
+            continue;
+        }
+        paths.push(p);
+        let parts: Vec<&str> = p.split('/').collect();
+        let n = parts.len();
+        if p.ends_with(".go") && n >= 3 && parts[n - 3] == "cmd" && !parts[n - 2].starts_with('_') {
+            found.push((n, parts[n - 2].to_owned(), parts[..n - 1].join("/")));
+        } else if p.ends_with("/src/main.rs") && n >= 3 {
+            found.push((n, parts[n - 3].to_owned(), parts[..n - 2].join("/")));
+        } else if p.ends_with(".rs") && n >= 3 && parts[n - 2] == "bin" && parts[n - 3] == "src" {
+            found.push((
+                n,
+                parts[n - 1].trim_end_matches(".rs").to_owned(),
+                parts[..n - 1].join("/"),
+            ));
+        }
+    }
+    let Some(min_depth) = found.iter().map(|f| f.0).min() else {
+        return Vec::new();
+    };
+    found.retain(|f| f.0 <= min_depth + 1);
+    let mut seen = std::collections::BTreeSet::new();
+    let mut ranked: Vec<(usize, String)> = Vec::new();
+    for (_, name, root) in found {
+        if !seen.insert(name.clone()) {
+            continue;
+        }
+        let prefix = format!("{root}/");
+        let weight = paths.iter().filter(|p| p.starts_with(&prefix)).count();
+        ranked.push((weight, name));
+    }
+    ranked.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.cmp(&b.1)));
+    ranked.into_iter().map(|(_, n)| n).collect()
+}
+
+fn short_list(names: &[String]) -> String {
+    if names.len() > 5 {
+        format!("{}, and more", names[..4].join(", "))
+    } else {
+        names.join(", ")
+    }
+}
+
 pub fn system_headline(g: &mut SystemArchitectureGraph) {
     let Some(ins) = g.insights.as_ref() else {
         return;
     };
+    let packages = ins.packages.len();
+    let real_services = ins.deployment.as_ref().map_or(0, |d| {
+        d.services
+            .iter()
+            .filter(|s| !is_support_path(&s.declared_in))
+            .count()
+    });
+    let has_real_service = real_services > 0;
+    // Many programs and few containers (Kubernetes): the programs are the system.
+    let image_only = ins.deployment.as_ref().is_some_and(|d| {
+        d.services
+            .iter()
+            .filter(|s| !is_support_path(&s.declared_in))
+            .all(|s| s.code_files < 10)
+    });
+    let many_programs = image_only && entrypoints(g).len() >= 4;
+    if !has_real_service || many_programs {
+        // No shipped containers: describe the programs, or the package set, instead.
+        let programs = entrypoints(g);
+        if programs.len() >= 2 {
+            g.summary.headline = format!(
+                "{} programs in {} packages: {}.",
+                programs.len(),
+                packages.max(1),
+                short_list(&programs)
+            );
+            return;
+        }
+        if packages >= 8 && g.routes.len() < 5 {
+            let names: Vec<String> = ins.packages.iter().map(|p| p.name.clone()).collect();
+            g.summary.headline =
+                format!("Monorepo of {packages} packages: {}.", short_list(&names));
+            return;
+        }
+    }
     let Some(d) = ins.deployment.as_ref().filter(|d| !d.services.is_empty()) else {
         return;
     };
+    // Tooling, samples and tests are in the container list but are not the system.
+    let only_real: std::collections::BTreeSet<&str> = if has_real_service {
+        d.services
+            .iter()
+            .filter(|s| is_support_path(&s.declared_in))
+            .map(|s| s.name.as_str())
+            .collect()
+    } else {
+        Default::default()
+    };
     // Test doubles and load generators are in the compose files but are not the system.
     let support = |n: &str| {
+        if only_real.contains(n) {
+            return true;
+        }
         let n = n.to_ascii_lowercase();
         n.split(|c: char| !c.is_ascii_alphanumeric()).any(|w| {
             matches!(
@@ -871,6 +1021,23 @@ pub fn system_headline(g: &mut SystemArchitectureGraph) {
         Some(_) => "App with an AI feature",
         None => "Containerized app",
     };
+    if parts.is_empty() {
+        let mut langs: std::collections::BTreeMap<&str, usize> = Default::default();
+        for f in g
+            .tiers
+            .iter()
+            .flat_map(|t| t.clusters.iter())
+            .flat_map(|c| c.files.iter())
+        {
+            *langs.entry(f.language.as_str()).or_default() += 1;
+        }
+        let mut top: Vec<(&str, usize)> = langs.into_iter().collect();
+        top.sort_by_key(|x| std::cmp::Reverse(x.1));
+        let total: usize = top.iter().map(|x| x.1).sum();
+        let names: Vec<&str> = top.iter().take(3).map(|x| x.0).collect();
+        g.summary.headline = format!("Codebase of {total} files in {}.", names.join(", "));
+        return;
+    }
     let n = d.services.iter().filter(|s| !support(&s.name)).count();
     let noun = if n == 1 { "container" } else { "containers" };
     g.summary.headline = format!("{lead} in {n} {noun}: {parts}.");

@@ -395,6 +395,7 @@ pub fn build(input: &StructureInput) -> Structure {
                     | Language::Go
                     | Language::Rust
                     | Language::Java
+                    | Language::Scala
                     | Language::CSharp
             )
         );

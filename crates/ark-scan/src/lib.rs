@@ -17,6 +17,9 @@ use serde::{Deserialize, Serialize};
 /// Directories that are never interesting for architecture.
 pub const DENY_DIRS: &[&str] = &[
     "node_modules",
+    ".claude",
+    ".cursor",
+    ".windsurf",
     "target",
     "dist",
     "build",
@@ -63,7 +66,6 @@ const UNPARSED_EXTS: &[(&str, &str)] = &[
     ("cc", "C++"),
     ("cpp", "C++"),
     ("hpp", "C++"),
-    ("scala", "Scala"),
     ("dart", "Dart"),
     ("ex", "Elixir"),
     ("exs", "Elixir"),
@@ -99,6 +101,7 @@ pub enum Language {
     Go,
     Java,
     CSharp,
+    Scala,
 }
 
 impl Language {
@@ -116,6 +119,7 @@ impl Language {
             "go" => Self::Go,
             "java" => Self::Java,
             "cs" => Self::CSharp,
+            "scala" | "sc" => Self::Scala,
             _ => return None,
         })
     }
@@ -130,6 +134,7 @@ impl Language {
             Self::Go => "go",
             Self::Java => "java",
             Self::CSharp => "csharp",
+            Self::Scala => "scala",
         }
     }
 }
@@ -162,7 +167,12 @@ impl OtherKind {
                 | "setup.cfg"
                 | "composer.json"
                 | "gemfile"
-        ) {
+                | "pom.xml"
+                | "build.gradle"
+                | "build.gradle.kts"
+                | "build.sbt"
+        ) || name.ends_with(".csproj")
+        {
             return Some(Self::Manifest);
         }
         if name.ends_with(".prisma")

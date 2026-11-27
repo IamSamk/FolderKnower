@@ -9,9 +9,12 @@ import {
   ChevronRight,
   Cpu,
   Expand,
+  Maximize,
   MemoryStick,
+  Minus,
   Pause,
   Play,
+  Plus,
   RotateCcw,
   X,
 } from "lucide-react";
@@ -86,18 +89,24 @@ const VIA_TEXT: Record<RunHop["via"], string> = {
   return: "response",
 };
 
-function useSize(ref: React.RefObject<HTMLDivElement | null>) {
+// Takes the element itself (from a callback ref) so it re-measures when the canvas mounts later,
+// e.g. after switching from the Flow or Memory diagram back to System.
+function useSize(el: HTMLDivElement | null) {
   const [s, setS] = useState({ w: 900, h: 600 });
   useLayoutEffect(() => {
-    const el = ref.current;
     if (!el) return;
     const ro = new ResizeObserver(() => setS({ w: el.clientWidth, h: el.clientHeight }));
     ro.observe(el);
     setS({ w: el.clientWidth, h: el.clientHeight });
     return () => ro.disconnect();
-  }, [ref]);
+  }, [el]);
   return s;
 }
+
+type Cam = { x: number; y: number; k: number };
+const MIN_K = 0.1;
+const MAX_K = 3;
+const clampK = (k: number) => Math.min(MAX_K, Math.max(MIN_K, k));
 
 /** The screen the user sees, drawn from the UI elements found in the start file. */
 /** The few lines of code behind a step, so a deep run shows what actually executed. */
@@ -542,8 +551,13 @@ export function SystemView() {
     () => (ix ? buildSystem(ix, run, { depth, feature }) : null),
     [ix, run, depth, feature],
   );
-  const vp = useRef<HTMLDivElement>(null);
+  const [vp, setVp] = useState<HTMLDivElement | null>(null);
   const size = useSize(vp);
+  // Manual camera: null while the camera follows the story, set once the user pans or zooms.
+  const [cam, setCam] = useState<Cam | null>(null);
+  const autoCam = useRef<Cam>({ x: 0, y: 0, k: 1 });
+  const camRef = useRef<Cam | null>(null);
+  camRef.current = cam;
   const hop = run && step >= 0 ? run.hops[step] : undefined;
   const anchor = ix && m && hop ? hopAnchor(ix, m, hop) : undefined;
 
@@ -609,6 +623,69 @@ export function SystemView() {
     return () => window.removeEventListener("keydown", k);
   }, [play, playing, run]);
 
+  // Mouse wheel / trackpad pans, Ctrl/Cmd + wheel or pinch zooms at the pointer, drag pans.
+  // Native listeners because React's wheel handler is passive and cannot stop page scroll.
+  useEffect(() => {
+    if (!vp) return;
+    const base = (): Cam => camRef.current ?? autoCam.current;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const c = base();
+      const r = vp.getBoundingClientRect();
+      const px = e.clientX - r.left;
+      const py = e.clientY - r.top;
+      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? r.height : 1;
+      if (e.ctrlKey || e.metaKey) {
+        const k = clampK(c.k * Math.exp((-e.deltaY * unit) / 240));
+        const f = k / c.k;
+        setCam({ k, x: px - (px - c.x) * f, y: py - (py - c.y) * f });
+      } else {
+        const dx = e.shiftKey && e.deltaX === 0 ? e.deltaY : e.deltaX;
+        const dy = e.shiftKey && e.deltaX === 0 ? 0 : e.deltaY;
+        setCam({ k: c.k, x: c.x - dx * unit, y: c.y - dy * unit });
+      }
+    };
+    let drag: { id: number; sx: number; sy: number; c: Cam } | null = null;
+    const onDown = (e: PointerEvent) => {
+      if (
+        e.button !== 0 ||
+        (e.target as HTMLElement).closest(
+          "button,select,a,input,.ak-sys-panel,.ak-sys-narrate,.ak-sys-zoom",
+        )
+      )
+        return;
+      drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, c: base() };
+      vp.setPointerCapture(e.pointerId);
+      vp.classList.add("grabbing");
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      setCam({ k: drag.c.k, x: drag.c.x + e.clientX - drag.sx, y: drag.c.y + e.clientY - drag.sy });
+    };
+    const onUp = (e: PointerEvent) => {
+      if (drag && e.pointerId === drag.id) {
+        drag = null;
+        vp.classList.remove("grabbing");
+      }
+    };
+    vp.addEventListener("wheel", onWheel, { passive: false });
+    vp.addEventListener("pointerdown", onDown);
+    vp.addEventListener("pointermove", onMove);
+    vp.addEventListener("pointerup", onUp);
+    vp.addEventListener("pointercancel", onUp);
+    return () => {
+      vp.removeEventListener("wheel", onWheel);
+      vp.removeEventListener("pointerdown", onDown);
+      vp.removeEventListener("pointermove", onMove);
+      vp.removeEventListener("pointerup", onUp);
+      vp.removeEventListener("pointercancel", onUp);
+    };
+  }, [vp]);
+
+  // The story takes the camera back whenever the step, run, detail level or feature changes.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset on these changes only
+  useEffect(() => setCam(null), [step, runId, depth, featureId, playing]);
+
   if (!ix || !m)
     return (
       <div className="ak-empty">
@@ -643,8 +720,19 @@ export function SystemView() {
       : nextAnchor
         ? (anchor.y + nextAnchor.y) / 2
         : anchor.y;
-  const tx = size.w / 2 - cx * zoom;
-  const ty = size.h / 2 - cy * zoom;
+  const autoTx = size.w / 2 - cx * zoom;
+  const autoTy = size.h / 2 - cy * zoom;
+  autoCam.current = { x: autoTx, y: autoTy, k: zoom };
+  const tx = cam ? cam.x : autoTx;
+  const ty = cam ? cam.y : autoTy;
+  const viewK = cam ? cam.k : zoom;
+  const zoomBy = (f: number) => {
+    const c = cam ?? autoCam.current;
+    const k = clampK(c.k * f);
+    const px = size.w / 2;
+    const py = size.h / 2;
+    setCam({ k, x: px - (px - c.x) * (k / c.k), y: py - (py - c.y) * (k / c.k) });
+  };
   const activeSvc = hop ? hopService(ix, hop, m.synthetic) : undefined;
   const activeRow = anchor?.row?.key;
   const lanes = [...new Set(m.boxes.map((b) => b.lane))].sort();
@@ -706,13 +794,14 @@ export function SystemView() {
             className="ak-input"
             value={featureId}
             aria-label="Feature"
+            title="Focus all three diagrams (System, Flow, Memory) on one feature. Parts that do not serve it fade out."
             onChange={(e) => {
               setFeatureId(e.target.value);
               setStep(-1);
               setPlaying(false);
             }}
           >
-            <option value="">All features</option>
+            <option value="">All features (whole app)</option>
             {features.map((f) => (
               <option key={f.id} value={f.id}>
                 {f.name}
@@ -794,6 +883,7 @@ export function SystemView() {
                 {p}
               </span>
             ))}
+          <span className="ak-muted">Applies to System, Flow and Memory.</span>
           <button type="button" className="ak-link-btn ml-auto" onClick={() => setFeatureId("")}>
             show everything
           </button>
@@ -804,12 +894,14 @@ export function SystemView() {
       ) : map === "flow" ? (
         <FlowPane feature={feature} run={run} depth={depth} />
       ) : (
-        <div className="ak-sys-vp" ref={vp}>
+        <div className="ak-sys-vp" ref={setVp}>
           <motion.div
             className="ak-sys-canvas"
             style={{ width: m.width, height: m.height, originX: 0, originY: 0 }}
-            animate={{ x: tx, y: ty, scale: zoom }}
-            transition={{ type: "spring", stiffness: 55, damping: 19, mass: 0.9 }}
+            animate={{ x: tx, y: ty, scale: viewK }}
+            transition={
+              cam ? { duration: 0 } : { type: "spring", stiffness: 55, damping: 19, mass: 0.9 }
+            }
           >
             {lanes.map((l) => {
               const first = m.boxes.find((b) => b.lane === l);
@@ -892,6 +984,26 @@ export function SystemView() {
               />
             )}
           </motion.div>
+          <div className="ak-zoombar ak-sys-zoom" role="group" aria-label="Zoom">
+            <button type="button" onClick={() => zoomBy(1 / 1.25)} aria-label="Zoom out">
+              <Minus size={15} />
+            </button>
+            <span className="ak-zoomval">{Math.round(viewK * 100)}%</span>
+            <button type="button" onClick={() => zoomBy(1.25)} aria-label="Zoom in">
+              <Plus size={15} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setCam(null)}
+              aria-label="Fit the whole system"
+              title="Fit the whole system"
+            >
+              <Maximize size={15} />
+            </button>
+          </div>
+          <div className="ak-sys-hint ak-muted">
+            Scroll to pan · Ctrl + scroll to zoom · drag to move
+          </div>
           <AnimatePresence>
             {hop && run && (
               <motion.div

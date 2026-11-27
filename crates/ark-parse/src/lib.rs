@@ -30,6 +30,7 @@ fn ts_language(lang: Language) -> tree_sitter::Language {
         Language::Go => tree_sitter_go::LANGUAGE.into(),
         Language::Java => tree_sitter_java::LANGUAGE.into(),
         Language::CSharp => tree_sitter_c_sharp::LANGUAGE.into(),
+        Language::Scala => tree_sitter_scala::LANGUAGE.into(),
     }
 }
 
@@ -82,7 +83,9 @@ pub fn parse_file(lang: Language, path: &str, src: &str) -> FileFacts {
             rust::macro_routes(src, &mut facts);
         }
         Language::Go => go::extract(root, bytes, &mut facts),
-        Language::Java | Language::CSharp => jvm::extract(lang, root, bytes, &mut facts),
+        Language::Java | Language::CSharp | Language::Scala => {
+            jvm::extract(lang, root, bytes, &mut facts)
+        }
     }
     enrich::enrich(lang, root, bytes, &mut facts);
     facts.finish();
