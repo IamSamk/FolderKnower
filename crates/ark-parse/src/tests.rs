@@ -443,3 +443,21 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     assert!(got.contains(&("GET", "/indexes/:param")), "{got:?}");
     assert!(got.contains(&("DELETE", "/indexes/:param")), "{got:?}");
 }
+
+#[test]
+fn trpc_procedures_become_routes() {
+    let src = "export const userRouter = createTRPCRouter({\n  list: protectedProcedure.input(z.object({})).query(async () => []),\n  create: publicProcedure.mutation(async () => 1),\n  child: otherRouter,\n});\n";
+    let f = parse_file(Language::TypeScript, "server/api/user.ts", src);
+    let r: Vec<_> = f
+        .routes
+        .iter()
+        .map(|r| (r.method.as_str(), r.path.as_str()))
+        .collect();
+    assert_eq!(
+        r,
+        [
+            ("QUERY", "/trpc/user.list"),
+            ("MUTATION", "/trpc/user.create")
+        ]
+    );
+}

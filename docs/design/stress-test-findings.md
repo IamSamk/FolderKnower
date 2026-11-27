@@ -27,8 +27,8 @@ Status: **fixed** in this milestone, **open** (logged, not done).
 |---|---|---|---|
 | R1 | Flask-RESTX/RESTful class routes (`@ns.route("/x")` on a `Resource` class, `api.add_resource`) not read. Dify's API went from 53 routes found to 1,499. | dify | **fixed** (verbs come from the class's `get`/`post`/... methods) |
 | R2 | actix `web::resource("/x").route(web::get().to(h))` inside `web::scope("/p")` chains not read (axum was). | meilisearch | **fixed** (scope prefixes composed) |
-| R3 | Meilisearch declares routes with its own `#[routes::routes("/x" => [get(h)])]` attribute DSL and nests them with `sub(Api)`. Still invisible: the app's real HTTP surface shows 2 routes (both in vendored examples). | meilisearch | open |
-| R4 | Next.js `pages/api` handlers wrapped by middleware helpers all get method `ANY` (132 of 148 routes). tRPC routers are not modelled as routes at all. Handlers that check `req.method` (`!== "POST"`, `switch`) now get those verbs; helper-wrapped ones stay `ANY`. | langfuse | partly fixed (method checks), open (wrapped, tRPC) |
+| R3 | Meilisearch declares routes with its own `#[routes::routes("/x" => [get(h)])]` attribute DSL and nests them with `sub(Api)`. The `#[routes::routes(...)]` attribute is now read and `sub(module::Api)` mounts are composed across files: 2 routes became 83, with real prefixes like `/indexes/{index_uid}/documents`. | meilisearch | **fixed** |
+| R4 | Next.js `pages/api` handlers wrapped by middleware helpers all get method `ANY` (132 of 148 routes). tRPC routers (`createTRPCRouter({ x: procedure.query(..) })`) are now routes named `/trpc/<router>.<proc>`; frontend `api.x.y.useQuery()` calls are not linked to them yet. Handlers that check `req.method` (`!== "POST"`, `switch`) now get those verbs; helper-wrapped ones stay `ANY`. | langfuse | partly fixed (method checks, tRPC routes), open (wrapped handlers, tRPC call links) |
 | R5 | Flask-RESTX namespaces carry a path prefix (`/console/api`); not composed, so frontend calls may not link to it. | dify | open |
 
 ### Deployment map (compose)
@@ -59,7 +59,7 @@ Status: **fixed** in this milestone, **open** (logged, not done).
 | C1 | C# (cartservice) and Java (adservice) are not parsed, silently. Now the summary says "Not read: 10 source files in languages without a parser yet (C# 8, Java 2)". Parsers still open. | boutique | **partly fixed** (honest, parsers open) |
 | C2 | Generated protobuf stubs were indexed: Online Boutique reported 90 "data models" (the same 22 messages copied per service). Now `*.pb.go`, `*_pb2*.py`, `*.pb.ts` etc. are skipped (models 90 to 2). The `.proto` messages are now the models. | boutique | **fixed** |
 | C3 | Vendored code (`external-crates/`, `third_party/`) and its examples produced routes and a hybrid-RAG pipeline claim. | meilisearch | **fixed** (denied dirs) |
-| C4 | Data model counts are dominated by zod/DTO schemas (Dify 8,302, 4,903 from one `contracts` package; Onyx 2,339). Needs ranking or a collapse to tables first. | dify, onyx | open |
+| C4 | Data model counts are dominated by zod/DTO schemas (Dify 8,302, 4,903 from one `contracts` package; Onyx 2,339). The Markdown export now lists tables and collections first and states the split (tables, schemas). | dify, onyx | **partly fixed** (export), open (canvas) |
 | C5 | `architecture.json` was always pretty-printed: 168 MB for Dify. Repos over 1,500 files now write compact JSON (79 MB; `--pretty` to indent). | dify, langfuse, onyx | **fixed** |
 | C6 | Health false positives on Online Boutique: `grpc_health` and `pythonjsonlogger` reported as missing from requirements (import name differs from package name); locust calls to `/cart` flagged because the Go frontend's mux routes are not read. | boutique | open |
 

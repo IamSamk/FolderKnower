@@ -460,3 +460,71 @@ impl X<'_, '_> {
         }
     }
 }
+
+/// Meilisearch-style `#[routes::routes(routes("/x" => [get(h), post(h2)], "/y" => sub(m::Api)))]`
+/// attribute DSL, read from the source text. `sub(..)` entries become `SUB` facts naming the
+/// child module; the linker prefixes that module's routes.
+pub fn macro_routes(src: &str, facts: &mut FileFacts) {
+    let Some(start) = src.find("routes::routes(") else {
+        return;
+    };
+    let entry =
+        regex::Regex::new(r#""([^"]*)"\s*=>\s*(\[[^\]]*\]|[a-z]+\([^)]*\))"#).expect("regex");
+    let call = regex::Regex::new(r"([a-z]+)\(([\w:]+)\)").expect("regex");
+    let mut from = start;
+    while let Some(i) = src[from..].find("routes::routes(") {
+        let open = from + i + "routes::routes".len();
+        let mut depth = 0usize;
+        let mut end = None;
+        for (k, ch) in src[open..].char_indices() {
+            match ch {
+                '(' => depth += 1,
+                ')' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        end = Some(open + k);
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+        let Some(end) = end else { break };
+        let body = &src[open..end];
+        let line = src[..open].lines().count() as u32;
+        for e in entry.captures_iter(body) {
+            let path = e[1].to_owned();
+            for c in call.captures_iter(&e[2]) {
+                let verb = &c[1];
+                let target = c[2].to_owned();
+                if verb == "sub" {
+                    // `chats::ChatsApi` -> module `chats`
+                    let module = target.split("::").next().unwrap_or(&target).to_owned();
+                    facts.routes.push(RouteFact {
+                        method: "SUB".to_owned(),
+                        path: path.clone(),
+                        framework: "macro".to_owned(),
+                        line,
+                        handler: Some(module),
+                    });
+                } else if matches!(
+                    verb,
+                    "get" | "post" | "put" | "patch" | "delete" | "head" | "options"
+                ) {
+                    facts.routes.push(RouteFact {
+                        method: verb.to_ascii_uppercase(),
+                        path: if path.is_empty() {
+                            "/".to_owned()
+                        } else {
+                            path.clone()
+                        },
+                        framework: "macro".to_owned(),
+                        line,
+                        handler: target.rsplit("::").next().map(str::to_owned),
+                    });
+                }
+            }
+        }
+        from = end;
+    }
+}

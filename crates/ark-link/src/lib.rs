@@ -450,11 +450,18 @@ pub fn link(files: &[ParsedFile], inputs: &LinkInputs) -> Linked {
     }
 
     // Routes
+    let mount_prefix = resolve::mount_prefixes(files);
     for (i, f) in files.iter().enumerate() {
         let path = f.scan.path.as_str();
         let mut facts_routes = f.facts.routes.clone();
         facts_routes.extend(resolve::file_based_routes(path, &f.facts));
-        for r in facts_routes {
+        for mut r in facts_routes {
+            if r.method == "SUB" {
+                continue;
+            }
+            if let Some(pre) = mount_prefix.get(path) {
+                r.path = format!("{pre}{}", if r.path == "/" { "" } else { &r.path });
+            }
             let handler = r.handler.as_deref().and_then(|h| {
                 let (recv, name) = match h.rsplit_once('.') {
                     Some((a, b)) if !h.contains("@L") => (Some(a), b),

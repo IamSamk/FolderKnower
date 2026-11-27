@@ -4,6 +4,10 @@ Notes for each version are shown in the in-app update pop-up and on the website'
 
 ## [Unreleased]
 
+- Meilisearch-style `#[routes::routes(...)]` route macros and `sub(..)` mounts are read and composed.
+- tRPC procedures appear as routes.
+- Data-model export lists tables first and counts tables and schemas separately.
+
 - Next.js `pages/api` routes take their verbs from `req.method` checks instead of always `ANY`.
 
 - Packages tab: workspace packages drawn as cards with tier bars and dependency chips.
