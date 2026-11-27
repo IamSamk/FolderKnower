@@ -4,6 +4,11 @@ Notes for each version are shown in the in-app update pop-up and on the website'
 
 ## [Unreleased]
 
+- Scala is parsed (objects, traits, classes, defs, imports, calls).
+- Maven, Gradle, sbt and .NET modules appear as workspace packages.
+- Headline skips dev, example and test containers; repos that ship binaries list their programs (Go `cmd/`, Rust bins); library monorepos say so.
+- `.claude/` and `.cursor/` folders are ignored.
+
 - Java and C# are parsed: classes, methods, imports, calls, Spring `@GetMapping` and ASP.NET `[HttpGet]` routes.
 
 - Meilisearch-style `#[routes::routes(...)]` route macros and `sub(..)` mounts are read and composed.

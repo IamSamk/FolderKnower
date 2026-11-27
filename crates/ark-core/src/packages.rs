@@ -24,6 +24,10 @@ fn read_manifest(root: &Path, f: &ScannedFile) -> Option<Manifest> {
         "Cargo.toml" => "cargo",
         "pyproject.toml" => "python",
         "go.mod" => "go",
+        "pom.xml" => "maven",
+        "build.gradle" | "build.gradle.kts" => "gradle",
+        "build.sbt" => "sbt",
+        f if f.ends_with(".csproj") => "dotnet",
         _ => return None,
     };
     let text = std::fs::read_to_string(root.join(&f.path)).ok()?;
@@ -54,9 +58,55 @@ fn read_manifest(root: &Path, f: &ScannedFile) -> Option<Manifest> {
                 }
             }
         }
+        "maven" => {
+            // artifactIds inside <dependencies> blocks
+            let mut rest = text.as_str();
+            while let Some(i) = rest.find("<dependencies>") {
+                let after = &rest[i + 14..];
+                let end = after.find("</dependencies>").unwrap_or(after.len());
+                for part in after[..end].split("<artifactId>").skip(1) {
+                    if let Some(a) = part.split("</artifactId>").next() {
+                        deps.push(a.trim().to_owned());
+                    }
+                }
+                rest = &after[end..];
+            }
+        }
+        "gradle" => {
+            // project(":a:b") and implementation("g:artifact:v")
+            for l in text.lines() {
+                if let Some(i) = l.find("project(") {
+                    let p = l[i + 8..].trim_start_matches(['"', '\'', ':']);
+                    let p = p.split(['"', '\'', ')']).next().unwrap_or("");
+                    if let Some(n) = p.rsplit(':').next().filter(|n| !n.is_empty()) {
+                        deps.push(n.to_owned());
+                    }
+                }
+            }
+        }
+        "dotnet" => {
+            for part in text.split("<ProjectReference Include=\"").skip(1) {
+                if let Some(p) = part.split('"').next() {
+                    let stem = p.rsplit(['/', '\\']).next().unwrap_or(p);
+                    deps.push(stem.trim_end_matches(".csproj").to_owned());
+                }
+            }
+        }
         _ => {}
     }
     let name = match eco {
+        "maven" => {
+            // first <artifactId> outside <parent>
+            let t = match (text.find("<parent>"), text.find("</parent>")) {
+                (Some(a), Some(b)) if b > a => format!("{}{}", &text[..a], &text[b + 9..]),
+                _ => text.clone(),
+            };
+            t.split("<artifactId>")
+                .nth(1)
+                .and_then(|x| x.split("</artifactId>").next())
+                .map(|x| x.trim().to_owned())
+        }
+        "dotnet" => file.strip_suffix(".csproj").map(str::to_owned),
         "npm" => serde_json::from_str::<serde_json::Value>(&text)
             .ok()?
             .get("name")

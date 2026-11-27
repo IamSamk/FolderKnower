@@ -7,7 +7,16 @@ import type { TierLabel, WorkspacePackage } from "../gen";
 import { TIER_COLOR, TIER_ORDER } from "../lib/theme";
 import { useStore } from "../store";
 
-const ECO: Record<string, string> = { npm: "npm", cargo: "Cargo", python: "Python", go: "Go" };
+const ECO: Record<string, string> = {
+  npm: "npm",
+  cargo: "Cargo",
+  python: "Python",
+  go: "Go",
+  maven: "Maven",
+  gradle: "Gradle",
+  sbt: "sbt",
+  dotnet: ".NET",
+};
 
 function compact(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : String(n);

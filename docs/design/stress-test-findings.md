@@ -63,6 +63,35 @@ Status: **fixed** in this milestone, **open** (logged, not done).
 | C5 | `architecture.json` was always pretty-printed: 168 MB for Dify. Repos over 1,500 files now write compact JSON (79 MB; `--pretty` to indent). | dify, langfuse, onyx | **fixed** |
 | C6 | Health false positives on Online Boutique: `grpc_health` and `pythonjsonlogger` reported as missing from requirements (import name differs from package name); locust calls to `/cart` flagged because the Go frontend's mux routes are not read. | boutique | open |
 
+## Round 2: big-company open source (M14)
+
+Shallow clones, 2026-11-27. These are the public repositories of the companies named in the
+brief; their production systems are private, so each case is compared with the architecture the
+project itself publishes.
+
+| Repo (owner) | Stack | Files | Index time |
+|---|---|---:|---:|
+| firecracker (AWS) | Rust VMM, 12 crates | 387 | 2 s |
+| kubernetes (Google/CNCF) | Go, 41 modules | 9,173 | 44 s |
+| spark (Databricks/Apache) | Scala, Java, Python | 5,289 once Scala is read | 35 s |
+| delta (Databricks) | Scala, Java, Python | 1,660 | 4 s |
+| mlflow (Databricks) | Python, TS, Java | 4,105 | 11 s |
+| react (Meta) | JS monorepo, Rust compiler | 1,793 | 13 s |
+| presto (Meta origin) | Java, 117 Maven modules, C++ | 6,819 | 52 s |
+
+| # | Miss | Repo | Status |
+|---|---|---|---|
+| N1 | Headline counted Dockerfiles in `dev/`, `examples/`, `tools/`, `*-tests/`, `*-test-image/` as shipped containers: Spark "18 containers: ." (all lint/docs images), Firecracker "1 container: ." (the dev container), Kubernetes "32 containers" (test images). Folders that hold tooling, samples and tests are now skipped. | spark, firecracker, kubernetes, presto, mlflow | **fixed** |
+| N2 | No program list for repos that ship binaries instead of containers. Go `cmd/<name>/`, Rust `src/main.rs` and `src/bin/*.rs` are now read: Firecracker "6 programs in 12 packages: firecracker, cpu-template-helper, jailer, snapshot-editor, ...", Kubernetes "25 programs in 41 packages: kubeadm, kube-controller-manager, kubelet, kube-proxy, ...". | firecracker, kubernetes | **fixed** |
+| N3 | A library monorepo was called "Full-stack app: frontend talks to a backend" (React). Now "Monorepo of 73 packages: ...". | react | **fixed** |
+| N4 | A headline with nothing to list printed "in 18 containers: ." Now falls back to "Codebase of N files in <languages>". | spark | **fixed** |
+| N5 | Maven, Gradle, sbt and .NET modules were not packages (Presto showed 0, the largest Java build in the set). Now 117 Presto modules with 703 module links; Spark 36. | presto, spark, delta, boutique | **fixed** |
+| N6 | Scala was not parsed: 3,432 of Spark's and 525 of Delta's source files were skipped. Added a Scala parser (objects, traits, classes, defs, imports, calls); Spark functions went from 20k to 73k. | spark, delta | **fixed** |
+| N7 | `.claude/` and `.cursor/` folders produced hundreds of "data models" (MLflow). Denied. | mlflow | **fixed** |
+| N8 | C and C++ (Presto's native engine on Velox, 214 files) are not parsed. The summary says so; no parser yet. | presto | open |
+| N9 | Meilisearch "single binary" now reads as "11 programs in 24 packages", which counts helper tools next to the server. | meilisearch | open |
+| N10 | MLflow is called an "AI system" with 23 containers: most are examples and tests, but the AI claim still comes from a gateway test fixture. | mlflow | open |
+
 ## What the maintainers' systems look like vs the detected one (after fixes)
 
 - **Online Boutique** (11 services + Redis, gRPC): all 11 services, Redis and the collector found, with the real service-to-service links. The C#/Java services' code is now read (C1).

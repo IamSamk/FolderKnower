@@ -539,3 +539,18 @@ fn export_digest_has_diagrams_and_the_retrieval_loop() {
     // Python code is never the browser tier.
     assert!(md.contains("\"api (api)\""));
 }
+
+#[test]
+fn support_paths_are_not_the_system() {
+    assert!(super::story::is_support_path(
+        "dev/spark-test-image/lint/Dockerfile:1"
+    ));
+    assert!(super::story::is_support_path(
+        "presto-product-tests/conf/docker-compose.yml:3"
+    ));
+    assert!(super::story::is_support_path("tools/devctr/Dockerfile:1"));
+    assert!(!super::story::is_support_path(
+        "docker/docker-compose.yaml:1"
+    ));
+    assert!(!super::story::is_support_path("Dockerfile:1"));
+}

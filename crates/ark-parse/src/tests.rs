@@ -494,3 +494,17 @@ fn csharp_aspnet_controller() {
     assert_eq!(f.functions.len(), 2);
     assert!(f.functions[0].calls.iter().any(|c| c.callee == "Find"));
 }
+
+#[test]
+fn scala_objects_traits_and_calls() {
+    let src = "package a.b\nimport org.apache.spark.sql.{DataFrame, SparkSession}\nobject Main extends App {\n  def run(x: Int): Int = { foo.bar(x); baz(1) }\n}\nclass Svc(val name: String) extends Base with Mixin {\n  private def hidden() = 1\n}\ntrait T { def f: Int }\n";
+    let f = parse_file(Language::Scala, "a/Main.scala", src);
+    let names: Vec<_> = f.classes.iter().map(|c| c.name.as_str()).collect();
+    assert_eq!(names, ["Main", "Svc", "T"]);
+    assert_eq!(f.classes[1].bases, ["Base", "Mixin"]);
+    assert_eq!(f.imports.len(), 2);
+    assert_eq!(f.imports[0].source, "org.apache.spark.sql.DataFrame");
+    let run = f.functions.iter().find(|x| x.name == "run").unwrap();
+    assert!(run.calls.iter().any(|c| c.callee == "bar"));
+    assert!(run.calls.iter().any(|c| c.callee == "baz"));
+}

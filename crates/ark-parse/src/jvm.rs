@@ -38,6 +38,9 @@ fn is_type_decl(kind: &str) -> bool {
             | "enum_declaration"
             | "record_declaration"
             | "struct_declaration"
+            | "class_definition"
+            | "object_definition"
+            | "trait_definition"
     )
 }
 
@@ -52,13 +55,14 @@ impl X<'_, '_> {
                 self.type_decl(node);
                 return;
             }
+            "import_declaration" if self.lang == Language::Scala => self.scala_import(node),
             "import_declaration" => self.java_import(node),
             "using_directive" => self.cs_using(node),
-            "method_declaration" | "constructor_declaration" => {
+            "method_declaration" | "constructor_declaration" | "function_definition" => {
                 self.method(node);
                 return;
             }
-            "method_invocation" | "invocation_expression" => self.call(node),
+            "method_invocation" | "invocation_expression" | "call_expression" => self.call(node),
             _ => {}
         }
         for c in named_children(node) {
@@ -84,6 +88,44 @@ impl X<'_, '_> {
             names: vec![last],
             line: line(node),
         });
+    }
+
+    /// `import org.apache.spark.sql.{DataFrame, SparkSession}` -> source up to the braces.
+    fn scala_import(&mut self, node: Node) {
+        let raw = self.t(node).trim_start_matches("import").trim().to_owned();
+        let (path, names) = match raw.split_once('{') {
+            Some((p, rest)) => (
+                p.trim_end_matches('.').to_owned(),
+                rest.trim_end_matches('}')
+                    .split(',')
+                    .map(|n| n.split("=>").next().unwrap_or("").trim().to_owned())
+                    .filter(|n| !n.is_empty())
+                    .collect::<Vec<_>>(),
+            ),
+            None => {
+                let last = raw.rsplit('.').next().unwrap_or(&raw).to_owned();
+                (raw.clone(), vec![last])
+            }
+        };
+        if path.is_empty() {
+            return;
+        }
+        // Each selector is its own class file: `pkg.Name`.
+        if raw.contains('{') {
+            for n in &names {
+                self.facts.imports.push(ImportFact {
+                    source: format!("{path}.{n}"),
+                    names: vec![n.clone()],
+                    line: line(node),
+                });
+            }
+        } else {
+            self.facts.imports.push(ImportFact {
+                source: path,
+                names,
+                line: line(node),
+            });
+        }
     }
 
     fn cs_using(&mut self, node: Node) {
@@ -169,7 +211,8 @@ impl X<'_, '_> {
         let mut fields = Vec::new();
         for c in named_children(node) {
             match c.kind() {
-                "superclass" | "super_interfaces" | "base_list" | "extends_interfaces" => {
+                "superclass" | "super_interfaces" | "base_list" | "extends_interfaces"
+                | "extends_clause" => {
                     for b in named_children(c) {
                         let b = if matches!(b.kind(), "type_list") {
                             named_children(b)
@@ -182,6 +225,7 @@ impl X<'_, '_> {
                     }
                 }
                 "class_body"
+                | "template_body"
                 | "declaration_list"
                 | "interface_body"
                 | "enum_body"
@@ -240,6 +284,12 @@ impl X<'_, '_> {
     }
 
     fn public(&self, node: Node) -> bool {
+        if self.lang == Language::Scala {
+            return !named_children(node).iter().any(|c| {
+                c.kind() == "modifiers"
+                    && (self.t(*c).contains("private") || self.t(*c).contains("protected"))
+            });
+        }
         named_children(node)
             .iter()
             .any(|c| matches!(c.kind(), "modifiers" | "modifier") && self.t(*c).contains("public"))
@@ -345,7 +395,22 @@ impl X<'_, '_> {
 
     fn call(&mut self, node: Node) {
         // Java method_invocation: object?, name, arguments. C# invocation_expression: function, arguments.
-        let (callee, receiver) = if node.kind() == "method_invocation" {
+        let (callee, receiver) = if node.kind() == "call_expression" {
+            let Some(f) = node.child_by_field_name("function") else {
+                return;
+            };
+            if f.kind() == "field_expression" {
+                let Some(n) = f.child_by_field_name("field") else {
+                    return;
+                };
+                (
+                    self.t(n).to_owned(),
+                    f.child_by_field_name("value").map(|o| clip(self.t(o), 48)),
+                )
+            } else {
+                (self.t(f).split('[').next().unwrap_or("").to_owned(), None)
+            }
+        } else if node.kind() == "method_invocation" {
             let Some(n) = node.child_by_field_name("name") else {
                 return;
             };
