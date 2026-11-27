@@ -23,6 +23,7 @@ import {
 import { motion } from "motion/react";
 import { useState } from "react";
 import { copyDigest, exportJson, isTauri } from "../lib/backend";
+import { appProfile } from "../lib/profile";
 import { TIER_COLOR } from "../lib/theme";
 import { type ThemePref, useTheme } from "../lib/themeMode";
 import { type Focus, useStore, type View } from "../store";
@@ -101,6 +102,7 @@ export function TopBar() {
   const errors = health?.issues.filter((i) => i.severity === "error").length ?? 0;
   if (!ix) return null;
   const top = stack[stack.length - 1];
+  const profile = appProfile(ix);
   const views: { k: View; label: string; icon: React.ReactNode }[] = [
     { k: "system", label: "System", icon: <Container size={15} strokeWidth={2.4} /> },
     { k: "architecture", label: "Code map", icon: <Network size={15} strokeWidth={2.4} /> },
@@ -113,10 +115,21 @@ export function TopBar() {
           },
         ]
       : []),
-    { k: "ui", label: "UI map", icon: <Boxes size={15} strokeWidth={2.4} /> },
-    { k: "er", label: "Data", icon: <Database size={15} strokeWidth={2.4} /> },
-    { k: "insights", label: "How it works", icon: <Brain size={15} strokeWidth={2.4} /> },
+    // A screen-less project (server only, library, CLI) has no UI map; a project with no tables
+    // or models has no Data tab. The tab you are on always stays.
+    ...(profile.hasUi || view === "ui"
+      ? [{ k: "ui" as View, label: "UI map", icon: <Boxes size={15} strokeWidth={2.4} /> }]
+      : []),
+    ...(profile.hasData || view === "er"
+      ? [{ k: "er" as View, label: "Data", icon: <Database size={15} strokeWidth={2.4} /> }]
+      : []),
+    {
+      k: "insights",
+      label: profile.insightsLabel,
+      icon: <Brain size={15} strokeWidth={2.4} />,
+    },
     { k: "live", label: "Live", icon: <Activity size={15} strokeWidth={2.4} /> },
+    { k: "about", label: "Your computer", icon: <Laptop size={15} strokeWidth={2.4} /> },
   ];
   const switchView = (k: View, el: Element) => {
     if (k === view) return;
@@ -203,7 +216,7 @@ export function TopBar() {
           <Wrench size={15} strokeWidth={2.4} />
           DSA tools
         </button>
-        {view !== "live" && view !== "system" && (
+        {view !== "live" && view !== "about" && view !== "system" && (
           <button
             type="button"
             className={`ak-tool ak-tool-label ${workflowOpen ? "on" : ""}`}

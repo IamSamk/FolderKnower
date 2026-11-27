@@ -688,7 +688,64 @@
   "questions": [],
   "insights": {
     "rulesetVersion": "patterns 0.1.0 / catalog 0.1.0 / services 0.1.0",
-    "dataStructures": [],
+    "dataStructures": [
+      {
+        "id": "dsa:fn:server/api.py#checkout:hashMap:dict",
+        "kind": "hashMap",
+        "fileId": "file:server/api.py",
+        "functionId": "fn:server/api.py#checkout",
+        "line": 16,
+        "subject": "dict",
+        "ruleId": "dsa.map.typed",
+        "confidence": 0.7,
+        "evidence": [
+          "uses dict"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:server/api.py#list_items:hashMap:dict",
+        "kind": "hashMap",
+        "fileId": "file:server/api.py",
+        "functionId": "fn:server/api.py#list_items",
+        "line": 11,
+        "subject": "dict",
+        "ruleId": "dsa.map.typed",
+        "confidence": 0.7,
+        "evidence": [
+          "uses dict"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:server/pricing.py#discount:hashMap:dict",
+        "kind": "hashMap",
+        "fileId": "file:server/pricing.py",
+        "functionId": "fn:server/pricing.py#discount",
+        "line": 8,
+        "subject": "dict",
+        "ruleId": "dsa.map.typed",
+        "confidence": 0.7,
+        "evidence": [
+          "uses dict"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:server/pricing.py#total:hashMap:dict",
+        "kind": "hashMap",
+        "fileId": "file:server/pricing.py",
+        "functionId": "fn:server/pricing.py#total",
+        "line": 4,
+        "subject": "dict",
+        "ruleId": "dsa.map.typed",
+        "confidence": 0.7,
+        "evidence": [
+          "uses dict"
+        ],
+        "ops": []
+      }
+    ],
     "libraries": [
       {
         "name": "FastAPI",

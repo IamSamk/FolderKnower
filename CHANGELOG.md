@@ -4,6 +4,11 @@ Notes for each version are shown in the in-app update pop-up and on the website'
 
 ## [Unreleased]
 
+- System view can be panned (scroll or drag) and zoomed (Ctrl + scroll, pinch, or the +/- buttons) on every OS; it also re-measures after switching back from Flow or Memory.
+- "Will a model fit on this computer?" moved out of Live into a new "Your computer" tab; Live only follows your project's own processes.
+- The tab after Data adapts to the app: "How the AI works" when an AI system is found, "Code insights" otherwise, with a bar naming the app kind. UI map and Data tabs hide when there is no screen or no data model.
+- The feature picker says it applies to System, Flow and Memory.
+- Data structures: JS/TS `Map`/`Set` and `get`/`set`/`has` usage, library sorts, and a stack or queue used from several functions is one finding instead of duplicates.
 - Scala is parsed (objects, traits, classes, defs, imports, calls).
 - Maven, Gradle, sbt and .NET modules appear as workspace packages.
 - Headline skips dev, example and test containers; repos that ship binaries list their programs (Go `cmd/`, Rust bins); library monorepos say so.

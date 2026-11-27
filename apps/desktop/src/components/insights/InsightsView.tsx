@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import type { AiArchitecture, DsaFinding, Insights } from "../../gen";
 import { DSA_EXPLAIN, DSA_LABEL } from "../../lib/insights";
+import { appProfile } from "../../lib/profile";
 import { useStore } from "../../store";
 import { AiPipeline } from "./AiPipeline";
 import { DsaAnim } from "./DsaAnim";
@@ -225,6 +226,8 @@ function LibsTab({ insights }: { insights: Insights }) {
 
 export function InsightsView() {
   const insights = useStore((s) => s.ix?.g.insights);
+  const ix = useStore((s) => s.ix);
+  const profile = ix ? appProfile(ix) : undefined;
   const tabs = useMemo(() => {
     const t: { k: Tab; label: string; n?: number; icon: React.ReactNode }[] = [];
     if (!insights) return t;
@@ -249,7 +252,9 @@ export function InsightsView() {
     });
     return t;
   }, [insights]);
-  const [tab, setTab] = useState<Tab>(insights?.ai ? "ai" : "dsa");
+  const [picked, setTab] = useState<Tab>(insights?.ai ? "ai" : "dsa");
+  // a tab picked for another project may not exist here
+  const tab: Tab = tabs.some((t) => t.k === picked) ? picked : (tabs[0]?.k ?? "dsa");
   if (!insights)
     return (
       <div className="ak-empty">
@@ -259,6 +264,17 @@ export function InsightsView() {
     );
   return (
     <div className="ak-insights">
+      {profile && (
+        <div className="ak-kindbar">
+          <span className="ak-chip">{profile.label}</span>
+          <span className="ak-muted">
+            {profile.blurb}
+            {insights.ai
+              ? " The AI pipeline tab only exists because an AI system was found."
+              : " No AI system was found, so there is no AI pipeline tab; the tabs below cover any project."}
+          </span>
+        </div>
+      )}
       <nav className="ak-subtabs">
         {tabs.map((t) => (
           <button
@@ -282,7 +298,13 @@ export function InsightsView() {
           (insights.dataStructures.length ? (
             <DsaGallery items={insights.dataStructures} />
           ) : (
-            <p className="ak-muted">No stacks, queues, trees or graphs were recognized.</p>
+            <p className="ak-muted">
+              No data structures were recognized. The scan looks for stacks, queues, heaps, hash
+              maps and sets, trees, graphs, linked lists, sorting, recursion and memoization, from
+              how variables are used. Plain lists and objects passed around a regular web app do not
+              count, so a project that only moves records between screens and a database can
+              honestly have none.
+            </p>
           ))}
         {tab === "memory" && <MemoryTab insights={insights} />}
         {tab === "libs" && <LibsTab insights={insights} />}

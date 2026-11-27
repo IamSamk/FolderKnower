@@ -1529,7 +1529,50 @@
   "questions": [],
   "insights": {
     "rulesetVersion": "patterns 0.1.0 / catalog 0.1.0 / services 0.1.0",
-    "dataStructures": [],
+    "dataStructures": [
+      {
+        "id": "dsa:fn:app/src/main.py#ask:hashMap:dict",
+        "kind": "hashMap",
+        "fileId": "file:app/src/main.py",
+        "functionId": "fn:app/src/main.py#ask",
+        "line": 8,
+        "subject": "dict",
+        "ruleId": "dsa.map.typed",
+        "confidence": 0.7,
+        "evidence": [
+          "uses dict"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:app/src/rerank.py#rerank:sorting:sorted",
+        "kind": "sorting",
+        "fileId": "file:app/src/rerank.py",
+        "functionId": "fn:app/src/rerank.py#rerank",
+        "line": 8,
+        "subject": "sorted",
+        "ruleId": "dsa.sort.library",
+        "confidence": 0.8,
+        "evidence": [
+          "sorted (line 10)"
+        ],
+        "ops": []
+      },
+      {
+        "id": "dsa:fn:app/src/retrieval.py#rrf_fuse:sorting:sorted",
+        "kind": "sorting",
+        "fileId": "file:app/src/retrieval.py",
+        "functionId": "fn:app/src/retrieval.py#rrf_fuse",
+        "line": 9,
+        "subject": "sorted",
+        "ruleId": "dsa.sort.library",
+        "confidence": 0.8,
+        "evidence": [
+          "sorted (line 14)"
+        ],
+        "ops": []
+      }
+    ],
     "ai": {
       "kind": "hybridRag",
       "headline": "Hybrid RAG: dense vectors and BM25 keywords are searched together, then fused; keyword hits are expanded through an entity graph; an evidence check sends the question back for more retrieval when the passages are not enough",

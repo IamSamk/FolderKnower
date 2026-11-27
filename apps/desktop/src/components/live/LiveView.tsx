@@ -13,9 +13,7 @@ import {
   type RuntimeStatus,
   runtimes,
   simulated,
-  systemSnapshot,
 } from "../../lib/telemetry";
-import { KvCalculator } from "../insights/KvCache";
 import { RunPanel } from "./RunPanel";
 
 const HISTORY = 40;
@@ -306,16 +304,9 @@ export function LiveView() {
   const [detail, setDetail] = useState<ProcessDetail | null>(null);
   const [selDetail, setSelDetail] = useState<ProcessDetail | null>(null);
   const [rts, setRts] = useState<RuntimeStatus[]>([]);
-  const [ramBytes, setRam] = useState<number | undefined>();
   const hist = useRef(new Map<number, number[]>());
   const [, force] = useState(0);
   const sim = simulated();
-
-  useEffect(() => {
-    void systemSnapshot()
-      .then((s) => setRam(s.totalMemory))
-      .catch(() => undefined);
-  }, []);
 
   // Everything below follows one process tree: the project's own. Nothing machine-wide.
   useEffect(() => {
@@ -431,10 +422,6 @@ export function LiveView() {
               and model servers appear here, never the rest of this computer.
             </section>
           )}
-          <section className="ak-card">
-            <div className="ak-live-title">Will a model fit on this computer?</div>
-            <KvCalculator ramBytes={ramBytes} />
-          </section>
         </div>
       </div>
     </div>
