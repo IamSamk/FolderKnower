@@ -368,8 +368,14 @@ pub fn file_based_routes(path: &str, facts: &FileFacts) -> Vec<RouteFact> {
             .iter()
             .find(|f| f.name == "default" || f.name == "handler")
             .map(|f| f.qualname.clone());
+        // `if (req.method !== "POST")` and `switch (req.method)` name the verbs it serves.
+        let method = if facts.verbs_checked.is_empty() {
+            "ANY".to_owned()
+        } else {
+            facts.verbs_checked.join("|")
+        };
         out.push(RouteFact {
-            method: "ANY".to_owned(),
+            method,
             path: format!("/{}", segs.join("/")),
             framework: "nextjs".to_owned(),
             line: 1,

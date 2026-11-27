@@ -133,3 +133,20 @@ fn url_normalisation() {
     );
     assert_eq!(normalize_url_segments(":param/users/{id}"), ["users", "*"]);
 }
+
+#[test]
+fn nextjs_pages_api_methods_come_from_checks() {
+    let f = pf(
+        "web/pages/api/todos.ts",
+        "export default function handler(req, res) {\n  if (req.method !== \"POST\") return res.status(405).end();\n  res.json({});\n}\n",
+    );
+    let routes = resolve::file_based_routes("web/pages/api/todos.ts", &f.facts);
+    assert_eq!(routes.len(), 1);
+    assert_eq!(routes[0].method, "POST");
+    let g = pf(
+        "web/pages/api/any.ts",
+        "export default function handler(req, res) { res.end(); }\n",
+    );
+    let r = resolve::file_based_routes("web/pages/api/any.ts", &g.facts);
+    assert_eq!(r[0].method, "ANY");
+}

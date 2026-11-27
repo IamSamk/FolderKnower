@@ -28,7 +28,7 @@ Status: **fixed** in this milestone, **open** (logged, not done).
 | R1 | Flask-RESTX/RESTful class routes (`@ns.route("/x")` on a `Resource` class, `api.add_resource`) not read. Dify's API went from 53 routes found to 1,499. | dify | **fixed** (verbs come from the class's `get`/`post`/... methods) |
 | R2 | actix `web::resource("/x").route(web::get().to(h))` inside `web::scope("/p")` chains not read (axum was). | meilisearch | **fixed** (scope prefixes composed) |
 | R3 | Meilisearch declares routes with its own `#[routes::routes("/x" => [get(h)])]` attribute DSL and nests them with `sub(Api)`. Still invisible: the app's real HTTP surface shows 2 routes (both in vendored examples). | meilisearch | open |
-| R4 | Next.js `pages/api` handlers wrapped by middleware helpers all get method `ANY` (132 of 148 routes). tRPC routers are not modelled as routes at all. | langfuse | open |
+| R4 | Next.js `pages/api` handlers wrapped by middleware helpers all get method `ANY` (132 of 148 routes). tRPC routers are not modelled as routes at all. Handlers that check `req.method` (`!== "POST"`, `switch`) now get those verbs; helper-wrapped ones stay `ANY`. | langfuse | partly fixed (method checks), open (wrapped, tRPC) |
 | R5 | Flask-RESTX namespaces carry a path prefix (`/console/api`); not composed, so frontend calls may not link to it. | dify | open |
 
 ### Deployment map (compose)
