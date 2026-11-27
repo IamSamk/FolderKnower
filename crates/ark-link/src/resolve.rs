@@ -90,7 +90,22 @@ impl<'a> Resolver<'a> {
             Language::Python => self.resolve_py(from, source, names),
             Language::Rust => self.resolve_rust(from, source).into_iter().collect(),
             Language::Go => self.resolve_go(source),
+            Language::Java => self.resolve_java(source),
+            Language::CSharp => Vec::new(),
         }
+    }
+
+    /// `com.acme.Foo` -> the file ending in `com/acme/Foo.java`.
+    fn resolve_java(&self, source: &str) -> Vec<usize> {
+        let tail = format!("{}.java", source.trim_end_matches(".*").replace('.', "/"));
+        self.by_path
+            .iter()
+            .filter(|(p, _)| {
+                p.ends_with(&tail)
+                    && (p.len() == tail.len() || p[..p.len() - tail.len()].ends_with('/'))
+            })
+            .map(|(_, i)| *i)
+            .collect()
     }
 
     fn resolve_js(&self, from: &str, source: &str) -> Option<usize> {
@@ -300,6 +315,7 @@ pub fn external_package(lang: Language, source: &str) -> Option<String> {
             }
             first.replace('_', "-")
         }
+        Language::Java | Language::CSharp => return None,
         Language::Go => {
             let parts: Vec<&str> = s.split('/').collect();
             if parts[0].contains('.') {

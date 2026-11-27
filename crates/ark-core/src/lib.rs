@@ -99,6 +99,8 @@ fn grammar_tag(lang: Language) -> &'static str {
         Language::Python => "tree-sitter-python@0.25.0",
         Language::Rust => "tree-sitter-rust@0.24.2",
         Language::Go => "tree-sitter-go@0.25.0",
+        Language::Java => "tree-sitter-java@0.23.5",
+        Language::CSharp => "tree-sitter-c-sharp@0.23.5",
     }
 }
 

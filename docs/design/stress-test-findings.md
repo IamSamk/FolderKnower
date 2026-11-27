@@ -56,7 +56,7 @@ Status: **fixed** in this milestone, **open** (logged, not done).
 
 | # | Miss | Repo | Status |
 |---|---|---|---|
-| C1 | C# (cartservice) and Java (adservice) are not parsed, silently. Now the summary says "Not read: 10 source files in languages without a parser yet (C# 8, Java 2)". Parsers still open. | boutique | **partly fixed** (honest, parsers open) |
+| C1 | C# (cartservice) and Java (adservice) are not parsed, silently. Now the summary says "Not read: 10 source files in languages without a parser yet (C# 8, Java 2)". Java and C# now have parsers (classes, methods, imports, calls, Spring and ASP.NET routes): parsed files went from 36 to 47 on Online Boutique. | boutique | **fixed** |
 | C2 | Generated protobuf stubs were indexed: Online Boutique reported 90 "data models" (the same 22 messages copied per service). Now `*.pb.go`, `*_pb2*.py`, `*.pb.ts` etc. are skipped (models 90 to 2). The `.proto` messages are now the models. | boutique | **fixed** |
 | C3 | Vendored code (`external-crates/`, `third_party/`) and its examples produced routes and a hybrid-RAG pipeline claim. | meilisearch | **fixed** (denied dirs) |
 | C4 | Data model counts are dominated by zod/DTO schemas (Dify 8,302, 4,903 from one `contracts` package; Onyx 2,339). The Markdown export now lists tables and collections first and states the split (tables, schemas). | dify, onyx | **partly fixed** (export), open (canvas) |
@@ -65,7 +65,7 @@ Status: **fixed** in this milestone, **open** (logged, not done).
 
 ## What the maintainers' systems look like vs the detected one (after fixes)
 
-- **Online Boutique** (11 services + Redis, gRPC): all 11 services, Redis and the collector found, with the real service-to-service links. Missing: the C#/Java services' code (C1).
+- **Online Boutique** (11 services + Redis, gRPC): all 11 services, Redis and the collector found, with the real service-to-service links. The C#/Java services' code is now read (C1).
 - **Onyx**: web server, API server, background workers, two model servers, nginx, Postgres, OpenSearch/Vespa, Redis, MinIO. All present; `background` now a worker, the model servers read as API (should be "model server", open).
 - **Dify**: api, worker, worker_beat, web, plugin_daemon, sandbox, ssrf_proxy, nginx, db, redis, vector store. Present. Routes now visible (1,499).
 - **Langfuse**: web, worker, ClickHouse, Postgres, Redis, MinIO, ai-gateway. Present in the container list; web/worker are not shown as the two main apps (S2).
@@ -76,5 +76,4 @@ Status: **fixed** in this milestone, **open** (logged, not done).
 1. D7: `.proto` service/rpc definitions.
 2. (done) S2 packages view on the canvas; C2 proto models.
 3. R3/R4: route DSLs and tRPC.
-4. C1: Java and C# parsers.
 5. C5: compact JSON.

@@ -461,3 +461,36 @@ fn trpc_procedures_become_routes() {
         ]
     );
 }
+
+#[test]
+fn java_spring_controller() {
+    let src = "package a;\nimport com.acme.Svc;\n@RestController\n@RequestMapping(\"/api/ads\")\npublic class AdController extends Base {\n  private String name;\n  @GetMapping(\"/{id}\")\n  public Ad get(String id) { svc.find(id); return null; }\n  @PostMapping\n  public void add() {}\n}\n";
+    let f = parse_file(Language::Java, "a/AdController.java", src);
+    let r: Vec<_> = f
+        .routes
+        .iter()
+        .map(|r| (r.method.as_str(), r.path.as_str()))
+        .collect();
+    assert_eq!(r, [("GET", "/api/ads/:param"), ("POST", "/api/ads")]);
+    assert_eq!(f.imports[0].source, "com.acme.Svc");
+    assert_eq!(f.classes[0].name, "AdController");
+    assert_eq!(f.classes[0].bases, ["Base"]);
+    assert_eq!(f.functions.len(), 2);
+    assert!(f.functions[0].calls.iter().any(|c| c.callee == "find"));
+}
+
+#[test]
+fn csharp_aspnet_controller() {
+    let src = "using System;\nusing Acme.Cart;\n[ApiController]\n[Route(\"api/[controller]\")]\npublic class CartController : ControllerBase {\n  public string Name { get; set; }\n  [HttpGet(\"{id}\")]\n  public Cart Get(string id) { return store.Find(id); }\n  [HttpPost]\n  public void Add() { }\n}\n";
+    let f = parse_file(Language::CSharp, "Cart/CartController.cs", src);
+    let r: Vec<_> = f
+        .routes
+        .iter()
+        .map(|r| (r.method.as_str(), r.path.as_str()))
+        .collect();
+    assert_eq!(r, [("GET", "/api/cart/:param"), ("POST", "/api/cart")]);
+    assert_eq!(f.imports.len(), 2);
+    assert_eq!(f.classes[0].name, "CartController");
+    assert_eq!(f.functions.len(), 2);
+    assert!(f.functions[0].calls.iter().any(|c| c.callee == "Find"));
+}

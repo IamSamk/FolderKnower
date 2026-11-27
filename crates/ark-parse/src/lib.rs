@@ -7,6 +7,7 @@ mod enrich;
 mod facts;
 mod go;
 mod js;
+mod jvm;
 mod python;
 mod rust;
 mod util;
@@ -27,6 +28,8 @@ fn ts_language(lang: Language) -> tree_sitter::Language {
         Language::Python => tree_sitter_python::LANGUAGE.into(),
         Language::Rust => tree_sitter_rust::LANGUAGE.into(),
         Language::Go => tree_sitter_go::LANGUAGE.into(),
+        Language::Java => tree_sitter_java::LANGUAGE.into(),
+        Language::CSharp => tree_sitter_c_sharp::LANGUAGE.into(),
     }
 }
 
@@ -79,6 +82,7 @@ pub fn parse_file(lang: Language, path: &str, src: &str) -> FileFacts {
             rust::macro_routes(src, &mut facts);
         }
         Language::Go => go::extract(root, bytes, &mut facts),
+        Language::Java | Language::CSharp => jvm::extract(lang, root, bytes, &mut facts),
     }
     enrich::enrich(lang, root, bytes, &mut facts);
     facts.finish();

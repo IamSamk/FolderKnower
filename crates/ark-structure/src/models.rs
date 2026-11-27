@@ -296,6 +296,7 @@ pub fn code_models(files: &[ParsedFile]) -> Vec<(DataModel, Vec<(String, Relatio
                 Language::TypeScript | Language::Tsx | Language::JavaScript => js_model(c),
                 Language::Rust => rust_model(c),
                 Language::Go => go_model(c),
+                Language::Java | Language::CSharp => None,
             };
             let Some((kind, framework)) = detected else {
                 continue;
